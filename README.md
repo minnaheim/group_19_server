@@ -1,4 +1,4 @@
-# SoPra RESTful Service Template FS25
+# Group 19 Server
 
 ## Getting started with Spring Boot
 -   Documentation: https://docs.spring.io/spring-boot/docs/current/reference/html/index.html
