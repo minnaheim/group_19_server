@@ -30,6 +30,7 @@ You can use the local Gradle Wrapper to build the application.
 -   Linux: `./gradlew`
 -   Windows: `./gradlew.bat`
 
+
 More Information about [Gradle Wrapper](https://docs.gradle.org/current/userguide/gradle_wrapper.html) and [Gradle](https://gradle.org/docs/).
 
 ### Build
