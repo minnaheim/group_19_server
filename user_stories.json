@@ -1,0 +1,276 @@
+[
+  {
+    "role": "new user",
+    "goal": "register an account",
+    "benefit": "access the application",
+    "acceptance_criteria": [
+      "The registration form accepts a valid email, password, and username.",
+      "An error is shown for invalid email.",
+      "Duplicate email registrations & usernames are rejected.",
+      "A successful registration logs the user in and confirms account creation."
+    ],
+    "time_estimate": "3h"
+  },
+  {
+    "role": "registered user",
+    "goal": "log in",
+    "benefit": "access my personal dashboard and group functionalities",
+    "acceptance_criteria": [
+      "The login form accepts correct credentials and denies incorrect ones.",
+      "A session is maintained until logout.",
+      "Error messages are displayed on failed login attempts."
+    ],
+    "time_estimate": "6h"
+  },
+  {
+    "role": "logged-in user",
+    "goal": "view my profile",
+    "benefit": "see my personal details and stored data",
+    "acceptance_criteria": [
+      "The profile page displays the user’s information, want-to-watch list, favorite genre, favorite film, and watched movie list.",
+      "Data loads correctly and errors are handled with sensible messages.",
+      "This can only be accessed by logged-in users."
+    ],
+    "time_estimate": "6h"
+  },
+  {
+    "role": "logged-in user",
+    "goal": "manage my want-to-watch list",
+    "benefit": "see, edit, and append to my want-to-watch list",
+    "acceptance_criteria": [
+      "One can only edit their own want-to-watch list.",
+      "Movies can be added to the watchlist.",
+      "Movies already on the watch list cannot be added.",
+      "The user can search with key words for movies.",
+      "The user can select genres from the UI to browse movies and then add them."
+    ],
+    "time_estimate": "14h"
+  },
+  {
+    "role": "user",
+    "goal": "create a group",
+    "benefit": "add friends for movie night",
+    "acceptance_criteria": [
+      "A new group is created when a valid group name is provided.",
+      "Valid group names are unique; if not, a similar one is suggested.",
+      "The group is associated with the creator’s account and visible in their group list.",
+      "Duplicate group names trigger an error."
+    ],
+    "time_estimate": "10h"
+  },
+  {
+    "role": "group creator",
+    "goal": "invite friends",
+    "benefit": "include them in the group movie selection process",
+    "acceptance_criteria": [
+      "Invited friends receive a request in the application, acceptance of which makes them members of the group.",
+      "Only usernames of registered users can be invited."
+    ],
+    "time_estimate": "10h"
+  },
+  {
+    "role": "group member",
+    "goal": "search for movies",
+    "benefit": "find films to add to the group pool",
+    "acceptance_criteria": [
+      "A search query returns a list of movies with titles, posters, and brief details.",
+      "Invalid queries return a “no results found” message.",
+      "The search function responds within a reasonable time.",
+      "One can search for movie titles, directors, and actors."
+    ],
+    "time_estimate": "12h"
+  },
+  {
+    "role": "group member",
+    "goal": "add a movie to the group pool",
+    "benefit": "contribute to the selection process",
+    "acceptance_criteria": [
+      "A movie can be added by clicking an “Add” button on the search result.",
+      "The movie appears in the group’s pool immediately.",
+      "Duplicate entries are not allowed; an error message is displayed."
+    ],
+    "time_estimate": "8h"
+  },
+  {
+    "role": "group member",
+    "goal": "view the movie pool",
+    "benefit": "see all suggested movies",
+    "acceptance_criteria": [
+      "The pool displays all movies added with relevant details.",
+      "The UI updates when new movies are added.",
+      "The list is visible to all group members."
+    ],
+    "time_estimate": "8h"
+  },
+  {
+    "role": "group member",
+    "goal": "cast a vote",
+    "benefit": "ensure my vote counts toward the final selection",
+    "acceptance_criteria": [
+      "Each user can vote for one movie per movie night event.",
+      "The vote is registered and displayed in the UI.",
+      "Only the latest vote is counted and users can change their vote."
+    ],
+    "time_estimate": "8h"
+  },
+  {
+    "role": "system",
+    "goal": "automatically select the winning movie",
+    "benefit": "finalise the group’s choice",
+    "acceptance_criteria": [
+      "When the voting period ends, the system counts votes accurately.",
+      "The movie with the highest vote count is selected automatically.",
+      "The winning movie is clearly displayed."
+    ],
+    "time_estimate": "12h"
+  },
+  {
+    "role": "system",
+    "goal": "apply the tie-breaker rule",
+    "benefit": "determine a clear winner",
+    "acceptance_criteria": [
+      "In a tie scenario, the tiebreaker of highest rank is applied.",
+      "The tie-breaker process is logged and documented.",
+      "The final decision is displayed to all group members."
+    ],
+    "time_estimate": "6h"
+  },
+  {
+    "role": "group member",
+    "goal": "view voting results",
+    "benefit": "understand how the group arrived at the final selection",
+    "acceptance_criteria": [
+      "The results page shows the (anonymous) vote count for each movie.",
+      "The selected movie is highlighted as the winner.",
+      "Results update in real time as votes are cast or changed."
+    ],
+    "time_estimate": "10h"
+  },
+  {
+    "role": "system",
+    "goal": "validate votes",
+    "benefit": "ensure the integrity of the selection process",
+    "acceptance_criteria": [
+      "Votes for movies not in the pool cannot be submitted.",
+      "Appropriate error messages are shown for invalid votes.",
+      "All valid votes are logged with user ID and timestamp."
+    ],
+    "time_estimate": "10h"
+  },
+  {
+    "role": "user",
+    "goal": "receive clear error messages and confirmations",
+    "benefit": "know when my actions succeed or fail",
+    "acceptance_criteria": [
+      "Confirmation messages appear upon successful registration, group creation, movie addition, and vote submission.",
+      "Error messages display for any invalid inputs (e.g., duplicate votes, invalid email formats).",
+      "The UI responds promptly to user actions with clear feedback."
+    ],
+    "time_estimate": "8h"
+  },
+  {
+    "role": "new user",
+    "goal": "set my movie preferences",
+    "benefit": "tailor movie suggestions",
+    "acceptance_criteria": [
+      "Upon registration, the user is asked to provide their movie preferences.",
+      "The user can select favorite genres from a list.",
+      "The user can search through all movies and select one as their favorite.",
+      "The user can opt out of this process."
+    ],
+    "time_estimate": "4h"
+  },
+  {
+    "role": "logged-in user",
+    "goal": "view other users' profiles",
+    "benefit": "see their movie preferences",
+    "acceptance_criteria": [
+      "The profile page displays the user’s information, want-to-watch list, favorite genre, and favorite film.",
+      "Users can set their profile to private if they do not want to be found.",
+      "Users can be found by username if their profile is public.",
+      "Users can decide which information is public.",
+      "This feature is accessible only to logged-in users."
+    ],
+    "time_estimate": "8h"
+  },
+  {
+    "role": "logged-in user",
+    "goal": "manage my want-to-watch list with suggestions",
+    "benefit": "receive tailored movie suggestions for my watchlist",
+    "acceptance_criteria": [
+      "One can only edit their own want-to-watch list.",
+      "Movie suggestions are generated using multiple dimensions (genre, actors, popularity, directors, personal history, etc.).",
+      "Suggested movies can be added to the watchlist.",
+      "No movies already on the watchlist are suggested.",
+      "Suggested movies can be downvoted and won’t be suggested again.",
+      "Movies marked as watched are not suggested."
+    ],
+    "time_estimate": "30h"
+  },
+  {
+    "role": "logged-in user",
+    "goal": "discover movies",
+    "benefit": "find movies to watch",
+    "acceptance_criteria": [
+      "The discover movies page displays suggested movies in a Tinder-like style, with pictures and short descriptions.",
+      "A link to the trailer is provided.",
+      "If a user likes a movie, it is added to their want-to-watch list.",
+      "If a user downvotes a movie, it won’t be suggested again.",
+      "The user can swipe or click through the suggestions."
+    ],
+    "time_estimate": "30h"
+  },
+  {
+    "role": "group member",
+    "goal": "view additional movie suggestions",
+    "benefit": "add new movies to the pool",
+    "acceptance_criteria": [
+      "The suggested movies have not yet been seen by any of the group members.",
+      "The suggestions follow the movie suggestion algorithm."
+    ],
+    "time_estimate": "12h"
+  },
+  {
+    "role": "group member",
+    "goal": "change my vote",
+    "benefit": "update my preference",
+    "acceptance_criteria": [
+      "Users can change their vote prior to the end of the voting period.",
+      "Only the latest vote is counted in the final tally.",
+      "The UI reflects the updated vote immediately."
+    ],
+    "time_estimate": "4h"
+  },
+  {
+    "role": "user",
+    "goal": "review movies",
+    "benefit": "provide feedback on movies watched",
+    "acceptance_criteria": [
+      "In the already watched list, users can see a rating (1-5 stars) for each movie.",
+      "Users can edit these ratings."
+    ],
+    "time_estimate": "10h"
+  },
+  {
+    "role": "system",
+    "goal": "weight multiple suggestions",
+    "benefit": "fairly prioritize popular movies",
+    "acceptance_criteria": [
+      "Votes for a movie added by several users are multiplied by weights."
+    ],
+    "time_estimate": "8h"
+  },
+  {
+    "role": "system",
+    "goal": "enforce password requirements",
+    "benefit": "ensure account security",
+    "acceptance_criteria": [
+      "The password must be at least 12 characters long.",
+      "The password must contain at least one uppercase letter.",
+      "The password must contain at least one lowercase letter.",
+      "The password must contain at least one numeric digit.",
+      "The password must contain at least one special character (e.g., !@#$%^&*())."
+    ],
+    "time_estimate": "8h"
+  }
+]
