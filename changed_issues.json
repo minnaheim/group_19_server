@@ -1,0 +1,55 @@
+[
+  {
+    "role": "group member",
+    "goal": "submit my preference ranking for the movies in the pool after movie adding has ended",
+    "benefit": "my ranking influences the final selection",
+    "acceptance_criteria": [
+      "Each user can rank all the movies in the pool (e.g., 1-5, with 1 as favorite and 5 as least).",
+      "The ranking is registered and displayed in the UI."
+    ],
+    "time_estimate": "8h"
+  },
+  {
+    "role": "system",
+    "goal": "automatically count the ranks and select the winning movie",
+    "benefit": "the group’s choice is finalized without manual intervention",
+    "acceptance_criteria": [
+      "When the ranking period ends, the system counts the ranks accurately.",
+      "The movie with the highest average ranking (lowest numerical rank count) is selected automatically.",
+      "The winning movie is clearly displayed."
+    ],
+    "time_estimate": "12h"
+  },
+  {
+    "role": "system",
+    "goal": "apply the tie-breaker rule when multiple movies receive the same average rank",
+    "benefit": "a clear winner is determined",
+    "acceptance_criteria": [
+      "In a tie scenario, the tiebreaker of highest rank is applied.",
+      "The tie-breaker process is logged and documented.",
+      "The final decision is displayed to all group members."
+    ],
+    "time_estimate": "6h"
+  },
+  {
+    "role": "group member",
+    "goal": "view the ranking results",
+    "benefit": "understand how the group arrived at the final selection",
+    "acceptance_criteria": [
+      "The results page shows the average ranking for each movie.",
+      "The selected movie is highlighted as the winner."
+    ],
+    "time_estimate": "10h"
+  },
+  {
+    "role": "system",
+    "goal": "validate that each ranking is for a valid movie in the pool",
+    "benefit": "the integrity of the selection process is ensured",
+    "acceptance_criteria": [
+      "Rankings submitted for movies not in the pool are not possible.",
+      "Appropriate error messages are shown for invalid rankings.",
+      "All valid rankings are logged with user ID and timestamp."
+    ],
+    "time_estimate": "10h"
+  }
+]
