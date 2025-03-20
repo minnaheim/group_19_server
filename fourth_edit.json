@@ -1,0 +1,28 @@
+[
+  {
+    "role": "logged-in user",
+    "goal": "see, edit, and append to my watched list",
+    "benefit": "so that I can effectively track my movie watching history",
+    "acceptance_criteria": [
+      "One can only edit their own watched list",
+      "Movies can be added to the watched list",
+      "Movies already on the watched list cannot be added",
+      "The user can search with key words for movies",
+      "The user can select genres from the UI to browse movies and then add them"
+    ],
+    "time_estimate": "14h"
+  },
+  {
+    "role": "logged-in user",
+    "goal": "see, invite, and remove users from my Friends list",
+    "benefit": "so that I can manage my social network and connect with other users",
+    "acceptance_criteria": [
+      "One can only edit their own Friends list",
+      "Other users can be invited to the Friends list",
+      "Other users already on the Friends list cannot be invited",
+      "Only usernames of registered users can be invited as friends",
+      "Invited friends receive a request in the application, acceptance of which makes them mutual friends"
+    ],
+    "time_estimate": "8h"
+  }
+]
