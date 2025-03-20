@@ -1,0 +1,83 @@
+[
+  {
+    "role": "group member",
+    "goal": "search for movies via the TMDb API to find films and watch their trailer in the web application",
+    "benefit": "so that I can preview trailers directly in the UI without leaving the application",
+    "acceptance_criteria": [
+      "A search query returns a list of movies with titles, posters, and brief details.",
+      "The displayed details also include the trailer, which is displayed directly in the UI.",
+      "An additional API (YouTube) is used to fetch trailer data."
+    ],
+    "time_estimate": "12h"
+  },
+  {
+    "role": "group member",
+    "goal": "hover over movies to display their details",
+    "benefit": "so that I can quickly view more information about a movie without extra clicks",
+    "acceptance_criteria": [
+      "Movie details are displayed upon hovering over movie posters."
+    ],
+    "time_estimate": "30h"
+  },
+  {
+    "role": "logged-in user",
+    "goal": "be suggested movies using the upgraded movie suggestion algorithm",
+    "benefit": "so that I receive refined recommendations based on multiple dimensions",
+    "acceptance_criteria": [
+      "Movie suggestions are made via several dimensions (genre, actors, popularity, directors, and my already watched list such that similar movies to the ones I rated negatively are not suggested)."
+    ],
+    "time_estimate": "30h"
+  },
+  {
+    "role": "logged-in user",
+    "goal": "view a list of 5 suggested movies below my watchlist using the first version of the movie suggestion algorithm",
+    "benefit": "so that I can easily add recommended movies to my watchlist",
+    "acceptance_criteria": [
+      "One can only edit their own want-to-watch list.",
+      "Movie suggestions are made via the dimensions: genre and popularity of movies.",
+      "Suggested movies can be added to the watchlist.",
+      "Suggested movies can be added to the watched list.",
+      "No movies already on the watchlist are suggested.",
+      "No movies marked as watched are suggested."
+    ],
+    "time_estimate": "20h"
+  },
+  {
+    "role": "group member",
+    "goal": "search for movies via the TMDb API to find films to add to the group pool",
+    "benefit": "so that I can view movie details and have a quick way to watch trailers if needed",
+    "acceptance_criteria": [
+      "A search query returns a list of movies with titles, posters, and brief details.",
+      "The displayed details include a 'Watch Trailer' button which, upon clicking, redirects the user to YouTube in a new tab to view the trailer.",
+      "Invalid queries return a 'no results found' message.",
+      "The search function responds within a reasonable time.",
+      "One can search for movie titles, directors, and actors."
+    ],
+    "time_estimate": "12h"
+  },
+  {
+    "role": "group creator",
+    "goal": "invite friends and manage group membership including termination",
+    "benefit": "so that I can efficiently manage my group for movie selection",
+    "acceptance_criteria": [
+      "Invited users receive a request in the application, and acceptance makes them members of the group.",
+      "Invited users can leave groups.",
+      "The group creator can delete a group.",
+      "Only usernames of registered users can be invited.",
+      "The group creator has the option to invite all users from their Friends list or select specific ones (multiple-choice).",
+      "Invitations to groups from friends are automatically accepted."
+    ],
+    "time_estimate": "10h"
+  },
+  {
+    "role": "logged-in user",
+    "goal": "view my profile to see my personal details and all stored data",
+    "benefit": "so that I can review my information, watchlist, and friend list",
+    "acceptance_criteria": [
+      "The profile page displays the user’s information, including the want-to-watch list, favorite genre, favorite film, watched movie list (movies marked as watched), and Friend list.",
+      "Data loads correctly and errors are handled with sensible messages.",
+      "This page is accessible only to logged-in users."
+    ],
+    "time_estimate": "6h"
+  }
+]
