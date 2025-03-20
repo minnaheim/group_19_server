@@ -1,0 +1,337 @@
+[
+  {
+    "role": "new user",
+    "goal": "register an account",
+    "benefit": "access the application",
+    "acceptance_criteria": [
+      "The registration form accepts a valid email, password, and username.",
+      "An error is shown for invalid emails.",
+      "Duplicate emails and usernames are rejected.",
+      "A successful registration logs the user in and confirms account creation."
+    ]
+  },
+  {
+    "role": "registered user",
+    "goal": "log in",
+    "benefit": "access my personal dashboard and group functionalities",
+    "acceptance_criteria": [
+      "The login form accepts correct credentials and denies incorrect ones.",
+      "A session is maintained until logout.",
+      "Error messages are displayed on failed login attempts."
+    ]
+  },
+  {
+    "role": "logged-in user",
+    "goal": "view my basic personal details (username, email, etc.)",
+    "benefit": "confirm my account information",
+    "acceptance_criteria": [
+      "The profile page displays core personal information (e.g., username, email, bio).",
+      "Data loads correctly and errors are handled with sensible messages.",
+      "This view is accessible only to logged-in users."
+    ]
+  },
+  {
+    "role": "logged-in user",
+    "goal": "search for and browse movies by keywords and genres",
+    "benefit": "find movies to add to my lists",
+    "acceptance_criteria": [
+      "A search bar accepts keywords and returns a list of movies with details (title, poster, and brief description).",
+      "The UI provides genre filtering options.",
+      "The search functionality is accessible from various parts of the application (e.g., when managing lists).",
+      "Appropriate error messages are shown if no results are found or if the query is invalid."
+    ]
+  },
+  {
+    "role": "logged-in user",
+    "goal": "manage my want-to-watch list",
+    "benefit": "add or remove movies using the shared search functionality",
+    "acceptance_criteria": [
+      "Only the owner can edit their want-to-watch list.",
+      "Movies can be manually added or removed.",
+      "Duplicate movies cannot be added, with an error shown if attempted.",
+      "Within the want-to-watch list, a search option is displayed, that allows to find movies through the search functionality"
+    ]
+  },
+  {
+    "role": "logged-in user",
+    "goal": "manage my watched list",
+    "benefit": "track movies I've seen using the shared search functionality",
+    "acceptance_criteria": [
+      "Only the owner can edit their watched list.",
+      "Movies can be added or removed from the watched list.",
+      "Duplicate entries are prevented, with an error displayed if attempted.",
+      "Within the Watched list, a search option is displayed, that allows to find movies through the search functionality"
+    ]
+  },
+  {
+    "role": "logged-in user",
+    "goal": "search for movies",
+    "benefit": "add them to my watched list",
+    "acceptance_criteria": [
+      "The user can search for movies by keywords.",
+      "The user can filter movies by genre from the UI.",
+      "Movies from the search can be added to the watched list."
+    ]
+  },
+  {
+    "role": "logged-in user",
+    "goal": "manage my friends list",
+    "benefit": "invite or remove friends",
+    "acceptance_criteria": [
+      "Only the owner can edit their friends list.",
+      "Only registered usernames can be invited.",
+      "Duplicate invitations are prevented.",
+      "Invited friends receive an in-app request; upon acceptance, the friendship becomes mutual."
+    ]
+  },
+  {
+    "role": "user",
+    "goal": "create a group",
+    "benefit": "add friends for movie night",
+    "acceptance_criteria": [
+      "A new group is created when a valid, unique group name is provided (with suggestions offered if the name is taken).",
+      "The group is associated with the creator's account and visible in their group list.",
+      "Duplicate group names trigger an error."
+    ]
+  },
+  {
+    "role": "group creator",
+    "goal": "invite friends to my group",
+    "benefit": "they can participate in the movie selection process",
+    "acceptance_criteria": [
+      "The group creator can invite registered users individually or by selecting multiple friends from their friends list.",
+      "Invited users receive an in-app request; acceptance makes them group members.",
+      "Users can leave the group on their own.",
+      "Invitations from friends (when applicable) are automatically accepted."
+    ]
+  },
+  {
+    "role": "group creator",
+    "goal": "delete my group",
+    "benefit": "terminate the group movie night event",
+    "acceptance_criteria": [
+      "The group creator can delete the group at any time.",
+      "Group deletion triggers notifications to all group members.",
+      "The group is removed from every member's group list."
+    ]
+  },
+  {
+    "role": "group member",
+    "goal": "search for movies via the TMDb API",
+    "benefit": "find films to add to the group pool",
+    "acceptance_criteria": [
+      "A search query returns a list of movies with titles, posters, and brief details including a \"Watch Trailer\" button (opening a new YouTube tab).",
+      "Invalid queries return a \"no results found\" message.",
+      "The search function responds within a reasonable time.",
+      "The search supports movie titles, directors, and actors."
+    ]
+  },
+  {
+    "role": "group member",
+    "goal": "add a movie from search results or my lists to the group pool",
+    "benefit": "my suggestion is included in the movie selection",
+    "acceptance_criteria": [
+      "A movie can be added by clicking an \"Add\" button.",
+      "The movie appears immediately in the group pool.",
+      "Duplicate entries are not allowed, and an error is displayed if attempted."
+    ]
+  },
+  {
+    "role": "group member",
+    "goal": "view the current movie pool",
+    "benefit": "see all suggested movies",
+    "acceptance_criteria": [
+      "The pool displays all movies with relevant details.",
+      "The UI updates in real time when new movies are added.",
+      "The movie pool is visible to all group members."
+    ]
+  },
+  {
+    "role": "group member",
+    "goal": "submit my ranking preferences for movies in the pool",
+    "benefit": "my choice influences the final selection",
+    "acceptance_criteria": [
+      "Each user can rank all movies in the pool (e.g., 1 for favorite up to 5 for least favorite).",
+      "The ranking is registered in the system and displayed in the UI."
+    ]
+  },
+  {
+    "role": "system",
+    "goal": "automatically calculate the average rankings and select the winning movie",
+    "benefit": "the group's choice is finalized without manual intervention",
+    "acceptance_criteria": [
+      "After the ranking period ends, the system calculates the average ranking accurately.",
+      "The movie with the highest average (or lowest numerical rank) is automatically selected.",
+      "The winning movie is clearly displayed to the group."
+    ]
+  },
+  {
+    "role": "system",
+    "goal": "apply a tiebreaker when multiple movies receive the same average rank",
+    "benefit": "a clear winner is determined",
+    "acceptance_criteria": [
+      "In a tie, the system applies the highest individual rank as the tiebreaker.",
+      "The tiebreaker process is logged and documented.",
+      "The final decision is clearly displayed to all group members."
+    ]
+  },
+  {
+    "role": "group member",
+    "goal": "view the ranking results",
+    "benefit": "understand how the final movie was selected",
+    "acceptance_criteria": [
+      "The results page displays the average ranking for each movie.",
+      "The winning movie is highlighted."
+    ]
+  },
+  {
+    "role": "system",
+    "goal": "validate submitted rankings",
+    "benefit": "ensure each ranking is for a movie in the pool and maintain selection integrity",
+    "acceptance_criteria": [
+      "Rankings cannot be submitted for movies not in the pool.",
+      "Invalid submissions trigger appropriate error messages.",
+      "All valid rankings are logged with the user ID and a timestamp."
+    ]
+  },
+  {
+    "role": "user",
+    "goal": "clear feedback from the UI",
+    "benefit": "know when my actions succeed or fail",
+    "acceptance_criteria": [
+      "Confirmation messages appear for successful actions (registration, group creation, movie addition, vote submission, etc.).",
+      "Error messages are displayed for any invalid inputs (e.g., duplicate votes, invalid formats).",
+      "The UI promptly reflects the outcome of user actions."
+    ]
+  },
+  {
+    "role": "new user",
+    "goal": "set my movie preferences during registration",
+    "benefit": "the system can offer personalized suggestions",
+    "acceptance_criteria": [
+      "Upon registration, the user is prompted to select favorite genres using a multiselect interface.",
+      "The user can opt out of providing preferences."
+    ]
+  },
+  {
+    "role": "new user",
+    "goal": "search for and select one movie as my favorite",
+    "benefit": "it is stored in my profile",
+    "acceptance_criteria": [
+      "The user can search through movies and select one as their favorite.",
+      "The selected movie is saved and displayed on the user's profile."
+    ]
+  },
+  {
+    "role": "logged-in user",
+    "goal": "see a list of 5 movie suggestions on my profile",
+    "benefit": "easily add new movies to my want-to-watch list",
+    "acceptance_criteria": [
+      "The system suggests 5 movies based on the user's favorite genres and overall movie popularity.",
+      "Movies already on the want-to-watch or watched lists are not suggested.",
+      "Suggested movies can be added to either the want-to-watch or watched list."
+    ]
+  },
+  {
+    "role": "logged-in user",
+    "goal": "improved movie suggestions that consider multiple dimensions",
+    "benefit": "the recommendations better match my taste",
+    "acceptance_criteria": [
+      "Movie suggestions are generated using multiple dimensions (genre, actors, directors, popularity, and user history such as negative ratings).",
+      "The algorithm updates suggestions based on the user's watch and rating history."
+    ]
+  },
+  {
+    "role": "logged-in user",
+    "goal": "view other users' profiles",
+    "benefit": "see their movie preferences",
+    "acceptance_criteria": [
+      "The profile page displays other users' information such as favorite genres and favorite film.",
+      "Users can set their profile to private to avoid being found.",
+      "Public profiles are searchable by username.",
+      "Users can control which information is public (e.g., show favorite film but hide the watch list)."
+    ]
+  },
+  {
+    "role": "logged-in user",
+    "goal": "access a \"discover movies\" page",
+    "benefit": "visually browse movie suggestions in a Tinder-like style",
+    "acceptance_criteria": [
+      "The page displays movie suggestions in card format with posters and brief descriptions.",
+      "Each card includes a link or button to view the trailer (which may open in a new tab or inline as per design).",
+      "The UI supports swipe and click interactions for navigation."
+    ]
+  },
+  {
+    "role": "logged-in user",
+    "goal": "interact with movie suggestions",
+    "benefit": "easily add or dismiss them",
+    "acceptance_criteria": [
+      "Liking a movie adds it to the want-to-watch list.",
+      "Downvoting a movie prevents it from being suggested again.",
+      "The UI immediately reflects the outcome of these interactions."
+    ]
+  },
+  {
+    "role": "group member",
+    "goal": "see additional movie suggestions below the current pool",
+    "benefit": "have more options for the group selection",
+    "acceptance_criteria": [
+      "The suggested movies shown have not yet been seen by any group member.",
+      "The suggestions follow the established movie suggestion algorithm."
+    ]
+  },
+  {
+    "role": "group member",
+    "goal": "change my vote before the deadline",
+    "benefit": "update my preference if my opinion changes",
+    "acceptance_criteria": [
+      "Users can change their vote prior to the end of the voting period.",
+      "Only the last vote is counted in the final tally.",
+      "The UI immediately reflects the updated vote."
+    ]
+  },
+  {
+    "role": "user",
+    "goal": "review movies on my watched list",
+    "benefit": "provide feedback on the movies I've seen",
+    "acceptance_criteria": [
+      "In the watched list, each movie displays a 1–5 star rating interface.",
+      "Users can submit and later edit their ratings."
+    ]
+  },
+  {
+    "role": "system",
+    "goal": "weight movies that are suggested by several users",
+    "benefit": "the group's preference is fairly represented",
+    "acceptance_criteria": [
+      "When a movie is suggested by multiple users, its vote count is multiplied by a weight factor."
+    ]
+  },
+  {
+    "role": "system",
+    "goal": "enforce strong password requirements",
+    "benefit": "user accounts are secure",
+    "acceptance_criteria": [
+      "The password must be at least 12 characters long.",
+      "It must contain at least one uppercase letter, one lowercase letter, one numeric digit, and one special character (e.g., !@$%^&())."
+    ]
+  },
+  {
+    "role": "group member",
+    "goal": "watch movie trailers directly in the web application",
+    "benefit": "quickly preview films",
+    "acceptance_criteria": [
+      "Search results include a trailer displayed directly in the UI.",
+      "Integration with YouTube API is implemented to fetch the trailer."
+    ]
+  },
+  {
+    "role": "group member",
+    "goal": "movie details to appear when I hover over a movie poster",
+    "benefit": "quickly see more information",
+    "acceptance_criteria": [
+      "Movie details are displayed in a tooltip or overlay upon hovering over the poster."
+    ]
+  }
+]
