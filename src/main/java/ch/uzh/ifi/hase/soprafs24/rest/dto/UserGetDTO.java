@@ -1,19 +1,26 @@
 package ch.uzh.ifi.hase.soprafs24.rest.dto;
 
+import java.util.List;
+
 import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
+import ch.uzh.ifi.hase.soprafs24.entity.Movie;
 
 public class UserGetDTO {
 
-  private Long id;
+  private int id;
   private String name;
   private String username;
   private UserStatus status;
+  private String bio;
+  private List<String> preferences;
+  private List<Movie> watchlist;
+  private List<Movie> watchedMovies;
 
-  public Long getId() {
+  public int getId() {
     return id;
   }
 
-  public void setId(Long id) {
+  public void setId(int id) {
     this.id = id;
   }
 
@@ -39,5 +46,37 @@ public class UserGetDTO {
 
   public void setStatus(UserStatus status) {
     this.status = status;
+  }
+
+  public String getBio() {
+    return bio;
+  }
+
+  public void setBio(String bio) {
+    this.bio = bio;
+  }
+
+  public List<String> getPreferences() {
+    return preferences;
+  }
+
+  public void setPreferences(List<String> preferences) {
+    this.preferences = preferences;
+  }
+
+  public List<Movie> getWatchlist() {
+    return watchlist;
+  }
+
+  public void setWatchlist(List<Movie> watchlist) {
+    this.watchlist = watchlist;
+  }
+
+  public List<Movie> getWatchedMovies() {
+    return watchedMovies;
+  }
+
+  public void setWatchedMovies(List<Movie> watchedMovies) {
+    this.watchedMovies = watchedMovies;
   }
 }
