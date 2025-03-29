@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Movie Service
@@ -65,7 +64,7 @@ public class MovieService {
         List<Movie> tmdbMovies = tmdbService.searchMovies(searchParams);
 
         // Remove duplicates (movies already in local DB)
-        Map<Integer, Movie> moviesMap = new HashMap<>();
+        Map<Long, Movie> moviesMap = new HashMap<>();
 
         // Add local movies first
         for (Movie movie : localMovies) {
@@ -104,7 +103,7 @@ public class MovieService {
      * @return The movie if found
      * @throws ResponseStatusException if the movie does not exist
      */
-    public Movie getMovieById(int movieId) {
+    public Movie getMovieById(long movieId) {
         // First check if the movie exists in our local database
         Movie movie = movieRepository.findByMovieId(movieId);
 

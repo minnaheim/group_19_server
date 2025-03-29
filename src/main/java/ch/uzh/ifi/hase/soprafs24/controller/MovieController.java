@@ -118,7 +118,7 @@ public class MovieController {
     @GetMapping("/movies/{movieId}")
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody
-    public MovieGetDTO getMovieById(@PathVariable int movieId) {
+    public MovieGetDTO getMovieById(@PathVariable long movieId) {
         // Check for valid movie ID
         if (movieId <= 0) {
             throw new SearchValidationException("Invalid movie ID: must be a positive integer");

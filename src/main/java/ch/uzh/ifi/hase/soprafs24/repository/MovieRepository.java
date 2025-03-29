@@ -9,8 +9,8 @@ import java.util.List;
 import ch.uzh.ifi.hase.soprafs24.entity.Movie;
 
 @Repository("movieRepository")
-public interface MovieRepository extends JpaRepository<Movie, Integer> {
-    Movie findByMovieId(int movieId);
+public interface MovieRepository extends JpaRepository<Movie, Long> {
+    Movie findByMovieId(long movieId);
 
     List<Movie> findByTitleContaining(String title);
     List<Movie> findByGenreContaining(String genre);

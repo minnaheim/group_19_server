@@ -12,7 +12,7 @@ import javax.persistence.Table;
 public class Movie implements Serializable {
 
     @Id
-    private int movieId; // corresponds to TMDB API movie_id
+    private long movieId; // corresponds to TMDB API movie_id
 
     @Column
     private String title;
@@ -42,13 +42,14 @@ public class Movie implements Serializable {
     private String description;
 
     // Getters and setters
-    public int getMovieId() {
+    public long getMovieId() {
         return movieId;
     }
 
-    public void setMovieId(int movieId) {
+    public void setMovieId(long movieId) {
         this.movieId = movieId;
     }
+
 
     public String getTitle() {
         return title;

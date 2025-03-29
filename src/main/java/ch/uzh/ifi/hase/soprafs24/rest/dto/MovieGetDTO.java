@@ -1,7 +1,7 @@
 package ch.uzh.ifi.hase.soprafs24.rest.dto;
 
 public class MovieGetDTO {
-    private int movieId;
+    private long movieId;
     private String title;
     private String genre;
     private Integer year;
@@ -12,11 +12,11 @@ public class MovieGetDTO {
     private String trailerURL;
     private String description;
 
-    public int getMovieId() {
+    public long getMovieId() {
         return movieId;
     }
 
-    public void setMovieId(int movieId) {
+    public void setMovieId(long movieId) {
         this.movieId = movieId;
     }
 

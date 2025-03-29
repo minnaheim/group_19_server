@@ -99,7 +99,7 @@ public class TMDbService {
      * @param movieId TMDb movie ID
      * @return Movie entity with detailed information
      */
-    public Movie getMovieDetails(int movieId) {
+    public Movie getMovieDetails(long movieId) {
         try {
             if (tmdbConfig.getApiKey().isEmpty()) {
                 log.error("TMDb API key is missing. Please add it to local.properties");
