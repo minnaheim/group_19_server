@@ -49,55 +49,112 @@ public class TMDbService {
                 return Collections.emptyList();
             }
 
-            String searchEndpoint = tmdbConfig.getBaseUrl() + "/search/movie";
-            UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(searchEndpoint)
-                    .queryParam("language", "en-US")
-                    .queryParam("sort_by", "popularity.desc");
-
-            // Add search parameters if available
             if (searchParams.getTitle() != null) {
+                String searchEndpoint = tmdbConfig.getBaseUrl() + "/search/movie";
+                UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(searchEndpoint)
+                        .queryParam("sort_by", "popularity.desc");
+
                 builder.queryParam("query", searchParams.getTitle().trim());
-            }
-            if (searchParams.getYear() != null) {
-                builder.queryParam("year", searchParams.getYear());
-            }
 
-            // Setup authentication headers
-            HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(tmdbConfig.getApiKey());
-            headers.setContentType(MediaType.APPLICATION_JSON);
+                // Setup authentication headers
+                HttpHeaders headers = new HttpHeaders();
+                headers.setBearerAuth(tmdbConfig.getApiKey());
+                headers.setContentType(MediaType.APPLICATION_JSON);
 
-            HttpEntity<String> entity = new HttpEntity<>(headers);
+                HttpEntity<String> entity = new HttpEntity<>(headers);
 
-            // Make the API call
-            ResponseEntity<String> response = restTemplate.exchange(
-                    builder.toUriString(),
-                    HttpMethod.GET,
-                    entity,
-                    String.class);
+                // Make the API call
+                ResponseEntity<String> response = restTemplate.exchange(
+                        builder.toUriString(),
+                        HttpMethod.GET,
+                        entity,
+                        String.class);
 
-            // Parse the response
-            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                JsonNode root = objectMapper.readTree(response.getBody());
-                JsonNode results = root.path("results");
+                // Parse the response
+                if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                    JsonNode root = objectMapper.readTree(response.getBody());
+                    JsonNode results = root.path("results");
 
-                List<Movie> movies = new ArrayList<>();
-                for (JsonNode movieNode : results) {
-                    Movie movie = mapTMDbMovieToEntity(movieNode);
+                    List<Movie> movies = new ArrayList<>();
+                    for (JsonNode movieNode : results) {
+                        Movie movie = mapTMDbMovieToEntity(movieNode);
 
-                    // Apply genre filter if specified
-                    if (searchParams.getGenre() != null && !searchParams.getGenre().isEmpty() && movie.getGenre() != null) {
-                        if (!movie.getGenre().toLowerCase().contains(searchParams.getGenre().toLowerCase())) {
-                            continue;
+                        // Apply genre filter if specified
+                        if (searchParams.getGenre() != null && !searchParams.getGenre().isEmpty() && movie.getGenre() != null) {
+                            if (!movie.getGenre().toLowerCase().contains(searchParams.getGenre().toLowerCase())) {
+                                continue;
+                            }
                         }
+
+                        movies.add(movie);
                     }
 
-                    movies.add(movie);
+                    return movies;
+                }
+            }
+            else if (searchParams.getTitle() == null) {
+                String searchEndpoint = tmdbConfig.getBaseUrl() + "/discover/movie";
+                UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(searchEndpoint)
+                        .queryParam("sort_by", "popularity.desc");
+
+                // Add search parameters if available
+                // years
+                if (searchParams.getYear() != null) {
+                    builder.queryParam("year", searchParams.getYear());
                 }
 
-                return movies;
-            }
+                // genre
+                if (searchParams.getGenre() != null && !searchParams.getGenre().isEmpty()) {
+                    builder.queryParam("with_genres", searchParams.getGenre());
+                }
 
+                // actor
+                if (searchParams.getActor() != null && !searchParams.getActor().isEmpty()) {
+                    builder.queryParam("with_cast", searchParams.getActor());
+                }
+
+                // crew
+                if (searchParams.getCrew() != null && !searchParams.getCrew().isEmpty()) {
+                    builder.queryParam("with_crew", searchParams.getCrew());
+                }
+
+
+                // Setup authentication headers
+                HttpHeaders headers = new HttpHeaders();
+                headers.setBearerAuth(tmdbConfig.getApiKey());
+                headers.setContentType(MediaType.APPLICATION_JSON);
+
+                HttpEntity<String> entity = new HttpEntity<>(headers);
+
+                // Make the API call
+                ResponseEntity<String> response = restTemplate.exchange(
+                        builder.toUriString(),
+                        HttpMethod.GET,
+                        entity,
+                        String.class);
+
+                // Parse the response
+                if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                    JsonNode root = objectMapper.readTree(response.getBody());
+                    JsonNode results = root.path("results");
+
+                    List<Movie> movies = new ArrayList<>();
+                    for (JsonNode movieNode : results) {
+                        Movie movie = mapTMDbMovieToEntity(movieNode);
+
+                        // Apply genre filter if specified
+                        if (searchParams.getGenre() != null && !searchParams.getGenre().isEmpty() && movie.getGenre() != null) {
+                            if (!movie.getGenre().toLowerCase().contains(searchParams.getGenre().toLowerCase())) {
+                                continue;
+                            }
+                        }
+
+                        movies.add(movie);
+                    }
+
+                    return movies;
+                }
+            }
             return Collections.emptyList();
         }
         catch (RestClientException e) {
@@ -124,6 +181,11 @@ public class TMDbService {
             }
 
             String detailsEndpoint = tmdbConfig.getBaseUrl() + "/movie/" + movieId;
+
+            // Build URL with query parameters
+            UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(detailsEndpoint)
+                    .queryParam("append_to_response", "videos,credits");
+
 
             // Setup authentication headers
             HttpHeaders headers = new HttpHeaders();
@@ -235,7 +297,7 @@ public class TMDbService {
         }
 
         // Original language as the language
-        movie.setLanguage(movieData.path("original_language").asText());
+        movie.setOriginallanguage(movieData.path("original_language").asText());
 
         return movie;
     }

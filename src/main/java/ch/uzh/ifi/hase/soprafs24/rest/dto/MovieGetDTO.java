@@ -5,9 +5,9 @@ public class MovieGetDTO {
     private String title;
     private String genre;
     private Integer year;
-    private String country;
     private String actor;
-    private String language;
+    private String crew;
+    private String originallanguage;
     private String posterURL;
     private String trailerURL;
     private String description;
@@ -44,14 +44,6 @@ public class MovieGetDTO {
         this.year = year;
     }
 
-    public String getCountry() {
-        return country;
-    }
-
-    public void setCountry(String country) {
-        this.country = country;
-    }
-
     public String getActor() {
         return actor;
     }
@@ -60,12 +52,21 @@ public class MovieGetDTO {
         this.actor = actor;
     }
 
-    public String getLanguage() {
-        return language;
+
+    public String getCrew() {
+        return crew;
     }
 
-    public void setLanguage(String language) {
-        this.language = language;
+    public void setCrew(String crew) {
+        this.crew = crew;
+    }
+
+    public String getOriginallanguage() {
+        return originallanguage;
+    }
+
+    public void setOriginallanguage(String originallanguage) {
+        this.originallanguage = originallanguage;
     }
 
     public String getPosterURL() {

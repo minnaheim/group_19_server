@@ -48,10 +48,8 @@ public class MovieService {
                 searchParams.getTitle(),
                 searchParams.getGenre(),
                 searchParams.getYear(),
-                searchParams.getCountry(),
                 searchParams.getActor(),
-                searchParams.getLanguage(),
-                searchParams.getTrailerURL());
+                searchParams.getCrew());
 
         // If we don't have any search parameters, just return local results
         if (!hasAnySearchParam(searchParams)) {
@@ -86,10 +84,8 @@ public class MovieService {
         return searchParams.getTitle() != null ||
                 searchParams.getGenre() != null ||
                 searchParams.getYear() != null ||
-                searchParams.getCountry() != null ||
                 searchParams.getActor() != null ||
-                searchParams.getLanguage() != null ||
-                searchParams.getTrailerURL() != null;
+                searchParams.getCrew() != null;
     }
 
     /**

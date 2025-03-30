@@ -24,13 +24,13 @@ public class Movie implements Serializable {
     private Integer year;
 
     @Column
-    private String country;
-
-    @Column
     private String actor;
 
     @Column
-    private String language;
+    private String crew;
+
+    @Column
+    private String originallanguage;
 
     @Column
     private String trailerURL;
@@ -75,14 +75,6 @@ public class Movie implements Serializable {
         this.year = year;
     }
 
-    public String getCountry() {
-        return country;
-    }
-
-    public void setCountry(String country) {
-        this.country = country;
-    }
-
     public String getActor() {
         return actor;
     }
@@ -91,12 +83,20 @@ public class Movie implements Serializable {
         this.actor = actor;
     }
 
-    public String getLanguage() {
-        return language;
+    public String getCrew() {
+        return crew;
     }
 
-    public void setLanguage(String language) {
-        this.language = language;
+    public void setCrew(String crew) {
+        this.crew = crew;
+    }
+
+    public String getOriginallanguage() {
+        return originallanguage;
+    }
+
+    public void setOriginallanguage(String originallanguage) {
+        this.originallanguage = originallanguage;
     }
 
     public String getTrailerURL() {

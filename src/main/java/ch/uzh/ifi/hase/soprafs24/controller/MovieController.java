@@ -12,10 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 
 /**
@@ -30,7 +27,7 @@ public class MovieController {
     private final TMDbService tmdbService;
     private static final int CURRENT_YEAR = LocalDate.now().getYear();
     private static final int MIN_MOVIE_YEAR = 1888; // First movie ever made
-    private static final int MIN_SEARCH_TERM_LENGTH = 2;
+    private static final int MIN_SEARCH_TERM_LENGTH = 1;
 
     MovieController(MovieService movieService, TMDbService tmdbService) {
         this.movieService = movieService;
@@ -43,15 +40,14 @@ public class MovieController {
      * @param title Search term for movie title
      * @param genre Genre to filter by
      * @param year Release year to filter by
-     * @param country Country to filter by
      * @param actor Actor name to filter by
-     * @param language Language to filter by
+     * @param crew Director name to filter by
      * @throws SearchValidationException if any parameter is invalid
      */
     private void validateSearchParams(String title, String genre, Integer year,
-                                      String country, String actor, String language) {
+                                      String actor, String crew) {
         // Check if at least one parameter is provided
-        if (title == null && genre == null && year == null && country == null && actor == null && language == null) {
+        if (title == null && genre == null && year == null && actor == null && crew == null) {
             throw new SearchValidationException("At least one search parameter is required");
         }
 
@@ -59,39 +55,58 @@ public class MovieController {
             throw new SearchValidationException("Search term must be at least " + MIN_SEARCH_TERM_LENGTH + " characters long");
         }
 
-        if (year != null && (year < MIN_MOVIE_YEAR || year > CURRENT_YEAR + 10)) {
-            throw new SearchValidationException("Year must be between " + MIN_MOVIE_YEAR + " and " + (CURRENT_YEAR + 10));
-        }
-
-
-        // Check year range
-        if (year != null) {
-            if (year < MIN_MOVIE_YEAR) {
-                throw new SearchValidationException("Year cannot be earlier than " + MIN_MOVIE_YEAR);
-            }
-            if (year > CURRENT_YEAR + 5) { // Allow for future movies up to 5 years ahead
-                throw new SearchValidationException("Year cannot be later than " + (CURRENT_YEAR + 5));
-            }
-        }
-
-
         //Validate genre if provided
         if (genre != null) {
             try {
-                // Get the set of valid genre IDs from the known list
-                Set<String> validGenreIds = Set.of(
-                        "28", "12", "16", "35", "80", "99", "18", "10751", "14",
-                        "36", "27", "10402", "9648", "10749", "878", "10770", "53", "10752", "37"
+                // Map of genre names to genre IDs
+                Map<String, String> genreNameToId = Map.ofEntries(
+                        Map.entry("Action", "28"),
+                        Map.entry("Adventure", "12"),
+                        Map.entry("Animation", "16"),
+                        Map.entry("Comedy", "35"),
+                        Map.entry("Crime", "80"),
+                        Map.entry("Documentary", "99"),
+                        Map.entry("Drama", "18"),
+                        Map.entry("Family", "10751"),
+                        Map.entry("Fantasy", "14"),
+                        Map.entry("History", "36"),
+                        Map.entry("Horror", "27"),
+                        Map.entry("Music", "10402"),
+                        Map.entry("Mystery", "9648"),
+                        Map.entry("Romance", "10749"),
+                        Map.entry("Science Fiction", "878"),
+                        Map.entry("TV Movie", "10770"),
+                        Map.entry("Thriller", "53"),
+                        Map.entry("War", "10752"),
+                        Map.entry("Western", "37")
                 );
 
-                // Handle comma-separated genre IDs
-                String[] genreIds = genre.split(",\\s*");
-                for (String genreId : genreIds) {
-                    String trimmedId = genreId.trim();
-                    if (!validGenreIds.contains(trimmedId)) {
-                        throw new SearchValidationException("Invalid genre ID: " + trimmedId);
+                // Get the set of valid genre IDs
+                Set<String> validGenreIds = new HashSet<>(genreNameToId.values());
+
+                // Handle comma-separated genres (could be IDs or names)
+                String[] genres = genre.split(",\\s*");
+                for (int i = 0; i < genres.length; i++) {
+                    String input = genres[i].trim();
+
+                    // Check if the input is a valid genre ID
+                    if (validGenreIds.contains(input)) {
+                        continue; // Valid genre ID, nothing to convert
+                    }
+
+                    // Check if the input is a valid genre name
+                    String genreId = genreNameToId.get(input);
+                    if (genreId != null) {
+                        // Replace the genre name with its corresponding ID
+                        genres[i] = genreId;
+                    } else {
+                        throw new SearchValidationException("Invalid genre: " + input);
                     }
                 }
+
+                // Join the genres back together (now all as IDs)
+                genre = String.join(",", genres);
+
             } catch (Exception e) {
                 if (e instanceof SearchValidationException) {
                     throw e;
@@ -100,18 +115,16 @@ public class MovieController {
             }
         }
 
-
-        // Check other text parameters for minimum length if provided
-        if (country != null && country.trim().length() < MIN_SEARCH_TERM_LENGTH && !country.trim().isEmpty()) {
-            throw new SearchValidationException("Country search term must be at least " + MIN_SEARCH_TERM_LENGTH + " characters long");
+        if (year != null && (year < MIN_MOVIE_YEAR || year > CURRENT_YEAR + 10)) {
+            throw new SearchValidationException("Year must be between " + MIN_MOVIE_YEAR + " and " + (CURRENT_YEAR + 10)); // +10 to include Pre-production announcements
         }
 
         if (actor != null && actor.trim().length() < MIN_SEARCH_TERM_LENGTH && !actor.trim().isEmpty()) {
             throw new SearchValidationException("Actor search term must be at least " + MIN_SEARCH_TERM_LENGTH + " characters long");
         }
 
-        if (language != null && language.trim().length() < MIN_SEARCH_TERM_LENGTH && !language.trim().isEmpty()) {
-            throw new SearchValidationException("Language search term must be at least " + MIN_SEARCH_TERM_LENGTH + " characters long");
+        if (crew != null && crew.trim().length() < MIN_SEARCH_TERM_LENGTH && !crew.trim().isEmpty()) {
+            throw new SearchValidationException("Director search term must be at least " + MIN_SEARCH_TERM_LENGTH + " characters long");
         }
     }
 
@@ -125,14 +138,12 @@ public class MovieController {
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String genre,
             @RequestParam(required = false) Integer year,
-            @RequestParam(required = false) String country,
             @RequestParam(required = false) String actor,
-            @RequestParam(required = false) String language,
-            @RequestParam(required = false) String trailerURL,
+            @RequestParam(required = false) String crew,
             @RequestParam(required = false, defaultValue = "1") Integer page) {
 
         // Validate search parameters
-        validateSearchParams(title, genre, year, country, actor, language);
+        validateSearchParams(title, genre, year, actor, crew);
 
 
         // Create a movie object with search parameters
@@ -140,10 +151,8 @@ public class MovieController {
         searchParams.setTitle(title);
         searchParams.setGenre(genre);
         searchParams.setYear(year);
-        searchParams.setCountry(country);
         searchParams.setActor(actor);
-        searchParams.setLanguage(language);
-        searchParams.setTrailerURL(trailerURL);
+        searchParams.setActor(crew);
 
         List<Movie> movies = movieService.getMovies(searchParams);
 
