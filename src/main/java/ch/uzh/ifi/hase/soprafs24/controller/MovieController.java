@@ -14,6 +14,9 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
+
 
 /**
  * Movie Controller
@@ -47,10 +50,19 @@ public class MovieController {
      */
     private void validateSearchParams(String title, String genre, Integer year,
                                       String country, String actor, String language) {
-        // Check for minimum search term length
-        if (title != null && title.trim().length() < MIN_SEARCH_TERM_LENGTH && !title.trim().isEmpty()) {
+        // Check if at least one parameter is provided
+        if (title == null && genre == null && year == null && country == null && actor == null && language == null) {
+            throw new SearchValidationException("At least one search parameter is required");
+        }
+
+        if (title != null && title.length() < MIN_SEARCH_TERM_LENGTH) {
             throw new SearchValidationException("Search term must be at least " + MIN_SEARCH_TERM_LENGTH + " characters long");
         }
+
+        if (year != null && (year < MIN_MOVIE_YEAR || year > CURRENT_YEAR + 10)) {
+            throw new SearchValidationException("Year must be between " + MIN_MOVIE_YEAR + " and " + (CURRENT_YEAR + 10));
+        }
+
 
         // Check year range
         if (year != null) {
@@ -62,11 +74,34 @@ public class MovieController {
             }
         }
 
-        // Check other text parameters for minimum length if provided
-        if (genre != null && genre.trim().length() < MIN_SEARCH_TERM_LENGTH && !genre.trim().isEmpty()) {
-            throw new SearchValidationException("Genre search term must be at least " + MIN_SEARCH_TERM_LENGTH + " characters long");
+
+        //Validate genre if provided
+        if (genre != null) {
+            try {
+                // Get the set of valid genre IDs from the known list
+                Set<String> validGenreIds = Set.of(
+                        "28", "12", "16", "35", "80", "99", "18", "10751", "14",
+                        "36", "27", "10402", "9648", "10749", "878", "10770", "53", "10752", "37"
+                );
+
+                // Handle comma-separated genre IDs
+                String[] genreIds = genre.split(",\\s*");
+                for (String genreId : genreIds) {
+                    String trimmedId = genreId.trim();
+                    if (!validGenreIds.contains(trimmedId)) {
+                        throw new SearchValidationException("Invalid genre ID: " + trimmedId);
+                    }
+                }
+            } catch (Exception e) {
+                if (e instanceof SearchValidationException) {
+                    throw e;
+                }
+                throw new SearchValidationException("Error validating genre: " + e.getMessage());
+            }
         }
 
+
+        // Check other text parameters for minimum length if provided
         if (country != null && country.trim().length() < MIN_SEARCH_TERM_LENGTH && !country.trim().isEmpty()) {
             throw new SearchValidationException("Country search term must be at least " + MIN_SEARCH_TERM_LENGTH + " characters long");
         }
@@ -96,12 +131,9 @@ public class MovieController {
             @RequestParam(required = false) String trailerURL,
             @RequestParam(required = false, defaultValue = "1") Integer page) {
 
-        try {
-            validateSearchParams(title, genre, year, country, actor, language);
-        } catch (SearchValidationException e) {
-            // If validation fails, return empty list rather than error
-            return new ArrayList<>();
-        }
+        // Validate search parameters
+        validateSearchParams(title, genre, year, country, actor, language);
+
 
         // Create a movie object with search parameters
         Movie searchParams = new Movie();
@@ -114,6 +146,12 @@ public class MovieController {
         searchParams.setTrailerURL(trailerURL);
 
         List<Movie> movies = movieService.getMovies(searchParams);
+
+        // Check if no results were found
+        if (movies.isEmpty()) {
+            throw new SearchValidationException("No movies found matching the search criteria");
+        }
+
         List<MovieGetDTO> movieGetDTOs = new ArrayList<>();
 
         for (Movie movie : movies) {
