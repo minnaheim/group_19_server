@@ -1,11 +1,23 @@
 package ch.uzh.ifi.hase.soprafs24.entity;
 
 import java.io.Serializable;
+import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+
+/**
+ * Internal Movie Representation
+ * This class composes the internal representation of the movie and defines how
+ * the movie is stored in the database.
+ * Every variable will be mapped into a database field with the @Column
+ * annotation
+ * - nullable = false -> this cannot be left empty
+ * - unique = true -> this value must be unqiue across the database -> composes
+ * the primary key
+ */
 
 @Entity
 @Table(name = "MOVIE")
