@@ -15,7 +15,7 @@ public class Group implements Serializable {
     
     @Id
     @GeneratedValue
-    private int id;
+    private Long groupId;
 
     @Column(nullable = false, unique = true)
     private String name;
@@ -29,12 +29,12 @@ public class Group implements Serializable {
     @Column
     private List<Movie> moviePool;
 
-    public int getId() {
-        return id;
+    public Long getGroupId() {
+        return groupId;
     }
 
-    public void setId(int id) {
-        this.id = id;
+    public void setGroupId(Long groupId) {
+        this.groupId = groupId;
     }
 
     public String getName() {

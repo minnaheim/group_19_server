@@ -32,7 +32,7 @@ public class Movie implements Serializable {
 
 // if we use id from tmdb
   @Column(nullable=false, unique=true)
-  private int id;
+  private Long movieId;
 
   @Column
   private String title;
@@ -56,12 +56,12 @@ public class Movie implements Serializable {
   private String trailerURL;
 
 //   getters and setters
-  public int getId() {
-    return id;
+  public long  getMovieId() {
+    return movieId;
   }
 
-  public void setId(int id) {
-    this.id = id;
+  public void setMovieId(Long movieId) {
+    this.movieId = movieId;
   }
 
   public String getTitle() {
