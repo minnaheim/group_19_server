@@ -16,8 +16,7 @@ import org.mapstruct.factory.Mappers;
  * UserGetDTO for getting, UserPostDTO for creating)
  * and vice versa.
  * Additional mappers can be defined for new entities.
- * Always created one mapper for getting information (GET) and one mapper for
- * creating information (POST).
+ * Always created one mapper for getting information (GET) and one mapper for creating information (POST).
  */
 @Mapper
 public interface DTOMapper {
