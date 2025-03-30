@@ -5,8 +5,11 @@ import ch.uzh.ifi.hase.soprafs24.exceptions.SearchValidationException;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.MovieGetDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.mapper.DTOMapper;
 import ch.uzh.ifi.hase.soprafs24.service.MovieService;
+import ch.uzh.ifi.hase.soprafs24.service.TMDbService;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -21,12 +24,14 @@ import java.util.List;
 public class MovieController {
 
     private final MovieService movieService;
+    private final TMDbService tmdbService;
     private static final int CURRENT_YEAR = LocalDate.now().getYear();
     private static final int MIN_MOVIE_YEAR = 1888; // First movie ever made
     private static final int MIN_SEARCH_TERM_LENGTH = 2;
 
-    MovieController(MovieService movieService) {
+    MovieController(MovieService movieService, TMDbService tmdbService) {
         this.movieService = movieService;
+        this.tmdbService = tmdbService;
     }
 
     /**
@@ -88,12 +93,17 @@ public class MovieController {
             @RequestParam(required = false) String country,
             @RequestParam(required = false) String actor,
             @RequestParam(required = false) String language,
-            @RequestParam(required = false) String trailerURL) {
+            @RequestParam(required = false) String trailerURL,
+            @RequestParam(required = false, defaultValue = "1") Integer page) {
 
-        // Validate search parameters
-        validateSearchParams(title, genre, year, country, actor, language);
+        try {
+            validateSearchParams(title, genre, year, country, actor, language);
+        } catch (SearchValidationException e) {
+            // If validation fails, return empty list rather than error
+            return new ArrayList<>();
+        }
 
-        // Create search params object
+        // Create a movie object with search parameters
         Movie searchParams = new Movie();
         searchParams.setTitle(title);
         searchParams.setGenre(genre);
@@ -103,11 +113,9 @@ public class MovieController {
         searchParams.setLanguage(language);
         searchParams.setTrailerURL(trailerURL);
 
-        // Get movies from service
         List<Movie> movies = movieService.getMovies(searchParams);
-
-        // Map to DTOs
         List<MovieGetDTO> movieGetDTOs = new ArrayList<>();
+
         for (Movie movie : movies) {
             movieGetDTOs.add(DTOMapper.INSTANCE.convertEntityToMovieGetDTO(movie));
         }
@@ -119,12 +127,18 @@ public class MovieController {
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody
     public MovieGetDTO getMovieById(@PathVariable long movieId) {
-        // Check for valid movie ID
-        if (movieId <= 0) {
-            throw new SearchValidationException("Invalid movie ID: must be a positive integer");
-        }
-
         Movie movie = movieService.getMovieById(movieId);
         return DTOMapper.INSTANCE.convertEntityToMovieGetDTO(movie);
+    }
+
+    @GetMapping("/movies/genres")
+    @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
+    public JsonNode getGenres() {
+        JsonNode genres = tmdbService.getGenres();
+        if (genres == null) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Could not fetch genres from TMDB");
+        }
+        return genres;
     }
 }

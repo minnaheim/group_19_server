@@ -43,52 +43,69 @@ public class TMDbService {
      */
     public List<Movie> searchMovies(Movie searchParams) {
         try {
+            // Don't search if no API key is configured
             if (tmdbConfig.getApiKey().isEmpty()) {
-                log.error("TMDb API key is missing. Please add it to local.properties");
+                log.warn("TMDB API key is not configured. Skipping external search.");
                 return Collections.emptyList();
             }
 
-            // Build URL with search parameters
-            UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(tmdbConfig.getBaseUrl() + "/search/movie")
-                    .queryParam("api_key", tmdbConfig.getApiKey());
+            String searchEndpoint = tmdbConfig.getBaseUrl() + "/search/movie";
+            UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(searchEndpoint)
+                    .queryParam("language", "en-US")
+                    .queryParam("sort_by", "popularity.desc");
 
-            // Add search parameters if they exist
-            if (searchParams.getTitle() != null && !searchParams.getTitle().isEmpty()) {
-                builder.queryParam("query", searchParams.getTitle());
+            // Add search parameters if available
+            if (searchParams.getTitle() != null) {
+                builder.queryParam("query", searchParams.getTitle().trim());
             }
             if (searchParams.getYear() != null) {
                 builder.queryParam("year", searchParams.getYear());
             }
 
-            // Set request headers
+            // Setup authentication headers
             HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(tmdbConfig.getApiKey());
             headers.setContentType(MediaType.APPLICATION_JSON);
+
             HttpEntity<String> entity = new HttpEntity<>(headers);
 
-            // Execute the request
+            // Make the API call
             ResponseEntity<String> response = restTemplate.exchange(
-                    builder.build().encode().toUri(),
+                    builder.toUriString(),
                     HttpMethod.GET,
                     entity,
                     String.class);
 
-            // Parse response
-            JsonNode root = objectMapper.readTree(response.getBody());
-            JsonNode results = root.path("results");
-            List<Movie> movies = new ArrayList<>();
+            // Parse the response
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                JsonNode root = objectMapper.readTree(response.getBody());
+                JsonNode results = root.path("results");
 
-            // Process each movie result
-            for (JsonNode movieData : results) {
-                Movie movie = mapTMDbMovieToEntity(movieData);
-                movies.add(movie);
+                List<Movie> movies = new ArrayList<>();
+                for (JsonNode movieNode : results) {
+                    Movie movie = mapTMDbMovieToEntity(movieNode);
+
+                    // Apply genre filter if specified
+                    if (searchParams.getGenre() != null && !searchParams.getGenre().isEmpty() && movie.getGenre() != null) {
+                        if (!movie.getGenre().toLowerCase().contains(searchParams.getGenre().toLowerCase())) {
+                            continue;
+                        }
+                    }
+
+                    movies.add(movie);
+                }
+
+                return movies;
             }
 
-            return movies;
-        } catch (RestClientException e) {
-            log.error("Error calling TMDb API: {}", e.getMessage());
             return Collections.emptyList();
-        } catch (Exception e) {
-            log.error("Error processing TMDb API response: {}", e.getMessage());
+        }
+        catch (RestClientException e) {
+            log.error("Error communicating with TMDb API: {}", e.getMessage());
+            return Collections.emptyList();
+        }
+        catch (Exception e) {
+            log.error("Unexpected error during TMDb search: {}", e.getMessage());
             return Collections.emptyList();
         }
     }
@@ -102,33 +119,74 @@ public class TMDbService {
     public Movie getMovieDetails(long movieId) {
         try {
             if (tmdbConfig.getApiKey().isEmpty()) {
-                log.error("TMDb API key is missing. Please add it to local.properties");
+                log.warn("TMDB API key is not configured. Cannot get movie details.");
                 return null;
             }
 
-            // Build URL for movie details
-            String url = tmdbConfig.getBaseUrl() + "/movie/" + movieId + "?api_key=" + tmdbConfig.getApiKey() + "&append_to_response=videos,credits";
+            String detailsEndpoint = tmdbConfig.getBaseUrl() + "/movie/" + movieId;
 
-            // Set request headers
+            // Setup authentication headers
             HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(tmdbConfig.getApiKey());
             headers.setContentType(MediaType.APPLICATION_JSON);
+
             HttpEntity<String> entity = new HttpEntity<>(headers);
 
-            // Execute the request
+            // Make API call
             ResponseEntity<String> response = restTemplate.exchange(
-                    url,
+                    detailsEndpoint,
                     HttpMethod.GET,
                     entity,
                     String.class);
 
-            // Parse response and map to Movie entity
-            JsonNode movieData = objectMapper.readTree(response.getBody());
-            return mapTMDbMovieToEntity(movieData);
-        } catch (RestClientException e) {
-            log.error("Error fetching movie details from TMDb API: {}", e.getMessage());
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                JsonNode movieData = objectMapper.readTree(response.getBody());
+                return mapTMDbMovieToEntity(movieData);
+            }
+
             return null;
-        } catch (Exception e) {
-            log.error("Error processing TMDb movie details: {}", e.getMessage());
+        }
+        catch (Exception e) {
+            log.error("Error getting movie details from TMDb: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Get list of all genres from TMDb
+     */
+    public JsonNode getGenres() {
+        try {
+            if (tmdbConfig.getApiKey().isEmpty()) {
+                log.warn("TMDB API key is not configured. Cannot get genres.");
+                return null;
+            }
+
+            String genresEndpoint = tmdbConfig.getBaseUrl() + "/genre/movie/list";
+
+            // Setup authentication headers
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(tmdbConfig.getApiKey());
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            // Make API call
+            ResponseEntity<String> response = restTemplate.exchange(
+                    genresEndpoint,
+                    HttpMethod.GET,
+                    entity,
+                    String.class);
+
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                JsonNode root = objectMapper.readTree(response.getBody());
+                return root.path("genres");
+            }
+
+            return null;
+        }
+        catch (Exception e) {
+            log.error("Error getting genres from TMDb: {}", e.getMessage());
             return null;
         }
     }
@@ -139,83 +197,45 @@ public class TMDbService {
     private Movie mapTMDbMovieToEntity(JsonNode movieData) {
         Movie movie = new Movie();
 
-        // Set movie ID from TMDb
-        movie.setMovieId(movieData.path("id").asInt());
+        movie.setMovieId(movieData.path("id").asLong());
+        movie.setTitle(movieData.path("title").asText());
+        movie.setDescription(movieData.path("overview").asText());
 
-        // Set title
-        movie.setTitle(movieData.path("title").asText(""));
+        // Extract release year from release_date (YYYY-MM-DD)
+        String releaseDate = movieData.path("release_date").asText();
+        if (releaseDate != null && !releaseDate.isEmpty()) {
+            try {
+                LocalDate date = LocalDate.parse(releaseDate, DateTimeFormatter.ISO_LOCAL_DATE);
+                movie.setYear(date.getYear());
+            } catch (DateTimeParseException e) {
+                log.warn("Could not parse release date: {}", releaseDate);
+            }
+        }
 
-        // Set poster URL
+        // Extract genre names from genre_ids
+        if (movieData.has("genre_ids") && movieData.path("genre_ids").isArray()) {
+            StringBuilder genreNames = new StringBuilder();
+            JsonNode genreIds = movieData.path("genre_ids");
+
+            for (JsonNode genreId : genreIds) {
+                // Here we would ideally map genre IDs to names, but for simplicity
+                // we'll just store the IDs as a comma-separated string
+                if (genreNames.length() > 0) {
+                    genreNames.append(", ");
+                }
+                genreNames.append(genreId.asText());
+            }
+            movie.setGenre(genreNames.toString());
+        }
+
+        // Set poster URL if available
         String posterPath = movieData.path("poster_path").asText(null);
         if (posterPath != null && !posterPath.isEmpty()) {
             movie.setPosterURL("https://image.tmdb.org/t/p/w500" + posterPath);
         }
 
-        // Set description/overview
-        movie.setDescription(movieData.path("overview").asText(""));
-
-        // Process release date to extract year
-        try {
-            String releaseDate = movieData.path("release_date").asText("");
-            if (!releaseDate.isEmpty()) {
-                LocalDate date = LocalDate.parse(releaseDate, DateTimeFormatter.ISO_DATE);
-                movie.setYear(date.getYear());
-            }
-        } catch (DateTimeParseException e) {
-            log.warn("Could not parse release date for movie ID {}", movie.getMovieId());
-        }
-
-        // Extract genre information
-        JsonNode genresNode = movieData.path("genres");
-        if (genresNode.isArray() && genresNode.size() > 0) {
-            StringBuilder genres = new StringBuilder();
-            for (int i = 0; i < genresNode.size(); i++) {
-                if (i > 0) {
-                    genres.append(", ");
-                }
-                genres.append(genresNode.get(i).path("name").asText(""));
-            }
-            movie.setGenre(genres.toString());
-        }
-
-        // Extract trailer URL if available
-        JsonNode videos = movieData.path("videos").path("results");
-        if (videos.isArray() && videos.size() > 0) {
-            for (JsonNode video : videos) {
-                if ("YouTube".equals(video.path("site").asText("")) &&
-                        "Trailer".equals(video.path("type").asText(""))) {
-                    movie.setTrailerURL("https://www.youtube.com/watch?v=" + video.path("key").asText(""));
-                    break;
-                }
-            }
-        }
-
-        // Extract actor information if available
-        JsonNode credits = movieData.path("credits");
-        if (!credits.isMissingNode() && credits.has("cast") && credits.path("cast").isArray()) {
-            JsonNode cast = credits.path("cast");
-            StringBuilder actors = new StringBuilder();
-            int count = 0;
-            for (int i = 0; i < cast.size() && count < 5; i++) {
-                if (count > 0) {
-                    actors.append(", ");
-                }
-                actors.append(cast.get(i).path("name").asText(""));
-                count++;
-            }
-            movie.setActor(actors.toString());
-        }
-
-        // Set language
-        if (movieData.has("original_language")) {
-            movie.setLanguage(movieData.path("original_language").asText(""));
-        }
-
-        // Set production country if available
-        JsonNode countries = movieData.path("production_countries");
-        if (countries.isArray() && countries.size() > 0) {
-            movie.setCountry(countries.get(0).path("name").asText(""));
-        }
+        // Original language as the language
+        movie.setLanguage(movieData.path("original_language").asText());
 
         return movie;
     }
