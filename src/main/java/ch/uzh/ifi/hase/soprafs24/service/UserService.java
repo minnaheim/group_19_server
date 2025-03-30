@@ -1,7 +1,9 @@
 package ch.uzh.ifi.hase.soprafs24.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
+import ch.uzh.ifi.hase.soprafs24.entity.FriendRequest;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
+import ch.uzh.ifi.hase.soprafs24.repository.FriendRequestRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.UserRepository;
 
 /**
@@ -35,6 +39,11 @@ public class UserService {
   public UserService(@Qualifier("userRepository") UserRepository userRepository) {
     this.userRepository = userRepository;
   }
+
+  // for friends functionality
+  @Autowired
+  private FriendRequestRepository friendRequestRepository;
+
 
   public List<User> getUsers() {
     return this.userRepository.findAll();
@@ -91,5 +100,62 @@ public class UserService {
     user.setToken(UUID.randomUUID().toString());
     return userRepository.save(user);      
   }
+
+
+  // friends functionality
+  public void addFriend(Long userId, Long friendId){
+
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+    User friend = userRepository.findById(friendId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+    if (user.equals(friend)){
+        throw new IllegalArgumentException("Cannot add yourself as a friend");
+    }
+
+    user.getFriends().add(friend);
+    friend.getFriends().add(user);
+    userRepository.save(user);
+    userRepository.save(friend);
+  }
+
+  public FriendRequest createFriendRequest(Long senderId, Long receiverId){
+
+    User sender = userRepository.findById(senderId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+    User receiver = userRepository.findById(receiverId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));  
+
+    FriendRequest request = new FriendRequest();
+    request.setSender(sender);
+    request.setReceiver(receiver);
+
+    FriendRequest savedFriendRequest = friendRequestRepository.save(request);
+    return savedFriendRequest;
+  }
+
+  public void acceptFriendRequest(Long requestId){
+    FriendRequest request = friendRequestRepository.findById(requestId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    request.setAccepted(true);
+    request.setRespondTime(LocalDateTime.now());
+    addFriend(request.getSender().getUserId(), request.getReceiver().getUserId());
+    friendRequestRepository.save(request);
+  }
+
+  public List<FriendRequest> getPendingRequests(Long userId){
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+    return user.getReceivedFriendRequests().stream()
+            .filter(req -> !req.isAccepted())
+            .collect(Collectors.toList());
+  }
+
+
+
 
 }

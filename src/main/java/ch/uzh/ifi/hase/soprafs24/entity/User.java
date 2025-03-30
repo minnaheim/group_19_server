@@ -198,7 +198,14 @@ public class User implements Serializable {
         this.favoriteDirectors = favoriteDirectors;
     }
 
-    
+    public Set<User> getFriends() {
+        return friends;
+    }
+  
+    public void setFriends(Set<User> friends) {
+        this.friends = friends;
+    }
+
     public Set<FriendRequest> getSentFriendRequests() {
         return sentFriendRequests;
     }
@@ -214,8 +221,4 @@ public class User implements Serializable {
     public void setReceivedFriendRequests(Set<FriendRequest> receivedFriendRequests) {
         this.receivedFriendRequests = receivedFriendRequests;
     }
-
-
-
-
 }
