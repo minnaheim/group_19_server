@@ -8,7 +8,6 @@ import ch.uzh.ifi.hase.soprafs24.entity.Movie;
 public class UserGetDTO {
 
   private Long userId;
-  private String name;
   private String username;
   private UserStatus status;
   private String bio;
@@ -24,14 +23,6 @@ public class UserGetDTO {
 
   public void setUserId(Long userId) {
     this.userId = userId;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public void setName(String name) {
-    this.name = name;
   }
 
   public String getUsername() {
