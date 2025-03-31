@@ -27,7 +27,7 @@ public class FriendRequestService {
         this.friendRequestRepository = friendRequestRepository;
     }
 
-    public void sendFriendRequest(Long senderId, Long receiverId) {
+    public User sendFriendRequest(Long senderId, Long receiverId) {
         User sender = userRepository.findById(senderId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sender not found"));
         User receiver = userRepository.findById(receiverId)
@@ -49,9 +49,10 @@ public class FriendRequestService {
         request.setSender(sender);
         request.setReceiver(receiver);
         friendRequestRepository.save(request);
+        return request.getReceiver();
     }
 
-    public void acceptFriendRequest(Long requestId, Long userId) {
+    public FriendRequest acceptFriendRequest(Long requestId, Long userId) {
         FriendRequest request = friendRequestRepository.findById(requestId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Friend request not found"));
         
@@ -73,10 +74,10 @@ public class FriendRequestService {
         
         userRepository.save(sender);
         userRepository.save(receiver);
-        friendRequestRepository.save(request);
+        return friendRequestRepository.save(request);
     }
 
-    public void rejectFriendRequest(Long requestId, Long userId) {
+    public FriendRequest rejectFriendRequest(Long requestId, Long userId) {
         FriendRequest request = friendRequestRepository.findById(requestId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Friend request not found"));
         
@@ -87,7 +88,7 @@ public class FriendRequestService {
 
         request.setAccepted(false);
         // request.setRespondTime(LocalDateTime.now());
-        friendRequestRepository.save(request);
+        return friendRequestRepository.save(request);
     }
 
     public List<FriendRequest> getPendingReceivedRequests(Long userId) {
@@ -109,7 +110,7 @@ public class FriendRequestService {
             .collect(Collectors.toList());
     }
 
-    public void removeFriend(Long userId, Long friendId) {
+    public User removeFriend(Long userId, Long friendId) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         User friend = userRepository.findById(friendId)
@@ -122,7 +123,7 @@ public class FriendRequestService {
         user.getFriends().remove(friend);
         friend.getFriends().remove(user);
         userRepository.save(user);
-        userRepository.save(friend);
+        return userRepository.save(friend);
     }
 
     // auxilary function which is used in sendRequest to prevent duplicate requests
