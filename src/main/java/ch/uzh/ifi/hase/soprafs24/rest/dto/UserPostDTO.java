@@ -2,7 +2,7 @@ package ch.uzh.ifi.hase.soprafs24.rest.dto;
 
 public class UserPostDTO {
 
-  private int id;
+  private Long userId;
   private String username;
   private String email;
   private String password;
@@ -12,12 +12,12 @@ public class UserPostDTO {
   // private List<Movie> watchlist;
   // private List<Movie> watchedMovies;
 
-  public int getId() {
-    return id;
+  public Long getUserId() {
+    return userId;
 }
 
-  public void setId(int id) {
-      this.id = id;
+  public void setId(Long userId) {
+      this.userId = userId;
   }
 
   public String getUsername() {

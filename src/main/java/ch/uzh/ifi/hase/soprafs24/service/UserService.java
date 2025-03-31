@@ -14,6 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
+import ch.uzh.ifi.hase.soprafs24.repository.FriendRequestRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.UserRepository;
 
 /**
@@ -35,6 +36,11 @@ public class UserService {
   public UserService(@Qualifier("userRepository") UserRepository userRepository) {
     this.userRepository = userRepository;
   }
+
+  // for friends functionality
+  @Autowired
+  private FriendRequestRepository friendRequestRepository;
+
 
   public List<User> getUsers() {
     return this.userRepository.findAll();
@@ -92,4 +98,12 @@ public class UserService {
     return userRepository.save(user);      
   }
 
+  // for user id identification by token
+  public Long getUserIdByToken(String token) {
+    User user = userRepository.findByToken(token);
+    if (user == null) {
+        return null;
+    }
+    return user.getUserId();
+}
 }

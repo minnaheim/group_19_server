@@ -1,7 +1,20 @@
 package ch.uzh.ifi.hase.soprafs24.entity;
 
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+
+// import javax.persistence.Column;
+// import javax.persistence.Entity;
+// import javax.persistence.GeneratedValue;
+// import javax.persistence.Id;
+// import javax.persistence.JoinColumn;
+// import javax.persistence.JoinTable;
+// import javax.persistence.ManyToMany;
+// import javax.persistence.OneToMany;
+// import javax.persistence.Table;
 
 import javax.persistence.*;
 
@@ -26,7 +39,7 @@ public class User implements Serializable {
   // user attributes
   @Id
   @GeneratedValue
-  private int id;
+  private Long userId;
 
   @Column(nullable = false, unique = true)
   private String username;
@@ -46,10 +59,23 @@ public class User implements Serializable {
   @Column
   private String bio;
 
-  @ElementCollection
-  @CollectionTable(name = "user_preferences", joinColumns = @JoinColumn(name = "user_id"))
-  @Column(name = "preference")
-  private List<String> preferences;
+  @Column
+  private List<String> favoriteGenres;
+
+  @Column
+  private List<String> favoriteMovies;  
+
+  @Column
+  private List<String> favoriteActors;
+
+  @Column
+  private List<String> favoriteDirectors;
+  
+//   @ElementCollection
+//   @CollectionTable(name = "user_preferences", joinColumns = @JoinColumn(name = "user_id"))
+//   @Column(name = "preference")
+//   private List<String> preferences;
+
 
   @ManyToMany
   @JoinTable(
@@ -68,12 +94,32 @@ public class User implements Serializable {
   private List<Movie> watchedMovies;
   ;
 
-  public int getId() {
-      return id;
+//  dealing with friends
+//  special separate table with users and their friends
+
+  @ManyToMany
+  @JoinTable(
+    name = "USER_FRIENDS",
+    joinColumns = @JoinColumn(name = "user_id"),
+    inverseJoinColumns = @JoinColumn(name = "friend_id")
+  )
+
+  private Set<User> friends = new HashSet<>();
+  
+//   for sent requests
+  @OneToMany(mappedBy = "sender")
+  private Set<FriendRequest> sentFriendRequests = new HashSet<>();
+// for received
+  @OneToMany(mappedBy = "receiver")
+  private Set<FriendRequest> receivedFriendRequests = new HashSet<>();
+
+  
+  public Long getUserId() {
+      return userId;
   }
 
-  public void setId(int id) {
-      this.id = id;
+  public void setId(Long userId) {
+      this.userId = userId;
   }
 
   public String getUsername() {
@@ -108,14 +154,6 @@ public class User implements Serializable {
       this.bio = bio;
   }
 
-  public List<String> getPreferences() {
-      return preferences;
-  }
-
-  public void setPreferences(List<String> preferences) {
-      this.preferences = preferences;
-  }
-
   public List<Movie> getWatchlist() {
       return watchlist;
   }
@@ -148,5 +186,59 @@ public class User implements Serializable {
       this.status = status;
   }
 
+    public List<String> getFavoriteGenres() {
+        return favoriteGenres;
+    }
 
+    public void setFavoriteGenres(List<String> favoriteGenres) {
+        this.favoriteGenres = favoriteGenres;
+    }
+
+    public List<String> getFavoriteMovies() {
+        return favoriteMovies;
+    }
+
+    public void setFavoriteMovies(List<String> favoriteMovies) {
+        this.favoriteMovies = favoriteMovies;
+    }
+
+    public List<String> getFavoriteActors() {
+        return favoriteActors;
+    }
+
+    public void setFavoriteActors(List<String> favoriteActors) {
+        this.favoriteActors = favoriteActors;
+    }
+
+    public List<String> getFavoriteDirectors() {
+        return favoriteDirectors;
+    }
+
+    public void setFavoriteDirectors(List<String> favoriteDirectors) {
+        this.favoriteDirectors = favoriteDirectors;
+    }
+
+    public Set<User> getFriends() {
+        return friends;
+    }
+  
+    public void setFriends(Set<User> friends) {
+        this.friends = friends;
+    }
+
+    public Set<FriendRequest> getSentFriendRequests() {
+        return sentFriendRequests;
+    }
+
+    public void setSentFriendRequests(Set<FriendRequest> sentFriendRequests) {
+        this.sentFriendRequests = sentFriendRequests;
+    }
+
+    public Set<FriendRequest> getReceivedFriendRequests() {
+        return receivedFriendRequests;
+    }
+
+    public void setReceivedFriendRequests(Set<FriendRequest> receivedFriendRequests) {
+        this.receivedFriendRequests = receivedFriendRequests;
+    }
 }

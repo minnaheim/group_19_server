@@ -62,7 +62,6 @@ public class Movie implements Serializable {
         this.movieId = movieId;
     }
 
-
     public String getTitle() {
         return title;
     }

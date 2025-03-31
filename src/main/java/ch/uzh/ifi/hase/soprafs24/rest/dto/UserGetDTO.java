@@ -7,21 +7,23 @@ import ch.uzh.ifi.hase.soprafs24.entity.Movie;
 
 public class UserGetDTO {
 
-  private int id;
+  private Long userId;
   private String name;
   private String username;
   private UserStatus status;
   private String bio;
-  private List<String> preferences;
+  private List<String> favoriteGenres;
+  private List<String> favoriteActors;
+  private List<String> favoriteDirectors;
   private List<Movie> watchlist;
   private List<Movie> watchedMovies;
 
-  public int getId() {
-    return id;
+  public Long getUserId() {
+    return userId;
   }
 
-  public void setId(int id) {
-    this.id = id;
+  public void setUserId(Long userId) {
+    this.userId = userId;
   }
 
   public String getName() {
@@ -56,14 +58,6 @@ public class UserGetDTO {
     this.bio = bio;
   }
 
-  public List<String> getPreferences() {
-    return preferences;
-  }
-
-  public void setPreferences(List<String> preferences) {
-    this.preferences = preferences;
-  }
-
   public List<Movie> getWatchlist() {
     return watchlist;
   }
@@ -79,4 +73,28 @@ public class UserGetDTO {
   public void setWatchedMovies(List<Movie> watchedMovies) {
     this.watchedMovies = watchedMovies;
   }
+
+    public List<String> getFavoriteGenres() {
+        return favoriteGenres;
+    }
+
+    public void setFavoriteGenres(List<String> favoriteGenres) {
+        this.favoriteGenres = favoriteGenres;
+    }
+
+    public List<String> getFavoriteActors() {
+        return favoriteActors;
+    }
+
+    public void setFavoriteActors(List<String> favoriteActors) {
+        this.favoriteActors = favoriteActors;
+    }
+
+    public List<String> getFavoriteDirectors() {
+        return favoriteDirectors;
+    }
+
+    public void setFavoriteDirectors(List<String> favoriteDirectors) {
+        this.favoriteDirectors = favoriteDirectors;
+    }
 }
