@@ -3,14 +3,10 @@ package ch.uzh.ifi.hase.soprafs24.entity;
 import java.io.Serializable;
 import java.util.List;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 @Entity
-@Table(name = "GROUP")
+@Table(name = "USER_GROUP")
 public class Group implements Serializable {
     
     @Id
@@ -20,13 +16,24 @@ public class Group implements Serializable {
     @Column(nullable = false, unique = true)
     private String name;
 
-    @Column(nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "creator_id", nullable = false)
     private User creator;
 
-    @Column(nullable = false)
+    @ManyToMany
+    @JoinTable(
+            name = "group_members",
+            joinColumns = @JoinColumn(name = "group_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
     private List<User> members;
 
-    @Column
+    @ManyToMany
+    @JoinTable(
+            name = "group_movies",
+            joinColumns = @JoinColumn(name = "group_id"),
+            inverseJoinColumns = @JoinColumn(name = "movie_id")
+    )
     private List<Movie> moviePool;
 
     public Long getGroupId() {

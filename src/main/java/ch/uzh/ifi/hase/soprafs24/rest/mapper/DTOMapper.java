@@ -1,8 +1,10 @@
 package ch.uzh.ifi.hase.soprafs24.rest.mapper;
 
 import ch.uzh.ifi.hase.soprafs24.entity.User;
+import ch.uzh.ifi.hase.soprafs24.entity.Movie;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserGetDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserPostDTO;
+import ch.uzh.ifi.hase.soprafs24.rest.dto.MovieGetDTO;
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 
@@ -14,8 +16,7 @@ import org.mapstruct.factory.Mappers;
  * UserGetDTO for getting, UserPostDTO for creating)
  * and vice versa.
  * Additional mappers can be defined for new entities.
- * Always created one mapper for getting information (GET) and one mapper for
- * creating information (POST).
+ * Always created one mapper for getting information (GET) and one mapper for creating information (POST).
  */
 @Mapper
 public interface DTOMapper {
@@ -38,4 +39,28 @@ public interface DTOMapper {
   @Mapping(source = "watchedMovies", target = "watchedMovies")
   @Mapping(source = "status", target = "status")
   UserGetDTO convertEntityToUserGetDTO(User user);
+
+  @Mapping(source = "movieId", target = "movieId")
+  @Mapping(source = "title", target = "title")
+  @Mapping(source = "genre", target = "genre")
+  @Mapping(source = "year", target = "year")
+  @Mapping(source = "actor", target = "actor")
+  @Mapping(source = "crew", target = "crew")
+  @Mapping(source = "originallanguage", target = "originallanguage")
+  @Mapping(source = "trailerURL", target = "trailerURL")
+  @Mapping(source = "posterURL", target = "posterURL")
+  @Mapping(source = "description", target = "description")
+  Movie convertMovieGetDTOtoEntity(MovieGetDTO movieGetDTO);
+
+  @Mapping(source = "movieId", target = "movieId")
+  @Mapping(source = "title", target = "title")
+  @Mapping(source = "genre", target = "genre")
+  @Mapping(source = "year", target = "year")
+  @Mapping(source = "actor", target = "actor")
+  @Mapping(source = "crew", target = "crew")
+  @Mapping(source = "originallanguage", target = "originallanguage")
+  @Mapping(source = "posterURL", target = "posterURL")
+  @Mapping(source = "trailerURL", target = "trailerURL")
+  @Mapping(source = "description", target = "description")
+  MovieGetDTO convertEntityToMovieGetDTO(Movie movie);
 }

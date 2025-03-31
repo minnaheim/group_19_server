@@ -5,15 +5,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
+
+// import javax.persistence.Column;
+// import javax.persistence.Entity;
+// import javax.persistence.GeneratedValue;
+// import javax.persistence.Id;
+// import javax.persistence.JoinColumn;
+// import javax.persistence.JoinTable;
+// import javax.persistence.ManyToMany;
+// import javax.persistence.OneToMany;
+// import javax.persistence.Table;
+
+import javax.persistence.*;
 
 import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
 
@@ -67,12 +70,29 @@ public class User implements Serializable {
 
   @Column
   private List<String> favoriteDirectors;
+  
+//   @ElementCollection
+//   @CollectionTable(name = "user_preferences", joinColumns = @JoinColumn(name = "user_id"))
+//   @Column(name = "preference")
+//   private List<String> preferences;
 
-  @Column
+
+  @ManyToMany
+  @JoinTable(
+          name = "user_watchlist",
+          joinColumns = @JoinColumn(name = "user_id"),
+          inverseJoinColumns = @JoinColumn(name = "movie_id")
+  )
   private List<Movie> watchlist;
 
-  @Column
+  @ManyToMany
+  @JoinTable(
+          name = "user_watched_movies",
+          joinColumns = @JoinColumn(name = "user_id"),
+          inverseJoinColumns = @JoinColumn(name = "movie_id")
+  )
   private List<Movie> watchedMovies;
+  ;
 
 //  dealing with friends
 //  special separate table with users and their friends
