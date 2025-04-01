@@ -83,6 +83,14 @@ public class UserService {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, String.format(baseErrorMessage, "email", "is"));
     }
   }
+  
+  public boolean isUsernameAvailable(String username) {
+    return userRepository.findByUsername(username) == null;
+  }
+  
+  public boolean isEmailAvailable(String email) {
+    return userRepository.findByEmail(email) == null;
+  }
   // login method
   public User loginUser(String username, String password) {
 
