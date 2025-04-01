@@ -49,7 +49,7 @@ public class UserServiceTest {
     // then
     Mockito.verify(userRepository, Mockito.times(1)).save(Mockito.any());
 
-    assertEquals(testUser.getId(), createdUser.getId());
+    assertEquals(testUser.getUserId(), createdUser.getUserId());
     // assertEquals(testUser.getName(), createdUser.getName());
     assertEquals(testUser.getUsername(), createdUser.getUsername());
     assertNotNull(createdUser.getToken());
