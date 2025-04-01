@@ -113,5 +113,23 @@ public class UserService {
         return null;
     }
     return user.getUserId();
-}
+  }
+  
+  public User getUserByToken(String token) {
+    User user = userRepository.findByToken(token);
+    if (user == null) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token");
+    }
+    return user;
+  }
+  
+  public void logoutUser(String token) {
+    User user = userRepository.findByToken(token);
+    if (user == null) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token");
+    }
+    user.setStatus(UserStatus.OFFLINE);
+    user.setToken(null);
+    userRepository.save(user);
+  }
 }

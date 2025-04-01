@@ -50,7 +50,7 @@ public class User implements Serializable {
   @Column(nullable = false)
   private String password;
   
-  @Column(nullable = false, unique = true)
+  @Column(unique = true)
   private String token;
 
   @Column(nullable = false)

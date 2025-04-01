@@ -70,6 +70,21 @@ public class UserController {
     User user = userService.loginUser(userPostDTO.getUsername(), userPostDTO.getPassword());
     return DTOMapper.INSTANCE.convertEntityToUserGetDTO(user);
   }
+  
+  @PostMapping("/logout")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  public void logoutUser(@RequestParam String token) {
+    userService.logoutUser(token);
+  }
+  
+  @GetMapping("/session")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  public UserGetDTO validateSession(@RequestParam String token) {
+    User user = userService.getUserByToken(token);
+    return DTOMapper.INSTANCE.convertEntityToUserGetDTO(user);
+  }
 
   @GetMapping("/check/username")
   @ResponseStatus(HttpStatus.OK)
