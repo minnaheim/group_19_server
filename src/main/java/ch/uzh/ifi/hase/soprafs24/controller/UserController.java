@@ -1,8 +1,10 @@
 package ch.uzh.ifi.hase.soprafs24.controller;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -68,5 +70,33 @@ public class UserController {
     User user = userService.loginUser(userPostDTO.getUsername(), userPostDTO.getPassword());
     return DTOMapper.INSTANCE.convertEntityToUserGetDTO(user);
   }
+  
+  @PostMapping("/logout")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  public void logoutUser(@RequestParam String token) {
+    userService.logoutUser(token);
+  }
+  
+  @GetMapping("/session")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  public UserGetDTO validateSession(@RequestParam String token) {
+    User user = userService.getUserByToken(token);
+    return DTOMapper.INSTANCE.convertEntityToUserGetDTO(user);
+  }
 
+  @GetMapping("/check/username")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  public boolean checkUsernameAvailability(@RequestParam String username) {
+    return userService.isUsernameAvailable(username);
+  }
+
+  @GetMapping("/check/email")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  public boolean checkEmailAvailability(@RequestParam String email) {
+    return userService.isEmailAvailable(email);
+  }
 }

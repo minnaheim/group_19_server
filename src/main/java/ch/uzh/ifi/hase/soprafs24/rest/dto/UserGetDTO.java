@@ -10,6 +10,7 @@ public class UserGetDTO {
   private Long userId;
   private String username;
   private UserStatus status;
+  private String token;
   private String bio;
   private List<String> favoriteGenres;
   private List<String> favoriteActors;
@@ -39,6 +40,14 @@ public class UserGetDTO {
 
   public void setStatus(UserStatus status) {
     this.status = status;
+  }
+
+  public String getToken() {
+      return token;
+  }
+
+  public void setToken(String token) {
+      this.token = token;
   }
 
   public String getBio() {

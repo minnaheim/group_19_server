@@ -31,6 +31,7 @@ public interface DTOMapper {
 
   @Mapping(source = "userId", target = "userId")
   @Mapping(source = "username", target = "username")
+  @Mapping(source = "token", target = "token")
   @Mapping(source = "bio", target = "bio")
   @Mapping(source = "favoriteGenres", target = "favoriteGenres")
   @Mapping(source = "favoriteActors", target = "favoriteActors")
