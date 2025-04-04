@@ -2,6 +2,7 @@ package ch.uzh.ifi.hase.soprafs25.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -98,5 +99,39 @@ public class UserController {
   @ResponseBody
   public boolean checkEmailAvailability(@RequestParam String email) {
     return userService.isEmailAvailable(email);
+  }
+
+  /**
+   * GET /users/{userId}/profile - Get user profile with complete data including watchlist
+   */
+  @GetMapping("/users/{userId}/profile")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  public UserGetDTO getUserProfile(@PathVariable("userId") Long userId) {
+    User user = userService.getUserById(userId);
+    return DTOMapper.INSTANCE.convertEntityToUserGetDTO(user);
+  }
+  
+  /**
+   * PUT /users/{userId}/profile - Update user profile
+   */
+  @PutMapping("/users/{userId}/profile")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  public UserGetDTO updateUserProfile(
+        @PathVariable("userId") Long userId,
+        @RequestBody UserPostDTO userPostDTO,
+        @RequestParam String token) {
+    // Check if the token matches the user
+    userService.checkUserToken(userId, token);
+    
+    // Convert DTO to entity
+    User userInput = DTOMapper.INSTANCE.convertUserPostDTOtoEntity(userPostDTO);
+    
+    // Update the user
+    User updatedUser = userService.updateUser(userId, userInput);
+    
+    // Return updated user data
+    return DTOMapper.INSTANCE.convertEntityToUserGetDTO(updatedUser);
   }
 }
