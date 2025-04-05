@@ -121,9 +121,17 @@ public class UserController {
   public UserGetDTO updateUserProfile(
         @PathVariable("userId") Long userId,
         @RequestBody UserPostDTO userPostDTO,
-        @RequestParam String token) {
+        @RequestParam(required = false) String token,
+        @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    
+    // Extract token from Authorization header if present
+    String effectiveToken = token;
+    if (authHeader != null && authHeader.startsWith("Bearer ")) {
+        effectiveToken = authHeader.substring(7);
+    }
+    
     // Check if the token matches the user
-    userService.checkUserToken(userId, token);
+    userService.checkUserToken(userId, effectiveToken);
     
     // Convert DTO to entity
     User userInput = DTOMapper.INSTANCE.convertUserPostDTOtoEntity(userPostDTO);

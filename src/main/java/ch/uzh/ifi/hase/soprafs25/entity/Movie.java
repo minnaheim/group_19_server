@@ -36,10 +36,10 @@ public class Movie implements Serializable {
     private Integer year;
 
     @Column
-    private String actor;
+    private String actor; // Comma-separated list of actors, will be parsed into array for client
 
     @Column
-    private String crew;
+    private String director; // This field holds the main director name
 
     @Column
     private String originallanguage;
@@ -94,12 +94,12 @@ public class Movie implements Serializable {
         this.actor = actor;
     }
 
-    public String getCrew() {
-        return crew;
+    public String getDirector() {
+        return director;
     }
 
-    public void setCrew(String crew) {
-        this.crew = crew;
+    public void setDirector(String director) {
+        this.director = director;
     }
 
     public String getOriginallanguage() {

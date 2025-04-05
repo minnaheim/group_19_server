@@ -5,8 +5,8 @@ public class MovieGetDTO {
     private String title;
     private String genre;
     private Integer year;
-    private String actor;
-    private String crew;
+    private String[] actors; // Array of actor names
+    private String director;
     private String originallanguage;
     private String posterURL;
     private String trailerURL;
@@ -44,21 +44,21 @@ public class MovieGetDTO {
         this.year = year;
     }
 
-    public String getActor() {
-        return actor;
+    public String[] getActors() {
+        return actors;
     }
 
-    public void setActor(String actor) {
-        this.actor = actor;
+    public void setActors(String[] actors) {
+        this.actors = actors;
     }
 
 
-    public String getCrew() {
-        return crew;
+    public String getDirector() {
+        return director;
     }
 
-    public void setCrew(String crew) {
-        this.crew = crew;
+    public void setDirector(String director) {
+        this.director = director;
     }
 
     public String getOriginallanguage() {
