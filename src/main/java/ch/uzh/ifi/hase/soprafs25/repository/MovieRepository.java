@@ -29,6 +29,23 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
             @Param("genre") String genre,
             @Param("year") Integer year);
 
+    // The filtering logic will return any movie that contains at least one actor or one director from the provided lists.
+    /*
+    * How it works:
+    * 1. It calls the basic search method findByBasicSearchParams to get initial movies
+    *    filtered by title, genre, and year.
+    * 2. If the provided actors or directors lists are null or empty, the method returns
+    *    the basic results without further filtering.
+    * 3. If a list of actors is provided, it filters the result to only include movies where
+    *    the movie's actors list contains at least one element from the provided actors list.
+    * 4. Similarly, if a list of directors is provided, it filters the result to only include movies where
+    *    the movie's directors list contains at least one element from the provided directors list.
+    *
+    * In answer to your question: Yes, you can search via multiple actors or multiple directors.
+    * The filtering logic uses anyMatch, which will return any movie that contains at least one
+    * actor or director from the provided lists.
+    */
+
     default List<Movie> findBySearchParamsWithLists(String title, String genre, Integer year,
                                                     List<String> actors, List<String> directors) {
         List<Movie> results = findByBasicSearchParams(title, genre, year);
