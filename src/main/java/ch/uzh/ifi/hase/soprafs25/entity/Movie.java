@@ -39,11 +39,11 @@ public class Movie implements Serializable {
 
     @Column
     @ElementCollection
-    private List<String> actor = new ArrayList<>();
+    private List<String> actors = new ArrayList<>();
 
     @Column
     @ElementCollection
-    private List<String> director = new ArrayList<>();
+    private List<String> directors = new ArrayList<>();
 
     @Column
     private String originallanguage;
@@ -90,24 +90,28 @@ public class Movie implements Serializable {
         this.year = year;
     }
 
-    public List<String> getActor() {
-        return actor;
+    public List<String> getActors() {
+        return actors;
     }
 
-    public void setActor(String actor) {
-        List<String> actorList = new ArrayList<>();
-        actorList.add(actor);
-        this.actor = actorList;
+    public void setActorsList(List<String> actors) {
+        this.actors = actors;
     }
 
-    public List<String> getDirector() {
-        return director;
+    public void addActor(String actor) {
+        this.actors.add(actor);
     }
 
-    public void setDirector(String director) {
-        List<String> directorList = new ArrayList<>();
-        directorList.add(director);
-        this.director = directorList;
+    public List<String> getDirectors() {
+        return directors;
+    }
+
+    public void setDirectorsList(List<String> directors) {
+        this.directors = directors;
+    }
+
+    public void addDirector(String director) {
+        this.directors.add(director);
     }
 
     public String getOriginallanguage() {

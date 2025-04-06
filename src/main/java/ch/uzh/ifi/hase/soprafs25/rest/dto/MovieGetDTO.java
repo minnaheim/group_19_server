@@ -7,8 +7,8 @@ public class MovieGetDTO {
     private String title;
     private String genre;
     private Integer year;
-    private List<String> actor;
-    private List<String> director;
+    private List<String> actors;
+    private List<String> directors;
     private String originallanguage;
     private String posterURL;
     private String trailerURL;
@@ -46,20 +46,20 @@ public class MovieGetDTO {
         this.year = year;
     }
 
-    public List<String> getActor() {
-        return actor;
+    public List<String> getActors() {
+        return actors;
     }
 
-    public void setActor(List<String> actor) {
-        this.actor = actor;
+    public void setActors(List<String> actors) {
+        this.actors = actors;
     }
 
-    public List<String> getDirector() {
-        return director;
+    public List<String> getDirectors() {
+        return directors;
     }
 
-    public void setDirector(List<String> director) {
-        this.director = director;
+    public void setDirectors(List<String> directors) {
+        this.directors = directors;
     }
 
     public String getOriginallanguage() {

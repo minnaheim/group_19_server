@@ -43,49 +43,64 @@ public class MovieService {
      * @return List of movies matching the search criteria without duplicates
      */
     public List<Movie> getMovies(Movie searchParams) {
+        List<Movie> results = new ArrayList<>();
+
         // Check if any search parameters are provided
         if (!hasAnySearchParam(searchParams)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "At least one search parameter must be provided");
         }
 
-        // First, search locally
-        List<Movie> localMovies = movieRepository.findBySearchParams(
+        // Search local database
+        List<Movie> localResults;
+
+        localResults = movieRepository.findBySearchParamsWithLists(
                 searchParams.getTitle(),
                 searchParams.getGenre(),
                 searchParams.getYear(),
-                searchParams.getActor().isEmpty() ? null : searchParams.getActor().get(0),
-                searchParams.getDirector().isEmpty() ? null : searchParams.getDirector().get(0)
+                searchParams.getActors(),
+                searchParams.getDirectors()
         );
 
+        results.addAll(localResults);
+
         // Search in TMDb API
-        List<Movie> tmdbMovies = tmdbService.searchMovies(searchParams);
+        try {
+            List<Movie> tmdbResults = tmdbService.searchMovies(searchParams);
 
-        // Combine results and remove duplicates
-        Map<Long, Movie> uniqueMovies = new HashMap<>();
+            // Add to results, avoiding duplicates
+            Map<Long, Movie> movieMap = new HashMap<>();
 
-        // Add local movies first
-        for (Movie movie : localMovies) {
-            uniqueMovies.put(movie.getMovieId(), movie);
+            // Add local results to map
+            for (Movie movie : results) {
+                movieMap.put(movie.getMovieId(), movie);
+            }
+
+            // Add TMDb results to map, avoiding duplicates
+            for (Movie movie : tmdbResults) {
+                if (!movieMap.containsKey(movie.getMovieId())) {
+                    movieMap.put(movie.getMovieId(), movie);
+                    results.add(movie);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error searching TMDb: {}", e.getMessage());
+            // Continue with just local results if TMDb search fails
         }
 
-        // Add TMDb movies (will override local movies with same ID)
-        for (Movie movie : tmdbMovies) {
-            uniqueMovies.put(movie.getMovieId(), movie);
-        }
-
-        return new ArrayList<>(uniqueMovies.values());
+        return results;
     }
+
 
     /**
      * Helper method to check if there are any search parameters provided
      */
     private boolean hasAnySearchParam(Movie searchParams) {
-        return (searchParams.getTitle() != null && !searchParams.getTitle().isBlank()) ||
-                (searchParams.getGenre() != null && !searchParams.getGenre().isBlank()) ||
+        return (searchParams.getTitle() != null && !searchParams.getTitle().trim().isEmpty()) ||
+                (searchParams.getGenre() != null && !searchParams.getGenre().trim().isEmpty()) ||
                 searchParams.getYear() != null ||
-                (searchParams.getActor() != null && !searchParams.getActor().isEmpty()) ||
-                (searchParams.getDirector() != null && !searchParams.getDirector().isEmpty());
+                (searchParams.getActors() != null && !searchParams.getActors().isEmpty()) ||
+                (searchParams.getDirectors() != null && !searchParams.getDirectors().isEmpty());
     }
 
     /**
@@ -104,14 +119,25 @@ public class MovieService {
         if (movie == null) {
             try {
                 movie = tmdbService.getMovieDetails(movieId);
+
+                // Save to local DB for future queries
+                if (movie != null) {
+                    movieRepository.save(movie);
+                }
             } catch (Exception e) {
-                log.error("Failed to get movie from TMDb", e);
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Movie not found");
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Movie with ID " + movieId + " was not found");
             }
+        }
+
+        if (movie == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "Movie with ID " + movieId + " was not found");
         }
 
         return movie;
     }
+
 
     /**
      * Saves a movie to the local database
