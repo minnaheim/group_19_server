@@ -1,12 +1,14 @@
 package ch.uzh.ifi.hase.soprafs25.rest.dto;
 
+import java.util.List;
+
 public class MovieGetDTO {
     private long movieId;
     private String title;
     private String genre;
     private Integer year;
-    private String actor;
-    private String crew;
+    private List<String> actor;
+    private List<String> director;
     private String originallanguage;
     private String posterURL;
     private String trailerURL;
@@ -44,21 +46,20 @@ public class MovieGetDTO {
         this.year = year;
     }
 
-    public String getActor() {
+    public List<String> getActor() {
         return actor;
     }
 
-    public void setActor(String actor) {
+    public void setActor(List<String> actor) {
         this.actor = actor;
     }
 
-
-    public String getCrew() {
-        return crew;
+    public List<String> getDirector() {
+        return director;
     }
 
-    public void setCrew(String crew) {
-        this.crew = crew;
+    public void setDirector(List<String> director) {
+        this.director = director;
     }
 
     public String getOriginallanguage() {
@@ -93,5 +94,3 @@ public class MovieGetDTO {
         this.description = description;
     }
 }
-
-
