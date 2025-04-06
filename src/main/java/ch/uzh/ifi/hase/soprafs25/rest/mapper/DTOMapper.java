@@ -21,47 +21,47 @@ import org.mapstruct.factory.Mappers;
 @Mapper
 public interface DTOMapper {
 
-  DTOMapper INSTANCE = Mappers.getMapper(DTOMapper.class);
+    DTOMapper INSTANCE = Mappers.getMapper(DTOMapper.class);
 
-  
-  @Mapping(source = "username", target = "username")
-  @Mapping(source = "email", target = "email")
-  @Mapping(source = "password", target = "password")
-  User convertUserPostDTOtoEntity(UserPostDTO userPostDTO);
 
-  @Mapping(source = "userId", target = "userId")
-  @Mapping(source = "username", target = "username")
-  @Mapping(source = "token", target = "token")
-  @Mapping(source = "bio", target = "bio")
-  @Mapping(source = "favoriteGenres", target = "favoriteGenres")
-  @Mapping(source = "favoriteActors", target = "favoriteActors")
-  @Mapping(source = "favoriteDirectors", target = "favoriteDirectors")
-  @Mapping(source = "watchlist", target = "watchlist")
-  @Mapping(source = "watchedMovies", target = "watchedMovies")
-  @Mapping(source = "status", target = "status")
-  UserGetDTO convertEntityToUserGetDTO(User user);
+    @Mapping(source = "username", target = "username")
+    @Mapping(source = "email", target = "email")
+    @Mapping(source = "password", target = "password")
+    User convertUserPostDTOtoEntity(UserPostDTO userPostDTO);
 
-  @Mapping(source = "movieId", target = "movieId")
-  @Mapping(source = "title", target = "title")
-  @Mapping(source = "genre", target = "genre")
-  @Mapping(source = "year", target = "year")
-  @Mapping(source = "actor", target = "actor")
-  @Mapping(source = "crew", target = "crew")
-  @Mapping(source = "originallanguage", target = "originallanguage")
-  @Mapping(source = "trailerURL", target = "trailerURL")
-  @Mapping(source = "posterURL", target = "posterURL")
-  @Mapping(source = "description", target = "description")
-  Movie convertMovieGetDTOtoEntity(MovieGetDTO movieGetDTO);
+    @Mapping(source = "userId", target = "userId")
+    @Mapping(source = "username", target = "username")
+    @Mapping(source = "token", target = "token")
+    @Mapping(source = "bio", target = "bio")
+    @Mapping(source = "favoriteGenres", target = "favoriteGenres")
+    @Mapping(source = "favoriteActors", target = "favoriteActors")
+    @Mapping(source = "favoriteDirectors", target = "favoriteDirectors")
+    @Mapping(source = "watchlist", target = "watchlist")
+    @Mapping(source = "watchedMovies", target = "watchedMovies")
+    @Mapping(source = "status", target = "status")
+    UserGetDTO convertEntityToUserGetDTO(User user);
 
-  @Mapping(source = "movieId", target = "movieId")
-  @Mapping(source = "title", target = "title")
-  @Mapping(source = "genre", target = "genre")
-  @Mapping(source = "year", target = "year")
-  @Mapping(source = "actor", target = "actor")
-  @Mapping(source = "crew", target = "crew")
-  @Mapping(source = "originallanguage", target = "originallanguage")
-  @Mapping(source = "posterURL", target = "posterURL")
-  @Mapping(source = "trailerURL", target = "trailerURL")
-  @Mapping(source = "description", target = "description")
-  MovieGetDTO convertEntityToMovieGetDTO(Movie movie);
+    @Mapping(source = "movieId", target = "movieId")
+    @Mapping(source = "title", target = "title")
+    @Mapping(source = "genre", target = "genre")
+    @Mapping(source = "year", target = "year")
+    @Mapping(source = "actor", target = "actor")
+    @Mapping(source = "director", target = "director")
+    @Mapping(source = "originallanguage", target = "originallanguage")
+    @Mapping(source = "trailerURL", target = "trailerURL")
+    @Mapping(source = "posterURL", target = "posterURL")
+    @Mapping(source = "description", target = "description")
+    Movie convertMovieGetDTOtoEntity(MovieGetDTO movieGetDTO);
+
+    @Mapping(source = "movieId", target = "movieId")
+    @Mapping(source = "title", target = "title")
+    @Mapping(source = "genre", target = "genre")
+    @Mapping(source = "year", target = "year")
+    @Mapping(source = "actor", target = "actor")
+    @Mapping(source = "director", target = "director")
+    @Mapping(source = "originallanguage", target = "originallanguage")
+    @Mapping(source = "posterURL", target = "posterURL")
+    @Mapping(source = "trailerURL", target = "trailerURL")
+    @Mapping(source = "description", target = "description")
+    MovieGetDTO convertEntityToMovieGetDTO(Movie movie);
 }
