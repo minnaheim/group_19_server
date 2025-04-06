@@ -94,16 +94,20 @@ public class Movie implements Serializable {
         return actor;
     }
 
-    public void setActor(List<String> actor) {
-        this.actor = actor;
+    public void setActor(String actor) {
+        List<String> actorList = new ArrayList<>();
+        actorList.add(actor);
+        this.actor = actorList;
     }
 
     public List<String> getDirector() {
         return director;
     }
 
-    public void setDirector(List<String> director) {
-        this.director = director;
+    public void setDirector(String director) {
+        List<String> directorList = new ArrayList<>();
+        directorList.add(director);
+        this.director = directorList;
     }
 
     public String getOriginallanguage() {

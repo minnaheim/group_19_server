@@ -113,9 +113,9 @@ public class TMDbService {
                     builder.queryParam("with_cast", searchParams.getActor());
                 }
 
-                // crew
-                if (searchParams.getCrew() != null && !searchParams.getCrew().isEmpty()) {
-                    builder.queryParam("with_crew", searchParams.getCrew());
+                // director
+                if (searchParams.getDirector() != null && !searchParams.getDirector().isEmpty()) {
+                    builder.queryParam("with_crew", searchParams.getDirector());
                 }
 
 

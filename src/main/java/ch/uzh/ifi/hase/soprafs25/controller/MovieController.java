@@ -41,14 +41,18 @@ public class MovieController {
      * @param genre Genre to filter by
      * @param year Release year to filter by
      * @param actor Actor name to filter by
-     * @param crew Director name to filter by
+     * @param director Director name to filter by
      * @throws SearchValidationException if any parameter is invalid
      */
     private void validateSearchParams(String title, String genre, Integer year,
-                                      String actor, String crew) {
+                                      String actor, String director) {
         // Check if at least one parameter is provided
-        if (title == null && genre == null && year == null && actor == null && crew == null) {
-            throw new SearchValidationException("At least one search parameter is required");
+        if ((title == null || title.isBlank()) &&
+                (genre == null || genre.isBlank()) &&
+                year == null &&
+                (actor == null || actor.isBlank()) &&
+                (director == null || director.isBlank())) {
+            throw new SearchValidationException("At least one search parameter must be provided");
         }
 
         if (title != null && title.length() < MIN_SEARCH_TERM_LENGTH) {
@@ -123,7 +127,7 @@ public class MovieController {
             throw new SearchValidationException("Actor search term must be at least " + MIN_SEARCH_TERM_LENGTH + " characters long");
         }
 
-        if (crew != null && crew.trim().length() < MIN_SEARCH_TERM_LENGTH && !crew.trim().isEmpty()) {
+        if (director != null && director.trim().length() < MIN_SEARCH_TERM_LENGTH && !director.trim().isEmpty()) {
             throw new SearchValidationException("Director search term must be at least " + MIN_SEARCH_TERM_LENGTH + " characters long");
         }
     }
@@ -139,11 +143,11 @@ public class MovieController {
             @RequestParam(required = false) String genre,
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) String actor,
-            @RequestParam(required = false) String crew,
+            @RequestParam(required = false) String director,
             @RequestParam(required = false, defaultValue = "1") Integer page) {
 
         // Validate search parameters
-        validateSearchParams(title, genre, year, actor, crew);
+        validateSearchParams(title, genre, year, actor, director);
 
 
         // Create a movie object with search parameters
@@ -152,7 +156,7 @@ public class MovieController {
         searchParams.setGenre(genre);
         searchParams.setYear(year);
         searchParams.setActor(actor);
-        searchParams.setActor(crew);
+        searchParams.setActor(director);
 
         List<Movie> movies = movieService.getMovies(searchParams);
 
