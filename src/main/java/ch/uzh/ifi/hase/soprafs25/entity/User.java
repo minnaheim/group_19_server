@@ -59,16 +59,24 @@ public class User implements Serializable {
   @Column
   private String bio;
 
-  @Column
+  @ElementCollection
+  @CollectionTable(name = "user_favorite_genres", joinColumns = @JoinColumn(name = "user_id"))
+  @Column(name = "genre")
   private List<String> favoriteGenres;
 
-  @Column
-  private List<String> favoriteMovies;  
+  @ElementCollection
+  @CollectionTable(name = "user_favorite_movies", joinColumns = @JoinColumn(name = "user_id"))
+  @Column(name = "movie")
+  private List<String> favoriteMovies;
 
-  @Column
+  @ElementCollection
+  @CollectionTable(name = "user_favorite_actors", joinColumns = @JoinColumn(name = "user_id"))
+  @Column(name = "actor")
   private List<String> favoriteActors;
 
-  @Column
+  @ElementCollection
+  @CollectionTable(name = "user_favorite_directors", joinColumns = @JoinColumn(name = "user_id"))
+  @Column(name = "director")
   private List<String> favoriteDirectors;
   
 //   @ElementCollection
