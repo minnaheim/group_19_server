@@ -10,27 +10,23 @@ import ch.uzh.ifi.hase.soprafs25.entity.Movie;
 
 @Repository("movieRepository")
 public interface MovieRepository extends JpaRepository<Movie, Long> {
+
     Movie findByMovieId(long movieId);
 
     List<Movie> findByTitleContaining(String title);
 
     List<Movie> findByGenreContaining(String genre);
 
-    List<Movie> findByActorsContaining(List<String> actors);
-
-    List<Movie> findByDirectorsContaining(List<String> directors);
-
     List<Movie> findByYearEquals(Integer year);
 
-    @Query(value = "SELECT DISTINCT m.* FROM movie m " +
-            "LEFT JOIN movie_actors a ON m.movieId = a.movie_movieId " +
-            "LEFT JOIN movie_directors d ON m.movieId = d.movie_movieId " +
+    @Query("SELECT DISTINCT m FROM Movie m " +
+            "LEFT JOIN m.actors actor " + // <-- CHANGED: adding left join to actors
+            "LEFT JOIN m.directors director " + // <-- CHANGED: adding left join to directors
             "WHERE (:title IS NULL OR LOWER(m.title) LIKE LOWER(CONCAT('%', :title, '%'))) " +
             "AND (:genre IS NULL OR LOWER(m.genre) LIKE LOWER(CONCAT('%', :genre, '%'))) " +
             "AND (:year IS NULL OR m.year = :year) " +
-            "AND ((:actors IS NULL OR :actors IS EMPTY) OR a.actor IN (:actors)) " +
-            "AND ((:directors IS NULL OR :directors IS EMPTY) OR d.director IN (:directors))",
-            nativeQuery = true)
+            "AND ((:actors IS NULL OR :actors IS EMPTY) OR actor IN :actors) " + // <-- CHANGED: filter actor via join alias
+            "AND ((:directors IS NULL OR :directors IS EMPTY) OR director IN :directors)") // <-- CHANGED: filter director via join alias
     List<Movie> findBySearchParamsWithLists(
             @Param("title") String title,
             @Param("genre") String genre,
@@ -38,6 +34,3 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
             @Param("actors") List<String> actors,
             @Param("directors") List<String> directors);
 }
-
-
-
