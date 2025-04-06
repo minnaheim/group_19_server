@@ -22,12 +22,12 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 
     List<Movie> findByYearEquals(Integer year);
 
-    @Query("SELECT DISTINCT m FROM Movie m LEFT JOIN m.actors actor LEFT JOIN m.directors director WHERE " +
-            "(:title IS NULL OR LOWER(m.title) LIKE LOWER(CONCAT('%', :title, '%'))) AND " +
-            "(:genre IS NULL OR LOWER(m.genre) LIKE LOWER(CONCAT('%', :genre, '%'))) AND " +
-            "(:year IS NULL OR m.year = :year) AND " +
-            "(:actors IS NULL OR :actors IS EMPTY OR actor IN :actors) AND " +
-            "(:directors IS NULL OR :directors IS EMPTY OR director IN :directors)")
+    @Query("SELECT DISTINCT m FROM Movie m " +
+            "WHERE (:title IS NULL OR LOWER(m.title) LIKE LOWER(CONCAT('%', :title, '%'))) " +
+            "AND (:genre IS NULL OR LOWER(m.genre) LIKE LOWER(CONCAT('%', :genre, '%'))) " +
+            "AND (:year IS NULL OR m.year = :year) " +
+            "AND (:actors IS NULL OR :actors IS EMPTY OR EXISTS (SELECT 1 FROM m.actors actor WHERE actor IN :actors)) " +
+            "AND (:directors IS NULL OR :directors IS EMPTY OR EXISTS (SELECT 1 FROM m.directors director WHERE director IN :directors))")
     List<Movie> findBySearchParamsWithLists(
             @Param("title") String title,
             @Param("genre") String genre,
@@ -35,3 +35,4 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
             @Param("actors") List<String> actors,
             @Param("directors") List<String> directors);
 }
+
