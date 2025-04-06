@@ -1,12 +1,14 @@
 package ch.uzh.ifi.hase.soprafs25.entity;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.persistence.ElementCollection;
 
 /**
  * Internal Movie Representation
@@ -36,10 +38,12 @@ public class Movie implements Serializable {
     private Integer year;
 
     @Column
-    private String actor;
+    @ElementCollection
+    private List<String> actors = new ArrayList<>();
 
     @Column
-    private String crew;
+    @ElementCollection
+    private List<String> directors = new ArrayList<>();
 
     @Column
     private String originallanguage;
@@ -86,20 +90,28 @@ public class Movie implements Serializable {
         this.year = year;
     }
 
-    public String getActor() {
-        return actor;
+    public List<String> getActors() {
+        return actors;
     }
 
-    public void setActor(String actor) {
-        this.actor = actor;
+    public void setActorsList(List<String> actors) {
+        this.actors = actors;
     }
 
-    public String getCrew() {
-        return crew;
+    public void addActor(String actor) {
+        this.actors.add(actor);
     }
 
-    public void setCrew(String crew) {
-        this.crew = crew;
+    public List<String> getDirectors() {
+        return directors;
+    }
+
+    public void setDirectorsList(List<String> directors) {
+        this.directors = directors;
+    }
+
+    public void addDirector(String director) {
+        this.directors.add(director);
     }
 
     public String getOriginallanguage() {

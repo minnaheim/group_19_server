@@ -109,13 +109,13 @@ public class TMDbService {
                 }
 
                 // actor
-                if (searchParams.getActor() != null && !searchParams.getActor().isEmpty()) {
-                    builder.queryParam("with_cast", searchParams.getActor());
+                if (searchParams.getActors() != null && !searchParams.getActors().isEmpty()) {
+                    builder.queryParam("with_cast", searchParams.getActors());
                 }
 
-                // crew
-                if (searchParams.getCrew() != null && !searchParams.getCrew().isEmpty()) {
-                    builder.queryParam("with_crew", searchParams.getCrew());
+                // director
+                if (searchParams.getDirectors() != null && !searchParams.getDirectors().isEmpty()) {
+                    builder.queryParam("with_crew", searchParams.getDirectors());
                 }
 
 
