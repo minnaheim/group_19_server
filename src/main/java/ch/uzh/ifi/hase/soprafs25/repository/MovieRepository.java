@@ -13,17 +13,21 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
     Movie findByMovieId(long movieId);
 
     List<Movie> findByTitleContaining(String title);
+
     List<Movie> findByGenreContaining(String genre);
+
     List<Movie> findByActorsContaining(List<String> actors);
+
     List<Movie> findByDirectorsContaining(List<String> directors);
+
     List<Movie> findByYearEquals(Integer year);
 
-    @Query("SELECT m FROM Movie m WHERE " +
+    @Query("SELECT DISTINCT m FROM Movie m WHERE " +
             "(:title IS NULL OR LOWER(m.title) LIKE LOWER(CONCAT('%', :title, '%'))) AND " +
             "(:genre IS NULL OR LOWER(m.genre) LIKE LOWER(CONCAT('%', :genre, '%'))) AND " +
             "(:year IS NULL OR m.year = :year) AND " +
-            "(:actors IS NULL OR EXISTS (SELECT a FROM m.actors a WHERE a IN :actors)) AND " +
-            "(:directors IS NULL OR EXISTS (SELECT d FROM m.directors d WHERE d IN :directors))")
+            "(:actors IS NULL OR :actors IS EMPTY OR EXISTS (SELECT a FROM m.actors a WHERE a IN :actors)) AND " +
+            "(:directors IS NULL OR :directors IS EMPTY OR EXISTS (SELECT d FROM m.directors d WHERE d IN :directors))")
     List<Movie> findBySearchParamsWithLists(
             @Param("title") String title,
             @Param("genre") String genre,
