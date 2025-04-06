@@ -50,16 +50,24 @@ public class MovieGetDTO {
         return actors;
     }
 
-    public void setActors(List<String> actors) {
+    public void setActorsList(List<String> actors) {
         this.actors = actors;
+    }
+
+    public void addActor(String actor) {
+        this.actors.add(actor);
     }
 
     public List<String> getDirectors() {
         return directors;
     }
 
-    public void setDirectors(List<String> directors) {
+    public void setDirectorsList(List<String> directors) {
         this.directors = directors;
+    }
+
+    public void addDirector(String director) {
+        this.directors.add(director);
     }
 
     public String getOriginallanguage() {
