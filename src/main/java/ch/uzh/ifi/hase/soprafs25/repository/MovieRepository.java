@@ -22,12 +22,12 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 
     List<Movie> findByYearEquals(Integer year);
 
-    @Query("SELECT DISTINCT m FROM Movie m WHERE " +
+    @Query("SELECT DISTINCT m FROM Movie m LEFT JOIN m.actors actor LEFT JOIN m.directors director WHERE " +
             "(:title IS NULL OR LOWER(m.title) LIKE LOWER(CONCAT('%', :title, '%'))) AND " +
             "(:genre IS NULL OR LOWER(m.genre) LIKE LOWER(CONCAT('%', :genre, '%'))) AND " +
             "(:year IS NULL OR m.year = :year) AND " +
-            "(:actors IS NULL OR :actors IS EMPTY OR m.actors IN :actors) AND " +
-            "(:directors IS NULL OR :directors IS EMPTY OR m.directors IN :directors)")
+            "(:actors IS NULL OR :actors IS EMPTY OR actor IN :actors) AND " +
+            "(:directors IS NULL OR :directors IS EMPTY OR director IN :directors)")
     List<Movie> findBySearchParamsWithLists(
             @Param("title") String title,
             @Param("genre") String genre,
