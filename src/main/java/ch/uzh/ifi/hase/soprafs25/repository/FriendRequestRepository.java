@@ -5,7 +5,7 @@ import org.springframework.stereotype.Repository;
 
 import ch.uzh.ifi.hase.soprafs25.entity.FriendRequest;
 
-@Repository("userRepository")
+@Repository("friendRequestRepository")
 public interface FriendRequestRepository extends JpaRepository<FriendRequest, Long> {
 
 }
