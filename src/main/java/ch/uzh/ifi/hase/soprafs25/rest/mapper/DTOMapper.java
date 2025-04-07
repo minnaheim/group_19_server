@@ -29,86 +29,76 @@ import ch.uzh.ifi.hase.soprafs25.rest.dto.UserPostDTO;
 @Mapper
 public interface DTOMapper {
 
-  DTOMapper INSTANCE = Mappers.getMapper(DTOMapper.class);
+    DTOMapper INSTANCE = Mappers.getMapper(DTOMapper.class);
 
-  @Mapping(target = "bio", ignore = true)
-  @Mapping(target = "watchlist", ignore = true)
-  @Mapping(target = "watchedMovies", ignore = true)
-  @Mapping(target = "token", ignore = true)
-  @Mapping(target = "status", ignore = true)
-  @Mapping(target = "favoriteGenres", ignore = true)
-  @Mapping(target = "favoriteMovies", ignore = true)
-  @Mapping(target = "favoriteActors", ignore = true)
-  @Mapping(target = "favoriteDirectors", ignore = true)
-  @Mapping(target = "friends", ignore = true)
-  @Mapping(target = "sentFriendRequests", ignore = true)
-  @Mapping(target = "receivedFriendRequests", ignore = true)
-  @Mapping(source = "username", target = "username")
-  @Mapping(source = "email", target = "email")
-  @Mapping(source = "password", target = "password")
-  User convertUserPostDTOtoEntity(UserPostDTO userPostDTO);
+    @Mapping(source = "username", target = "username")
+    @Mapping(source = "email", target = "email")
+    @Mapping(source = "password", target = "password")
+    User convertUserPostDTOtoEntity(UserPostDTO userPostDTO);
 
-  @Mapping(source = "userId", target = "userId")
-  @Mapping(source = "username", target = "username")
-  @Mapping(source = "token", target = "token")
-  @Mapping(source = "bio", target = "bio")
-  @Mapping(source = "favoriteGenres", target = "favoriteGenres")
-  @Mapping(source = "favoriteActors", target = "favoriteActors")
-  @Mapping(source = "favoriteDirectors", target = "favoriteDirectors")
-  @Mapping(source = "watchlist", target = "watchlist")
-  @Mapping(source = "watchedMovies", target = "watchedMovies")
-  @Mapping(source = "status", target = "status")
-  UserGetDTO convertEntityToUserGetDTO(User user);
+    @Mapping(source = "userId", target = "userId")
+    @Mapping(source = "username", target = "username")
+    @Mapping(source = "token", target = "token")
+    @Mapping(source = "bio", target = "bio")
+    @Mapping(source = "favoriteGenres", target = "favoriteGenres")
+    @Mapping(source = "favoriteActors", target = "favoriteActors")
+    @Mapping(source = "favoriteDirectors", target = "favoriteDirectors")
+    @Mapping(source = "watchlist", target = "watchlist")
+    @Mapping(source = "watchedMovies", target = "watchedMovies")
+    @Mapping(source = "status", target = "status")
+    UserGetDTO convertEntityToUserGetDTO(User user);
 
-  @Mapping(source = "movieId", target = "movieId")
-  @Mapping(source = "title", target = "title")
-  @Mapping(source = "genre", target = "genre")
-  @Mapping(source = "year", target = "year")
-  @Mapping(source = "actor", target = "actor")
-  @Mapping(source = "crew", target = "crew")
-  @Mapping(source = "originallanguage", target = "originallanguage")
-  @Mapping(source = "trailerURL", target = "trailerURL")
-  @Mapping(source = "posterURL", target = "posterURL")
-  @Mapping(source = "description", target = "description")
-  Movie convertMovieGetDTOtoEntity(MovieGetDTO movieGetDTO);
 
-  @Mapping(source = "movieId", target = "movieId")
-  @Mapping(source = "title", target = "title")
-  @Mapping(source = "genre", target = "genre")
-  @Mapping(source = "year", target = "year")
-  @Mapping(source = "actor", target = "actor")
-  @Mapping(source = "crew", target = "crew")
-  @Mapping(source = "originallanguage", target = "originallanguage")
-  @Mapping(source = "posterURL", target = "posterURL")
-  @Mapping(source = "trailerURL", target = "trailerURL")
-  @Mapping(source = "description", target = "description")
-  MovieGetDTO convertEntityToMovieGetDTO(Movie movie);
+    @Mapping(source = "movieId", target = "movieId")
+    @Mapping(source = "title", target = "title")
+    @Mapping(source = "genre", target = "genre")
+    @Mapping(source = "year", target = "year")
+    @Mapping(source = "actors", target = "actors")
+    @Mapping(source = "directors", target = "directors")
+    @Mapping(source = "originallanguage", target = "originallanguage")
+    @Mapping(source = "trailerURL", target = "trailerURL")
+    @Mapping(source = "posterURL", target = "posterURL")
+    @Mapping(source = "description", target = "description")
+    Movie convertMovieGetDTOtoEntity(MovieGetDTO movieGetDTO);
 
-  @Mapping(target = "groupId", ignore = true)
-  @Mapping(target = "creator", ignore = true)
-  @Mapping(target = "members", ignore = true)
-  @Mapping(target = "moviePool", ignore = true)
-  @Mapping(source = "groupName", target = "groupName")
-  Group convertGroupPostDTOtoEntity(GroupPostDTO groupPostDTO);
+    @Mapping(source = "movieId", target = "movieId")
+    @Mapping(source = "title", target = "title")
+    @Mapping(source = "genre", target = "genre")
+    @Mapping(source = "year", target = "year")
+    @Mapping(source = "actors", target = "actors")
+    @Mapping(source = "directors", target = "directors")
+    @Mapping(source = "originallanguage", target = "originallanguage")
+    @Mapping(source = "posterURL", target = "posterURL")
+    @Mapping(source = "trailerURL", target = "trailerURL")
+    @Mapping(source = "description", target = "description")
+    MovieGetDTO convertEntityToMovieGetDTO(Movie movie);
+    
+    @Mapping(target = "groupId", ignore = true)
+    @Mapping(target = "creator", ignore = true)
+    @Mapping(target = "members", ignore = true)
+    @Mapping(target = "moviePool", ignore = true)
+    @Mapping(source = "groupName", target = "groupName")
+    Group convertGroupPostDTOtoEntity(GroupPostDTO groupPostDTO);
 
-  @Mapping(source = "groupId", target = "groupId")
-  @Mapping(source = "groupName", target = "groupName")
-  @Mapping(source = "creator.userId", target = "creatorId")
-  @Mapping(source = "members", target = "memberIds")
-  @Mapping(source = "moviePool", target = "movieIds")
-  GroupGetDTO convertEntityToGroupGetDTO(Group group);
+    @Mapping(source = "groupId", target = "groupId")
+    @Mapping(source = "groupName", target = "groupName")
+    @Mapping(source = "creator.userId", target = "creatorId")
+    @Mapping(source = "members", target = "memberIds")
+    @Mapping(source = "moviePool", target = "movieIds")
+    GroupGetDTO convertEntityToGroupGetDTO(Group group);
 
-  default List<Long> mapUsersToIds(List<User> users) {
-    if (users == null) return null;
-    return users.stream()
-               .map(User::getUserId)
-               .collect(Collectors.toList());
-  }
+    default List<Long> mapUsersToIds(List<User> users) {
+      if (users == null) return null;
+      return users.stream()
+                 .map(User::getUserId)
+                 .collect(Collectors.toList());
+    }
 
-  default List<Long> mapMoviesToIds(List<Movie> movies) {
-    if (movies == null) return null;
-    return movies.stream()
-                .map(Movie::getMovieId)
-                .collect(Collectors.toList());
-  }
+    default List<Long> mapMoviesToIds(List<Movie> movies) {
+      if (movies == null) return null;
+      return movies.stream()
+                  .map(Movie::getMovieId)
+                  .collect(Collectors.toList());
+    }
 }
+
