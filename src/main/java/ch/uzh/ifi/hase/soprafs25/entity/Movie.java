@@ -87,7 +87,6 @@ public class Movie implements Serializable {
         this.genres.add(genre);
     }
 
-
     public Integer getYear() {
         return year;
     }

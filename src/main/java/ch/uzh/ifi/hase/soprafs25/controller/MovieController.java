@@ -14,7 +14,6 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDate;
 import java.util.*;
 
-
 /**
  * Movie Controller
  * This class is responsible for handling all REST request that are related to
@@ -94,7 +93,6 @@ public class MovieController {
                 throw new SearchValidationException("Error validating genre: " + e.getMessage());
             }
         }
-
 
         if (year != null && (year < MIN_MOVIE_YEAR || year > CURRENT_YEAR + 10)) {
             throw new SearchValidationException("Year must be between " + MIN_MOVIE_YEAR + " and " + (CURRENT_YEAR + 10)); // +10 to include Pre-production announcements
