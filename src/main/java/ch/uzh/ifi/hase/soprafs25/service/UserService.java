@@ -107,13 +107,13 @@ public class UserService {
   }
 
   // for user id identification by token
-  public Long getUserIdByToken(String token) {
-    User user = userRepository.findByToken(token);
-    if (user == null) {
-        return null;
-    }
-    return user.getUserId();
-  }
+  // public Long getUserIdByToken(String token) {
+  //   User user = userRepository.findByToken(token);
+  //   if (user == null) {
+  //       return null;
+  //   }
+  //   return user.getUserId();
+  // }
   
   public User getUserByToken(String token) {
     User user = userRepository.findByToken(token);
@@ -132,4 +132,5 @@ public class UserService {
     user.setToken(null);
     userRepository.save(user);
   }
+
 }

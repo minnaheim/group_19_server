@@ -1,12 +1,20 @@
 package ch.uzh.ifi.hase.soprafs25.rest.mapper;
 
-import ch.uzh.ifi.hase.soprafs25.entity.User;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.factory.Mappers;
+
+import ch.uzh.ifi.hase.soprafs25.entity.Group;
 import ch.uzh.ifi.hase.soprafs25.entity.Movie;
+import ch.uzh.ifi.hase.soprafs25.entity.User;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.GroupGetDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.GroupPostDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.MovieGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.UserGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.UserPostDTO;
-import ch.uzh.ifi.hase.soprafs25.rest.dto.MovieGetDTO;
-import org.mapstruct.*;
-import org.mapstruct.factory.Mappers;
 
 /**
  * DTOMapper
@@ -22,7 +30,6 @@ import org.mapstruct.factory.Mappers;
 public interface DTOMapper {
 
     DTOMapper INSTANCE = Mappers.getMapper(DTOMapper.class);
-
 
     @Mapping(source = "username", target = "username")
     @Mapping(source = "email", target = "email")
@@ -40,6 +47,7 @@ public interface DTOMapper {
     @Mapping(source = "watchedMovies", target = "watchedMovies")
     @Mapping(source = "status", target = "status")
     UserGetDTO convertEntityToUserGetDTO(User user);
+
 
     @Mapping(source = "movieId", target = "movieId")
     @Mapping(source = "title", target = "title")
@@ -64,4 +72,33 @@ public interface DTOMapper {
     @Mapping(source = "trailerURL", target = "trailerURL")
     @Mapping(source = "description", target = "description")
     MovieGetDTO convertEntityToMovieGetDTO(Movie movie);
+    
+    @Mapping(target = "groupId", ignore = true)
+    @Mapping(target = "creator", ignore = true)
+    @Mapping(target = "members", ignore = true)
+    @Mapping(target = "moviePool", ignore = true)
+    @Mapping(source = "groupName", target = "groupName")
+    Group convertGroupPostDTOtoEntity(GroupPostDTO groupPostDTO);
+
+    @Mapping(source = "groupId", target = "groupId")
+    @Mapping(source = "groupName", target = "groupName")
+    @Mapping(source = "creator.userId", target = "creatorId")
+    @Mapping(source = "members", target = "memberIds")
+    @Mapping(source = "moviePool", target = "movieIds")
+    GroupGetDTO convertEntityToGroupGetDTO(Group group);
+
+    default List<Long> mapUsersToIds(List<User> users) {
+      if (users == null) return null;
+      return users.stream()
+                 .map(User::getUserId)
+                 .collect(Collectors.toList());
+    }
+
+    default List<Long> mapMoviesToIds(List<Movie> movies) {
+      if (movies == null) return null;
+      return movies.stream()
+                  .map(Movie::getMovieId)
+                  .collect(Collectors.toList());
+    }
 }
+
