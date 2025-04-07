@@ -30,14 +30,15 @@ public class GroupService {
         User creator = userRepository.findById(creatorId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Creator not found"));
 
-        if (groupName == null || groupName.trim().isEmpty()){
-            groupName = generateUniqueName();
-        }
+        validateGroupName(groupName);
+        // for creating similar/unique name
+        // if (groupName == null || groupName.trim().isEmpty()){
+        //     groupName = generateUniqueName();
+        // }
 
-        else if (groupRepository.findByGroupName(groupName) != null){
-            groupName = generateSimilarName(groupName);
-        }
-
+        // else if (groupRepository.findByGroupName(groupName) != null){
+        //     groupName = generateSimilarName(groupName);
+        // }
         Group newGroup = new Group();
         newGroup.setGroupName(groupName);
         newGroup.setCreator(creator);
@@ -47,9 +48,18 @@ public class GroupService {
 
         return groupRepository.save(newGroup);
     }
+    private void validateGroupName(String groupName) {
+        if (groupName == null || groupName.trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Group name cannot be empty");
+        }
+
+        if (groupRepository.findByGroupName(groupName) != null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This group name is already taken");
+        }
+    }
 
     private String generateUniqueName() {
-        String[] adjectives = {"Clever", "Brave", "Bright", "Happy", "Lucky", "Funny", "Beatiful", "Creative", "Modern", "Action", "Horrors", "Drama", "Comedy", "Fantasy"};
+        String[] adjectives = {"Clever", "Brave", "Bright", "Happy", "Lucky", "Funny", "Beautiful", "Creative", "Modern", "Action", "Horrors", "Drama", "Comedy", "Fantasy"};
         String[] nouns = {"Group", "Team", "Squad", "Crew", "Gang", "Party", "Guild", "MovieEnjoyers"};
         Random random = new Random();
 
@@ -73,5 +83,15 @@ public class GroupService {
         } while (groupRepository.findByGroupName(similarName) != null);
 
         return similarName;
+    }
+
+    public void deleteGroup(Long groupId, Long userId) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
+        // Check if the user is the creator of the group
+        if (!group.getCreator().getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the group creator can delete the group");
+        }
+        groupRepository.delete(group);
     }
 }
