@@ -43,7 +43,7 @@ public interface DTOMapper {
 
     @Mapping(source = "movieId", target = "movieId")
     @Mapping(source = "title", target = "title")
-    @Mapping(source = "genre", target = "genre")
+    @Mapping(source = "genres", target = "genres")
     @Mapping(source = "year", target = "year")
     @Mapping(source = "actors", target = "actors")
     @Mapping(source = "directors", target = "directors")
@@ -55,7 +55,7 @@ public interface DTOMapper {
 
     @Mapping(source = "movieId", target = "movieId")
     @Mapping(source = "title", target = "title")
-    @Mapping(source = "genre", target = "genre")
+    @Mapping(source = "genres", target = "genres")
     @Mapping(source = "year", target = "year")
     @Mapping(source = "actors", target = "actors")
     @Mapping(source = "directors", target = "directors")

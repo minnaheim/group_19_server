@@ -18,7 +18,10 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class TMDbService {
@@ -27,6 +30,54 @@ public class TMDbService {
     private final TMDbConfig tmdbConfig;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
+
+    // Map to convert genre IDs to strings
+    private static final Map<Integer, String> GENRE_ID_TO_NAME = new HashMap<>();
+    static {
+        GENRE_ID_TO_NAME.put(28, "Action");
+        GENRE_ID_TO_NAME.put(12, "Adventure");
+        GENRE_ID_TO_NAME.put(16, "Animation");
+        GENRE_ID_TO_NAME.put(35, "Comedy");
+        GENRE_ID_TO_NAME.put(80, "Crime");
+        GENRE_ID_TO_NAME.put(99, "Documentary");
+        GENRE_ID_TO_NAME.put(18, "Drama");
+        GENRE_ID_TO_NAME.put(10751, "Family");
+        GENRE_ID_TO_NAME.put(14, "Fantasy");
+        GENRE_ID_TO_NAME.put(36, "History");
+        GENRE_ID_TO_NAME.put(27, "Horror");
+        GENRE_ID_TO_NAME.put(10402, "Music");
+        GENRE_ID_TO_NAME.put(9648, "Mystery");
+        GENRE_ID_TO_NAME.put(10749, "Romance");
+        GENRE_ID_TO_NAME.put(878, "Science Fiction");
+        GENRE_ID_TO_NAME.put(10770, "TV Movie");
+        GENRE_ID_TO_NAME.put(53, "Thriller");
+        GENRE_ID_TO_NAME.put(10752, "War");
+        GENRE_ID_TO_NAME.put(37, "Western");
+    }
+
+    // Map to convert genre names to IDs
+    private static final Map<String, String> GENRE_NAME_TO_ID = new HashMap<>();
+    static {
+        GENRE_NAME_TO_ID.put("Action", "28");
+        GENRE_NAME_TO_ID.put("Adventure", "12");
+        GENRE_NAME_TO_ID.put("Animation", "16");
+        GENRE_NAME_TO_ID.put("Comedy", "35");
+        GENRE_NAME_TO_ID.put("Crime", "80");
+        GENRE_NAME_TO_ID.put("Documentary", "99");
+        GENRE_NAME_TO_ID.put("Drama", "18");
+        GENRE_NAME_TO_ID.put("Family", "10751");
+        GENRE_NAME_TO_ID.put("Fantasy", "14");
+        GENRE_NAME_TO_ID.put("History", "36");
+        GENRE_NAME_TO_ID.put("Horror", "27");
+        GENRE_NAME_TO_ID.put("Music", "10402");
+        GENRE_NAME_TO_ID.put("Mystery", "9648");
+        GENRE_NAME_TO_ID.put("Romance", "10749");
+        GENRE_NAME_TO_ID.put("Science Fiction", "878");
+        GENRE_NAME_TO_ID.put("TV Movie", "10770");
+        GENRE_NAME_TO_ID.put("Thriller", "53");
+        GENRE_NAME_TO_ID.put("War", "10752");
+        GENRE_NAME_TO_ID.put("Western", "37");
+    }
 
     @Autowired
     public TMDbService(TMDbConfig tmdbConfig, RestTemplate restTemplate) {
@@ -78,14 +129,6 @@ public class TMDbService {
                     List<Movie> movies = new ArrayList<>();
                     for (JsonNode movieNode : results) {
                         Movie movie = mapTMDbMovieToEntity(movieNode);
-
-                        // Apply genre filter if specified
-                        if (searchParams.getGenre() != null && !searchParams.getGenre().isEmpty() && movie.getGenre() != null) {
-                            if (!movie.getGenre().toLowerCase().contains(searchParams.getGenre().toLowerCase())) {
-                                continue;
-                            }
-                        }
-
                         movies.add(movie);
                     }
 
@@ -104,19 +147,33 @@ public class TMDbService {
                 }
 
                 // genre
-                if (searchParams.getGenre() != null && !searchParams.getGenre().isEmpty()) {
-                    builder.queryParam("with_genres", searchParams.getGenre());
+                if (searchParams.getGenres() != null && !searchParams.getGenres().isEmpty()) {
+                    // Convert genre names to IDs and join with comma
+                    String genreIds = searchParams.getGenres().stream()
+                            .map(genre -> GENRE_NAME_TO_ID.getOrDefault(genre, ""))
+                            .filter(id -> !id.isEmpty())
+                            .collect(Collectors.joining(","));
+
+                    if (!genreIds.isEmpty()) {
+                        builder.queryParam("with_genres", genreIds);
+                    }
                 }
+
 
                 // actor
                 if (searchParams.getActors() != null && !searchParams.getActors().isEmpty()) {
                     builder.queryParam("with_cast", searchParams.getActors());
                 }
+                // TODO: implement actor search with person IDs
+                // This would require additional API calls to convert actor names to IDs
+
 
                 // director
                 if (searchParams.getDirectors() != null && !searchParams.getDirectors().isEmpty()) {
                     builder.queryParam("with_crew", searchParams.getDirectors());
                 }
+                // TODO: implement director search with person IDs
+                // This would require additional API calls to convert director names to IDs
 
 
                 // Setup authentication headers
@@ -142,12 +199,13 @@ public class TMDbService {
                     for (JsonNode movieNode : results) {
                         Movie movie = mapTMDbMovieToEntity(movieNode);
 
-                        // Apply genre filter if specified
-                        if (searchParams.getGenre() != null && !searchParams.getGenre().isEmpty() && movie.getGenre() != null) {
-                            if (!movie.getGenre().toLowerCase().contains(searchParams.getGenre().toLowerCase())) {
+                        // ToDo, analyse whether filters need to be applied here
+                        /*if (searchParams.getGenres() != null && !searchParams.getGenres().isEmpty() && movie.getGenres() != null) {
+                            if (!movie.getGenres().contains(searchParams.getGenres())) {
                                 continue;
                             }
                         }
+                        */
 
                         movies.add(movie);
                     }
@@ -257,48 +315,63 @@ public class TMDbService {
      * Maps TMDb API response to Movie entity
      */
     private Movie mapTMDbMovieToEntity(JsonNode movieData) {
-        Movie movie = new Movie();
+        try {
+            Movie movie = new Movie();
 
-        movie.setMovieId(movieData.path("id").asLong());
-        movie.setTitle(movieData.path("title").asText());
-        movie.setDescription(movieData.path("overview").asText());
+            movie.setMovieId(movieData.path("id").asLong());
+            movie.setTitle(movieData.path("title").asText());
+            movie.setDescription(movieData.path("overview").asText());
 
-        // Extract release year from release_date (YYYY-MM-DD)
-        String releaseDate = movieData.path("release_date").asText();
-        if (releaseDate != null && !releaseDate.isEmpty()) {
-            try {
-                LocalDate date = LocalDate.parse(releaseDate, DateTimeFormatter.ISO_LOCAL_DATE);
-                movie.setYear(date.getYear());
-            } catch (DateTimeParseException e) {
-                log.warn("Could not parse release date: {}", releaseDate);
-            }
-        }
-
-        // Extract genre names from genre_ids
-        if (movieData.has("genre_ids") && movieData.path("genre_ids").isArray()) {
-            StringBuilder genreNames = new StringBuilder();
-            JsonNode genreIds = movieData.path("genre_ids");
-
-            for (JsonNode genreId : genreIds) {
-                // Here we would ideally map genre IDs to names, but for simplicity
-                // we'll just store the IDs as a comma-separated string
-                if (genreNames.length() > 0) {
-                    genreNames.append(", ");
+            // Extract release year from release_date (YYYY-MM-DD)
+            String releaseDate = movieData.path("release_date").asText();
+            if (releaseDate != null && !releaseDate.isEmpty()) {
+                try {
+                    LocalDate date = LocalDate.parse(releaseDate, DateTimeFormatter.ISO_LOCAL_DATE);
+                    movie.setYear(date.getYear());
+                } catch (DateTimeParseException e) {
+                    log.warn("Could not parse release date: {}", releaseDate);
                 }
-                genreNames.append(genreId.asText());
             }
-            movie.setGenre(genreNames.toString());
+
+            // Convert genre IDs to genre names
+            JsonNode genreIdsNode = movieData.path("genre_ids");
+            if (genreIdsNode.isArray()) {
+                for (JsonNode genreIdNode : genreIdsNode) {
+                    int genreId = genreIdNode.asInt();
+                    String genreName = GENRE_ID_TO_NAME.getOrDefault(genreId, "Unknown");
+                    movie.addGenre(genreName);
+                }
+            } else {
+                // For other endpoints not yet used but kept for future usages (not delete as else condition should never be true anyways)
+                // ToDo delete if not needed
+                JsonNode genresNode = movieData.path("genres");
+                if (genresNode.isArray()) {
+                    for (JsonNode genreNode : genresNode) {
+                        int genreId = genreNode.path("id").asInt();
+                        String genreName = genreNode.path("name").asText();
+                        // If name is provided directly, use it; otherwise look up in our map
+                        if (genreName == null || genreName.isEmpty()) {
+                            genreName = GENRE_ID_TO_NAME.getOrDefault(genreId, "Unknown");
+                        }
+                        movie.addGenre(genreName);
+                    }
+                }
+            }
+
+            // Set poster URL if available
+            String posterPath = movieData.path("poster_path").asText(null);
+            if (posterPath != null && !posterPath.isEmpty()) {
+                movie.setPosterURL("https://image.tmdb.org/t/p/w500" + posterPath);
+            }
+
+            // Original language as the language
+            movie.setOriginallanguage(movieData.path("original_language").asText());
+
+            return movie;
         }
-
-        // Set poster URL if available
-        String posterPath = movieData.path("poster_path").asText(null);
-        if (posterPath != null && !posterPath.isEmpty()) {
-            movie.setPosterURL("https://image.tmdb.org/t/p/w500" + posterPath);
+        catch (Exception e) {
+            log.error("Error mapping TMDb movie to entity: {}", e.getMessage());
+            return null;
         }
-
-        // Original language as the language
-        movie.setOriginallanguage(movieData.path("original_language").asText());
-
-        return movie;
     }
 }

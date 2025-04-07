@@ -5,7 +5,7 @@ import java.util.List;
 public class MovieGetDTO {
     private long movieId;
     private String title;
-    private String genre;
+    private List<String> genres;
     private Integer year;
     private List<String> actors;
     private List<String> directors;
@@ -30,12 +30,12 @@ public class MovieGetDTO {
         this.title = title;
     }
 
-    public String getGenre() {
-        return genre;
+    public List<String> getGenres() {
+        return genres;
     }
 
-    public void setGenre(String genre) {
-        this.genre = genre;
+    public void setGenres(List<String> genres) {
+        this.genres = genres;
     }
 
     public Integer getYear() {

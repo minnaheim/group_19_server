@@ -32,7 +32,8 @@ public class Movie implements Serializable {
     private String title;
 
     @Column
-    private String genre;
+    @ElementCollection
+    private List<String> genres = new ArrayList<>();
 
     @Column
     private Integer year;
@@ -74,13 +75,18 @@ public class Movie implements Serializable {
         this.title = title;
     }
 
-    public String getGenre() {
-        return genre;
+    public List<String> getGenres() {
+        return genres;
     }
 
-    public void setGenre(String genre) {
-        this.genre = genre;
+    public void setGenres(List<String> genres) {
+        this.genres = genres;
     }
+
+    public void addGenre(String genre) {
+        this.genres.add(genre);
+    }
+
 
     public Integer getYear() {
         return year;
