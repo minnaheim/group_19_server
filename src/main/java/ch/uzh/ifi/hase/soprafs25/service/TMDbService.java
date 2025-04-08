@@ -557,7 +557,9 @@ public class TMDbService {
             }
 
             // Original language as the language
-            movie.setOriginallanguage(movieData.path("original_language").asText());
+            String languageCode = movieData.path("original_language").asText();
+            String languageName = LanguageID_TO_LanguageNAME.getOrDefault(languageCode, languageCode);
+            movie.setOriginallanguage(languageName);
 
             return movie;
         }
