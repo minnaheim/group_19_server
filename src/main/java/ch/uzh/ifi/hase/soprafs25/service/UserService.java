@@ -123,6 +123,11 @@ public class UserService {
     return user;
   }
   
+  public User getUserById(Long userId) {
+    return userRepository.findById(userId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+  }
+  
   public void logoutUser(String token) {
     User user = userRepository.findByToken(token);
     if (user == null) {
@@ -133,4 +138,55 @@ public class UserService {
     userRepository.save(user);
   }
 
+  
+  /**
+   * Checks if the given token belongs to the specified user
+   */
+  public void checkUserToken(Long userId, String token) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+    
+    // Check if the token is valid for this user
+    if (user.getToken() == null || !user.getToken().equals(token)) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token for this user");
+    }
+  }
+  
+  /**
+   * Updates a user's information
+   */
+  public User updateUser(Long userId, User updatedUser) {
+    User existingUser = userRepository.findById(userId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+    
+    // Update fields if provided
+    if (updatedUser.getUsername() != null) {
+      // Check if the new username is available (unless it's the same as the current one)
+      if (!existingUser.getUsername().equals(updatedUser.getUsername()) && 
+          userRepository.findByUsername(updatedUser.getUsername()) != null) {
+        throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already taken");
+      }
+      existingUser.setUsername(updatedUser.getUsername());
+    }
+    
+    if (updatedUser.getEmail() != null) {
+      // Check if the new email is available (unless it's the same as the current one)
+      if (!existingUser.getEmail().equals(updatedUser.getEmail()) && 
+          userRepository.findByEmail(updatedUser.getEmail()) != null) {
+        throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already taken");
+      }
+      existingUser.setEmail(updatedUser.getEmail());
+    }
+    
+    if (updatedUser.getPassword() != null) {
+      existingUser.setPassword(updatedUser.getPassword());
+    }
+    
+    if (updatedUser.getBio() != null) {
+      existingUser.setBio(updatedUser.getBio());
+    }
+    
+    // Save and return the updated user
+    return userRepository.save(existingUser);
+  }
 }

@@ -44,9 +44,16 @@ public class UserMovieController {
     public List<MovieGetDTO> addToWatchlist(
             @PathVariable("userId") Long userId,
             @PathVariable("movieId") Long movieId,
-            @RequestParam String token) {
+            @RequestParam(required = false) String token,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
         
-        List<Movie> updatedWatchlist = userMovieService.addToWatchlist(userId, movieId, token);
+        // Extract token from Authorization header if present
+        String effectiveToken = token;
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            effectiveToken = authHeader.substring(7);
+        }
+        
+        List<Movie> updatedWatchlist = userMovieService.addToWatchlist(userId, movieId, effectiveToken);
         return convertMovieListToDTOList(updatedWatchlist);
     }
     
@@ -59,9 +66,16 @@ public class UserMovieController {
     public List<MovieGetDTO> removeFromWatchlist(
             @PathVariable("userId") Long userId,
             @PathVariable("movieId") Long movieId,
-            @RequestParam String token) {
+            @RequestParam(required = false) String token,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
         
-        List<Movie> updatedWatchlist = userMovieService.removeFromWatchlist(userId, movieId, token);
+        // Extract token from Authorization header if present
+        String effectiveToken = token;
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            effectiveToken = authHeader.substring(7);
+        }
+        
+        List<Movie> updatedWatchlist = userMovieService.removeFromWatchlist(userId, movieId, effectiveToken);
         return convertMovieListToDTOList(updatedWatchlist);
     }
     
@@ -85,9 +99,16 @@ public class UserMovieController {
     public List<MovieGetDTO> addToWatchedMovies(
             @PathVariable("userId") Long userId,
             @PathVariable("movieId") Long movieId,
-            @RequestParam String token) {
+            @RequestParam(required = false) String token,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
         
-        List<Movie> updatedWatchedMovies = userMovieService.addToWatchedMovies(userId, movieId, token);
+        // Extract token from Authorization header if present
+        String effectiveToken = token;
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            effectiveToken = authHeader.substring(7);
+        }
+        
+        List<Movie> updatedWatchedMovies = userMovieService.addToWatchedMovies(userId, movieId, effectiveToken);
         return convertMovieListToDTOList(updatedWatchedMovies);
     }
     
@@ -100,9 +121,16 @@ public class UserMovieController {
     public List<MovieGetDTO> removeFromWatchedMovies(
             @PathVariable("userId") Long userId,
             @PathVariable("movieId") Long movieId,
-            @RequestParam String token) {
+            @RequestParam(required = false) String token,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
         
-        List<Movie> updatedWatchedMovies = userMovieService.removeFromWatchedMovies(userId, movieId, token);
+        // Extract token from Authorization header if present
+        String effectiveToken = token;
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            effectiveToken = authHeader.substring(7);
+        }
+        
+        List<Movie> updatedWatchedMovies = userMovieService.removeFromWatchedMovies(userId, movieId, effectiveToken);
         return convertMovieListToDTOList(updatedWatchedMovies);
     }
     
