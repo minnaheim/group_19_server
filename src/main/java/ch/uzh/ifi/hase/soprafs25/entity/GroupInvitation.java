@@ -1,29 +1,30 @@
 package ch.uzh.ifi.hase.soprafs25.entity;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "FRIEND_REQUEST")
-public class FriendRequest {
+@Table(name = "GROUP_INVITATION")
+public class GroupInvitation implements Serializable {
 
     @Id
     @GeneratedValue
-    private Long requestId;
+    private Long invitationId;
 
     @ManyToOne
-    @JoinColumn(name = "sender_id", nullable = false)
+    private Group group;
+
+    @ManyToOne
     private User sender;
 
     @ManyToOne
-    @JoinColumn(name = "receiver_id", nullable = false)
     private User receiver;
 
     @Column(nullable = false)
@@ -33,20 +34,22 @@ public class FriendRequest {
     private LocalDateTime responseTime;
 
     @Column(nullable = false)
-    // by default set it to false after sending
-    private boolean accepted = false;
+    private boolean accepted;
 
-    // set creation time when FriendRequest is initialized
-    public FriendRequest(){
-        this.creationTime = LocalDateTime.now();
+    public Long getInvitationId() {
+        return invitationId;
     }
 
-    public Long getRequestId() {
-        return requestId;
+    public void setInvitationId(Long invitationId) {
+        this.invitationId = invitationId;
     }
 
-    public void setRequestId(Long requestId) {
-        this.requestId = requestId;
+    public Group getGroup() {
+        return group;
+    }
+
+    public void setGroup(Group group) {
+        this.group = group;
     }
 
     public User getSender() {
@@ -87,8 +90,5 @@ public class FriendRequest {
 
     public void setAccepted(boolean accepted) {
         this.accepted = accepted;
-        this.responseTime = LocalDateTime.now();
     }
-    
-    
-}
+} 
