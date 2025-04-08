@@ -556,7 +556,7 @@ public class TMDbService {
                 movie.setPosterURL("https://image.tmdb.org/t/p/w500" + posterPath);
             }
 
-            // Original language as the language
+            // Original language as the language using LanguageID_TO_LanguageNAME
             String languageCode = movieData.path("original_language").asText();
             String languageName = LanguageID_TO_LanguageNAME.getOrDefault(languageCode, languageCode);
             movie.setOriginallanguage(languageName);
