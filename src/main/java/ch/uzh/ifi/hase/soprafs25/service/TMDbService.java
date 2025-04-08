@@ -143,7 +143,7 @@ public class TMDbService {
                 // Add search parameters if available
                 // years
                 if (searchParams.getYear() != null) {
-                    builder.queryParam("year", searchParams.getYear());
+                    builder.queryParam("primary_release_year", searchParams.getYear());
                 }
 
                 // genre
