@@ -45,18 +45,12 @@ public class MovieService {
     public List<Movie> getMovies(Movie searchParams) {
         List<Movie> results = new ArrayList<>();
 
-        // Check if any search parameters are provided
-        if (!hasAnySearchParam(searchParams)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "At least one search parameter must be provided");
-        }
-
         // Search local database
         List<Movie> localResults;
 
         localResults = movieRepository.findBySearchParamsWithLists(
                 searchParams.getTitle(),
-                searchParams.getGenre(),
+                searchParams.getGenres(),
                 searchParams.getYear(),
                 searchParams.getActors(),
                 searchParams.getDirectors()
@@ -89,18 +83,6 @@ public class MovieService {
         }
 
         return results;
-    }
-
-
-    /**
-     * Helper method to check if there are any search parameters provided
-     */
-    private boolean hasAnySearchParam(Movie searchParams) {
-        return (searchParams.getTitle() != null && !searchParams.getTitle().trim().isEmpty()) ||
-                (searchParams.getGenre() != null && !searchParams.getGenre().trim().isEmpty()) ||
-                searchParams.getYear() != null ||
-                (searchParams.getActors() != null && !searchParams.getActors().isEmpty()) ||
-                (searchParams.getDirectors() != null && !searchParams.getDirectors().isEmpty());
     }
 
     /**

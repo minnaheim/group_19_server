@@ -48,10 +48,9 @@ public interface DTOMapper {
     @Mapping(source = "status", target = "status")
     UserGetDTO convertEntityToUserGetDTO(User user);
 
-
     @Mapping(source = "movieId", target = "movieId")
     @Mapping(source = "title", target = "title")
-    @Mapping(source = "genre", target = "genre")
+    @Mapping(source = "genres", target = "genres")
     @Mapping(source = "year", target = "year")
     @Mapping(source = "actors", target = "actors")
     @Mapping(source = "directors", target = "directors")
@@ -63,7 +62,7 @@ public interface DTOMapper {
 
     @Mapping(source = "movieId", target = "movieId")
     @Mapping(source = "title", target = "title")
-    @Mapping(source = "genre", target = "genre")
+    @Mapping(source = "genres", target = "genres")
     @Mapping(source = "year", target = "year")
     @Mapping(source = "actors", target = "actors")
     @Mapping(source = "directors", target = "directors")
@@ -72,7 +71,7 @@ public interface DTOMapper {
     @Mapping(source = "trailerURL", target = "trailerURL")
     @Mapping(source = "description", target = "description")
     MovieGetDTO convertEntityToMovieGetDTO(Movie movie);
-    
+
     @Mapping(target = "groupId", ignore = true)
     @Mapping(target = "creator", ignore = true)
     @Mapping(target = "members", ignore = true)
@@ -101,4 +100,3 @@ public interface DTOMapper {
                   .collect(Collectors.toList());
     }
 }
-

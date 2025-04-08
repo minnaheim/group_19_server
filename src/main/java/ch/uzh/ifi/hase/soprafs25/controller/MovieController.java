@@ -14,7 +14,6 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDate;
 import java.util.*;
 
-
 /**
  * Movie Controller
  * This class is responsible for handling all REST request that are related to
@@ -38,22 +37,22 @@ public class MovieController {
      * Validates the search parameters
      *
      * @param title Search term for movie title
-     * @param genre Genre to filter by
+     * @param genres Genre to filter by
      * @param year Release year to filter by
      * @param actors Actor name to filter by
      * @param directors Director name to filter by
      * @throws SearchValidationException if any parameter is invalid
      */
-    private void validateSearchParams(String title, String genre, Integer year,
+    private void validateSearchParams(String title, List<String> genres, Integer year,
                                       List<String> actors, List<String> directors) {
         // Check if at least one parameter is provided
         boolean isTitleBlank = (title == null || title.isBlank());
-        boolean isGenreBlank = (genre == null || genre.isBlank());
+        boolean isGenreEmpty = (genres == null || genres.stream().allMatch(item -> item == null || item.trim().isEmpty()));
         boolean isYearNull = (year == null);
         boolean isActorsEmpty = (actors == null || actors.stream().allMatch(item -> item == null || item.trim().isEmpty()));
         boolean isDirectorsEmpty = (directors == null || directors.stream().allMatch(item -> item == null || item.trim().isEmpty()));
 
-        if (isTitleBlank && isGenreBlank && isYearNull && isActorsEmpty && isDirectorsEmpty) {
+        if (isTitleBlank && isGenreEmpty && isYearNull && isActorsEmpty && isDirectorsEmpty) {
             throw new SearchValidationException("At least one search parameter must be provided");
         }
 
@@ -62,57 +61,31 @@ public class MovieController {
         }
 
         //Validate genre if provided
-        if (genre != null) {
+        if (genres != null && !genres.isEmpty()) {
             try {
-                // Map of genre names to genre IDs
-                Map<String, String> genreNameToId = Map.ofEntries(
-                        Map.entry("Action", "28"),
-                        Map.entry("Adventure", "12"),
-                        Map.entry("Animation", "16"),
-                        Map.entry("Comedy", "35"),
-                        Map.entry("Crime", "80"),
-                        Map.entry("Documentary", "99"),
-                        Map.entry("Drama", "18"),
-                        Map.entry("Family", "10751"),
-                        Map.entry("Fantasy", "14"),
-                        Map.entry("History", "36"),
-                        Map.entry("Horror", "27"),
-                        Map.entry("Music", "10402"),
-                        Map.entry("Mystery", "9648"),
-                        Map.entry("Romance", "10749"),
-                        Map.entry("Science Fiction", "878"),
-                        Map.entry("TV Movie", "10770"),
-                        Map.entry("Thriller", "53"),
-                        Map.entry("War", "10752"),
-                        Map.entry("Western", "37")
+                // Set of valid genre names
+                Set<String> validGenreNames = Set.of(
+                        "Action", "Adventure", "Animation", "Comedy", "Crime",
+                        "Documentary", "Drama", "Family", "Fantasy", "History",
+                        "Horror", "Music", "Mystery", "Romance", "Science Fiction",
+                        "TV Movie", "Thriller", "War", "Western"
                 );
 
-                // Get the set of valid genre IDs
-                Set<String> validGenreIds = new HashSet<>(genreNameToId.values());
-
-                // Handle comma-separated genres (could be IDs or names)
-                String[] genres = genre.split(",\\s*");
-                for (int i = 0; i < genres.length; i++) {
-                    String input = genres[i].trim();
-
-                    // Check if the input is a valid genre ID
-                    if (validGenreIds.contains(input)) {
-                        continue; // Valid genre ID, nothing to convert
+                // Validate each genre in the list
+                for (String genre : genres) {
+                    if (genre == null) {
+                        throw new SearchValidationException("Genre cannot be null");
                     }
 
-                    // Check if the input is a valid genre name
-                    String genreId = genreNameToId.get(input);
-                    if (genreId != null) {
-                        // Replace the genre name with its corresponding ID
-                        genres[i] = genreId;
-                    } else {
-                        throw new SearchValidationException("Invalid genre: " + input);
+                    String trimmedGenre = genre.trim();
+                    if (trimmedGenre.isEmpty()) {
+                        throw new SearchValidationException("Genre cannot be empty");
+                    }
+
+                    if (!validGenreNames.contains(trimmedGenre)) {
+                        throw new SearchValidationException("Invalid genre: " + trimmedGenre);
                     }
                 }
-
-                // Join the genres back together (now all as IDs)
-                genre = String.join(",", genres);
-
             } catch (Exception e) {
                 if (e instanceof SearchValidationException) {
                     throw e;
@@ -150,20 +123,20 @@ public class MovieController {
     @ResponseBody
     public List<MovieGetDTO> getMovies(
             @RequestParam(required = false) String title,
-            @RequestParam(required = false) String genre,
+            @RequestParam(required = false) List<String> genres,
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) List<String> actors,
             @RequestParam(required = false) List<String> directors,
             @RequestParam(required = false, defaultValue = "1") Integer page) {
 
         // Validate search parameters
-        validateSearchParams(title, genre, year, actors, directors);
+        validateSearchParams(title, genres, year, actors, directors);
 
 
         // Create a movie object with search parameters
         Movie searchParams = new Movie();
         searchParams.setTitle(title);
-        searchParams.setGenre(genre);
+        searchParams.setGenres(genres);
         searchParams.setYear(year);
         searchParams.setActorsList(actors);
         searchParams.setDirectorsList(directors);

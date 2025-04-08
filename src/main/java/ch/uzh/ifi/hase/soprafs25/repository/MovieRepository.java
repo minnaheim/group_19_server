@@ -16,42 +16,41 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 
     List<Movie> findByTitleContaining(String title);
 
-    List<Movie> findByGenreContaining(String genre);
-
     List<Movie> findByYearEquals(Integer year);
 
     @Query("SELECT DISTINCT m FROM Movie m WHERE " +
             "(:title IS NULL OR LOWER(m.title) LIKE LOWER(CONCAT('%', :title, '%'))) AND " +
-            "(:genre IS NULL OR LOWER(m.genre) LIKE LOWER(CONCAT('%', :genre, '%'))) AND " +
             "(:year IS NULL OR m.year = :year)")
     List<Movie> findByBasicSearchParams(
             @Param("title") String title,
-            @Param("genre") String genre,
             @Param("year") Integer year);
 
     // The filtering logic will return any movie that contains at least one actor or one director from the provided lists.
     /*
     * How it works:
     * 1. It calls the basic search method findByBasicSearchParams to get initial movies
-    *    filtered by title, genre, and year.
-    * 2. If the provided actors or directors lists are null or empty, the method returns
+    *    filtered by title, genre, and year. If only genres are passed (e.g., `["Action", "Adventure", "Drama"]`)
+    *    and both `title` and `year` are null, the `findByBasicSearchParams(title, year)` call will NOT return an
+    *    empty list. Instead, it will return ALL movies from the database.
+    * 2. If the provided actors or directors, genres lists are null or empty, the method returns
     *    the basic results without further filtering.
-    * 3. If a list of actors is provided, it filters the result to only include movies where
-    *    the movie's actors list contains at least one element from the provided actors list.
-    * 4. Similarly, if a list of directors is provided, it filters the result to only include movies where
-    *    the movie's directors list contains at least one element from the provided directors list.
-    *
-    * In answer to your question: Yes, you can search via multiple actors or multiple directors.
-    * The filtering logic uses anyMatch, which will return any movie that contains at least one
-    * actor or director from the provided lists.
+    * 3. If a list of actors/directors/genres is provided, it filters the result to only include movies where
+    *    the movie's actors/directors/genres list contains at least one element from the provided actors list.
     */
 
-    default List<Movie> findBySearchParamsWithLists(String title, String genre, Integer year,
+    default List<Movie> findBySearchParamsWithLists(String title, List<String> genres, Integer year,
                                                     List<String> actors, List<String> directors) {
-        List<Movie> results = findByBasicSearchParams(title, genre, year);
+        List<Movie> results = findByBasicSearchParams(title, year);
 
-        if ((actors == null || actors.isEmpty()) && (directors == null || directors.isEmpty())) {
+        if ((genres == null || genres.isEmpty()) && (actors == null || actors.isEmpty()) && (directors == null || directors.isEmpty())) {
             return results;
+        }
+
+        if (genres != null && !genres.isEmpty()) {
+            results = results.stream()
+                    .filter(movie -> movie.getGenres() != null &&
+                            movie.getGenres().stream().anyMatch(genres::contains))
+                    .collect(Collectors.toList());
         }
 
         if (actors != null && !actors.isEmpty()) {
