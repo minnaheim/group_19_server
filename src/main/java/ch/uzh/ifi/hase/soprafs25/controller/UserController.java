@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -36,7 +35,6 @@ public class UserController {
 
   // @GetMapping("/users")
   // @ResponseStatus(HttpStatus.OK)
-  // @ResponseBody
   // public List<UserGetDTO> getAllUsers() {
   //   // fetch all users in the internal representation
   //   List<User> users = userService.getUsers();
@@ -53,7 +51,6 @@ public class UserController {
 
   @PostMapping("/register")
   @ResponseStatus(HttpStatus.CREATED)
-  @ResponseBody
   public UserGetDTO createUser(@RequestBody UserPostDTO userPostDTO) {
     // convert API user to internal representation
     User userInput = DTOMapper.INSTANCE.convertUserPostDTOtoEntity(userPostDTO);
@@ -68,7 +65,6 @@ public class UserController {
 
   @PostMapping("/login")
   @ResponseStatus(HttpStatus.OK)
-  @ResponseBody
   public UserGetDTO loginUser(@RequestBody UserPostDTO userPostDTO) {
     User user = userService.loginUser(userPostDTO.getUsername(), userPostDTO.getPassword());
     return DTOMapper.INSTANCE.convertEntityToUserGetDTO(user);
@@ -76,14 +72,12 @@ public class UserController {
   
   @PostMapping("/logout")
   @ResponseStatus(HttpStatus.OK)
-  @ResponseBody
   public void logoutUser(@RequestParam String token) {
     userService.logoutUser(token);
   }
   
   @GetMapping("/session")
   @ResponseStatus(HttpStatus.OK)
-  @ResponseBody
   public UserGetDTO validateSession(@RequestParam String token) {
     User user = userService.getUserByToken(token);
     return DTOMapper.INSTANCE.convertEntityToUserGetDTO(user);
@@ -91,14 +85,12 @@ public class UserController {
 
   @GetMapping("/check/username")
   @ResponseStatus(HttpStatus.OK)
-  @ResponseBody
   public boolean checkUsernameAvailability(@RequestParam String username) {
     return userService.isUsernameAvailable(username);
   }
 
   @GetMapping("/check/email")
   @ResponseStatus(HttpStatus.OK)
-  @ResponseBody
   public boolean checkEmailAvailability(@RequestParam String email) {
     return userService.isEmailAvailable(email);
   }
@@ -108,7 +100,6 @@ public class UserController {
    */
   @GetMapping("/users/{userId}/profile")
   @ResponseStatus(HttpStatus.OK)
-  @ResponseBody
   public UserGetDTO getUserProfile(@PathVariable("userId") Long userId) {
     User user = userService.getUserById(userId);
     return DTOMapper.INSTANCE.convertEntityToUserGetDTO(user);
@@ -119,7 +110,6 @@ public class UserController {
    */
   @PutMapping("/users/{userId}/profile")
   @ResponseStatus(HttpStatus.OK)
-  @ResponseBody
   public UserGetDTO updateUserProfile(
         @PathVariable("userId") Long userId,
         @RequestBody UserPostDTO userPostDTO,

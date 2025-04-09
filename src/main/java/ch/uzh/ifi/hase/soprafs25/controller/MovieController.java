@@ -120,7 +120,6 @@ public class MovieController {
      */
     @GetMapping("/movies")
     @ResponseStatus(HttpStatus.OK)
-    @ResponseBody
     public List<MovieGetDTO> getMovies(
             @RequestParam(required = false) String title,
             @RequestParam(required = false) List<String> genres,
@@ -159,7 +158,6 @@ public class MovieController {
 
     @GetMapping("/movies/{movieId}")
     @ResponseStatus(HttpStatus.OK)
-    @ResponseBody
     public MovieGetDTO getMovieById(@PathVariable long movieId) {
         Movie movie = movieService.getMovieById(movieId);
         return DTOMapper.INSTANCE.convertEntityToMovieGetDTO(movie);
@@ -167,7 +165,6 @@ public class MovieController {
 
     @GetMapping("/movies/genres")
     @ResponseStatus(HttpStatus.OK)
-    @ResponseBody
     public JsonNode getGenres() {
         JsonNode genres = tmdbService.getGenres();
         if (genres == null) {

@@ -29,7 +29,6 @@ public class UserPreferencesController {
      */
     @GetMapping("/api/genres")
     @ResponseStatus(HttpStatus.OK)
-    @ResponseBody
     public List<Map<String, Object>> getAllGenres() {
         return userPreferencesService.getAllGenres();
     }
@@ -39,7 +38,6 @@ public class UserPreferencesController {
      */
     @PostMapping("/api/users/{userId}/preferences/genres")
     @ResponseStatus(HttpStatus.OK)
-    @ResponseBody
     public Map<String, Object> saveGenrePreferences(
             @PathVariable("userId") Long userId,
             @RequestBody Map<String, List<String>> genrePreferences,
@@ -65,7 +63,6 @@ public class UserPreferencesController {
      */
     @GetMapping("/api/users/{userId}/preferences/genres")
     @ResponseStatus(HttpStatus.OK)
-    @ResponseBody
     public Map<String, Object> getGenrePreferences(@PathVariable("userId") Long userId) {
         List<String> genres = userPreferencesService.getGenrePreferences(userId);
         return Map.of("genres", genres);
@@ -76,7 +73,6 @@ public class UserPreferencesController {
      */
     @PostMapping("/api/users/{userId}/preferences/favorite-movie")
     @ResponseStatus(HttpStatus.OK)
-    @ResponseBody
     public Map<String, Object> saveFavoriteMovie(
             @PathVariable("userId") Long userId,
             @RequestBody Map<String, Long> favoriteMovie,
@@ -102,7 +98,6 @@ public class UserPreferencesController {
      */
     @GetMapping("/api/users/{userId}/preferences/favorite-movie")
     @ResponseStatus(HttpStatus.OK)
-    @ResponseBody
     public Map<String, Object> getFavoriteMovie(@PathVariable("userId") Long userId) {
         Movie movie = userPreferencesService.getFavoriteMovie(userId);
         

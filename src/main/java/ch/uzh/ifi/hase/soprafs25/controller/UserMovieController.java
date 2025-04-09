@@ -29,7 +29,6 @@ public class UserMovieController {
      */
     @GetMapping("/users/{userId}/watchlist")
     @ResponseStatus(HttpStatus.OK)
-    @ResponseBody
     public List<MovieGetDTO> getWatchlist(@PathVariable("userId") Long userId) {
         List<Movie> watchlist = userMovieService.getWatchlist(userId);
         return convertMovieListToDTOList(watchlist);
@@ -40,7 +39,6 @@ public class UserMovieController {
      */
     @PostMapping("/users/{userId}/watchlist/{movieId}")
     @ResponseStatus(HttpStatus.CREATED)
-    @ResponseBody
     public List<MovieGetDTO> addToWatchlist(
             @PathVariable("userId") Long userId,
             @PathVariable("movieId") Long movieId,
@@ -62,7 +60,6 @@ public class UserMovieController {
      */
     @DeleteMapping("/users/{userId}/watchlist/{movieId}")
     @ResponseStatus(HttpStatus.OK)
-    @ResponseBody
     public List<MovieGetDTO> removeFromWatchlist(
             @PathVariable("userId") Long userId,
             @PathVariable("movieId") Long movieId,
@@ -84,7 +81,6 @@ public class UserMovieController {
      */
     @GetMapping("/users/{userId}/watched")
     @ResponseStatus(HttpStatus.OK)
-    @ResponseBody
     public List<MovieGetDTO> getWatchedMovies(@PathVariable("userId") Long userId) {
         List<Movie> watchedMovies = userMovieService.getWatchedMovies(userId);
         return convertMovieListToDTOList(watchedMovies);
@@ -95,7 +91,6 @@ public class UserMovieController {
      */
     @PostMapping("/users/{userId}/watched/{movieId}")
     @ResponseStatus(HttpStatus.CREATED)
-    @ResponseBody
     public List<MovieGetDTO> addToWatchedMovies(
             @PathVariable("userId") Long userId,
             @PathVariable("movieId") Long movieId,
@@ -117,7 +112,6 @@ public class UserMovieController {
      */
     @DeleteMapping("/users/{userId}/watched/{movieId}")
     @ResponseStatus(HttpStatus.OK)
-    @ResponseBody
     public List<MovieGetDTO> removeFromWatchedMovies(
             @PathVariable("userId") Long userId,
             @PathVariable("movieId") Long movieId,
