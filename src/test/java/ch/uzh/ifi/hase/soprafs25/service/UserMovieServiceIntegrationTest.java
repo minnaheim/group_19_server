@@ -55,7 +55,7 @@ public class UserMovieServiceIntegrationTest {
         testMovie.setMovieId(12345L);
         testMovie.setTitle("Test Movie");
         testMovie.setYear(2023);
-        testMovie.setGenre("Action");
+        testMovie.setGenres(java.util.Collections.singletonList("Action"));
         testMovie.setDescription("A test movie description");
         movieRepository.save(testMovie);
 

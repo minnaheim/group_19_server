@@ -9,12 +9,14 @@ import javax.persistence.CollectionTable;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import ch.uzh.ifi.hase.soprafs25.constant.UserStatus;
@@ -63,10 +65,9 @@ public class User implements Serializable {
   @Column(name = "genre")
   private List<String> favoriteGenres;
 
-  @ElementCollection
-  @CollectionTable(name = "user_favorite_movies", joinColumns = @JoinColumn(name = "user_id"))
-  @Column(name = "movie")
-  private List<String> favoriteMovies;
+  @OneToOne
+  @JoinColumn(name = "favorite_movie_id")
+  private Movie favoriteMovie;
 
   @ElementCollection
   @CollectionTable(name = "user_favorite_actors", joinColumns = @JoinColumn(name = "user_id"))
@@ -110,7 +111,6 @@ public class User implements Serializable {
     joinColumns = @JoinColumn(name = "user_id"),
     inverseJoinColumns = @JoinColumn(name = "friend_id")
   )
-
   private Set<User> friends = new HashSet<>();
   
 //   for sent requests
@@ -201,12 +201,12 @@ public class User implements Serializable {
         this.favoriteGenres = favoriteGenres;
     }
 
-    public List<String> getFavoriteMovies() {
-        return favoriteMovies;
+    public Movie getFavoriteMovie() {
+        return favoriteMovie;
     }
 
-    public void setFavoriteMovies(List<String> favoriteMovies) {
-        this.favoriteMovies = favoriteMovies;
+    public void setFavoriteMovie(Movie favoriteMovie) {
+        this.favoriteMovie = favoriteMovie;
     }
 
     public List<String> getFavoriteActors() {

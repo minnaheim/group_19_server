@@ -47,7 +47,11 @@ public class UserMovieService {
      */
     public List<Movie> getWatchlist(Long userId) {
         User user = getUserById(userId);
-        return user.getWatchlist() != null ? user.getWatchlist() : new ArrayList<>();
+        if (user.getWatchlist() == null) {
+            user.setWatchlist(new ArrayList<>());
+            userRepository.save(user);
+        }
+        return user.getWatchlist();
     }
 
     /**
@@ -67,19 +71,18 @@ public class UserMovieService {
         // Get and save the movie to ensure it exists in our database
         Movie movie = getAndSaveMovieById(movieId);
         
-        // Initialize watchlist if null
-        if (user.getWatchlist() == null) {
-            user.setWatchlist(new ArrayList<>());
-        }
+        // Get the watchlist (this ensures initialization)
+        List<Movie> watchlist = getWatchlist(userId);
         
         // Check if movie is already in watchlist
-        if (isMovieInList(user.getWatchlist(), movieId)) {
+        if (isMovieInList(watchlist, movieId)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, 
                 "Movie is already in your watchlist");
         }
         
         // Add movie to watchlist
-        user.getWatchlist().add(movie);
+        watchlist.add(movie);
+        user.setWatchlist(watchlist);
         userRepository.save(user);
         
         return user.getWatchlist();
@@ -99,18 +102,22 @@ public class UserMovieService {
         // Authorization check
         authorizeUserAction(user, requesterToken);
         
-        // Check if watchlist exists
-        if (user.getWatchlist() == null || user.getWatchlist().isEmpty()) {
+        // Get the watchlist (ensures initialization)
+        List<Movie> watchlist = getWatchlist(userId);
+        
+        // Check if watchlist is empty
+        if (watchlist.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, 
-                "Watchlist is empty or does not exist");
+                "Watchlist is empty");
         }
         
         // Remove movie from watchlist
-        if (!removeMovieFromList(user.getWatchlist(), movieId)) {
+        if (!removeMovieFromList(watchlist, movieId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, 
                 "Movie not found in watchlist");
         }
         
+        user.setWatchlist(watchlist);
         userRepository.save(user);
         return user.getWatchlist();
     }
@@ -123,7 +130,11 @@ public class UserMovieService {
      */
     public List<Movie> getWatchedMovies(Long userId) {
         User user = getUserById(userId);
-        return user.getWatchedMovies() != null ? user.getWatchedMovies() : new ArrayList<>();
+        if (user.getWatchedMovies() == null) {
+            user.setWatchedMovies(new ArrayList<>());
+            userRepository.save(user);
+        }
+        return user.getWatchedMovies();
     }
 
     /**
@@ -143,24 +154,23 @@ public class UserMovieService {
         // Get and save the movie to ensure it exists in our database
         Movie movie = getAndSaveMovieById(movieId);
         
-        // Initialize watched movies list if null
-        if (user.getWatchedMovies() == null) {
-            user.setWatchedMovies(new ArrayList<>());
-        }
+        // Get the watched movies list (this ensures initialization)
+        List<Movie> watchedMovies = getWatchedMovies(userId);
         
         // Check if movie is already in watched movies
-        if (isMovieInList(user.getWatchedMovies(), movieId)) {
+        if (isMovieInList(watchedMovies, movieId)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, 
                 "Movie is already in your watched movies list");
         }
         
         // Add movie to watched movies
-        user.getWatchedMovies().add(movie);
+        watchedMovies.add(movie);
+        user.setWatchedMovies(watchedMovies);
         
-        // If the movie was in the watchlist, we can optionally remove it
-        if (user.getWatchlist() != null) {
-            removeMovieFromList(user.getWatchlist(), movieId);
-        }
+        // Get the watchlist and remove the movie if it exists there
+        List<Movie> watchlist = getWatchlist(userId);
+        removeMovieFromList(watchlist, movieId);
+        user.setWatchlist(watchlist);
         
         userRepository.save(user);
         
@@ -181,18 +191,22 @@ public class UserMovieService {
         // Authorization check
         authorizeUserAction(user, requesterToken);
         
-        // Check if watched movies list exists
-        if (user.getWatchedMovies() == null || user.getWatchedMovies().isEmpty()) {
+        // Get the watched movies list (ensures initialization)
+        List<Movie> watchedMovies = getWatchedMovies(userId);
+        
+        // Check if watched movies list is empty
+        if (watchedMovies.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, 
-                "Watched movies list is empty or does not exist");
+                "Watched movies list is empty");
         }
         
         // Remove movie from watched movies
-        if (!removeMovieFromList(user.getWatchedMovies(), movieId)) {
+        if (!removeMovieFromList(watchedMovies, movieId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, 
                 "Movie not found in watched movies list");
         }
         
+        user.setWatchedMovies(watchedMovies);
         userRepository.save(user);
         return user.getWatchedMovies();
     }

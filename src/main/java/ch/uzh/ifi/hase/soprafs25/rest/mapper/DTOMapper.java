@@ -43,6 +43,7 @@ public interface DTOMapper {
     @Mapping(source = "favoriteGenres", target = "favoriteGenres")
     @Mapping(source = "favoriteActors", target = "favoriteActors")
     @Mapping(source = "favoriteDirectors", target = "favoriteDirectors")
+    @Mapping(source = "favoriteMovie", target = "favoriteMovie")
     @Mapping(source = "watchlist", target = "watchlist")
     @Mapping(source = "watchedMovies", target = "watchedMovies")
     @Mapping(source = "status", target = "status")

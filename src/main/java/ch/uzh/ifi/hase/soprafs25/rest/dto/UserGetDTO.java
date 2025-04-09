@@ -8,7 +8,6 @@ import ch.uzh.ifi.hase.soprafs25.entity.Movie;
 public class UserGetDTO {
 
   private Long userId;
-  private Long id;  // For client compatibility
   private String username;
   private String email; // Added email field
   private String password; // For client compatibility
@@ -18,7 +17,7 @@ public class UserGetDTO {
   private List<String> favoriteGenres;
   private List<String> favoriteActors;
   private List<String> favoriteDirectors;
-  private List<String> favoriteMovies;
+  private Movie favoriteMovie;
   private List<Movie> watchlist;
   private List<Movie> watchedMovies;
 
@@ -102,13 +101,6 @@ public class UserGetDTO {
         this.favoriteDirectors = favoriteDirectors;
     }
   
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
   
     public String getEmail() {
         return email;
@@ -126,11 +118,11 @@ public class UserGetDTO {
         this.password = password;
     }
   
-    public List<String> getFavoriteMovies() {
-        return favoriteMovies;
+    public Movie getFavoriteMovie() {
+        return favoriteMovie;
     }
 
-    public void setFavoriteMovies(List<String> favoriteMovies) {
-        this.favoriteMovies = favoriteMovies;
+    public void setFavoriteMovie(Movie favoriteMovie) {
+        this.favoriteMovie = favoriteMovie;
     }
 }
