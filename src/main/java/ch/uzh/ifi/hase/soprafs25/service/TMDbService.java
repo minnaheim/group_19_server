@@ -466,9 +466,20 @@ public class TMDbService {
 
     /**
      * Get list of all genres from TMDb
+     * Uses caching to avoid redundant API calls
      */
+    private JsonNode cachedGenres = null;
+    private long genresCacheTimestamp = 0;
+    private static final long GENRE_CACHE_TTL = 86400000; // 24 hours in milliseconds
+    
     public JsonNode getGenres() {
         try {
+            // Return cached genres if available and not expired
+            long currentTime = System.currentTimeMillis();
+            if (cachedGenres != null && (currentTime - genresCacheTimestamp) < GENRE_CACHE_TTL) {
+                return cachedGenres;
+            }
+            
             if (tmdbConfig.getApiKey().isEmpty()) {
                 log.warn("TMDB API key is not configured. Cannot get genres.");
                 return null;
@@ -492,7 +503,13 @@ public class TMDbService {
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 JsonNode root = objectMapper.readTree(response.getBody());
-                return root.path("genres");
+                JsonNode genres = root.path("genres");
+                
+                // Cache the result
+                cachedGenres = genres;
+                genresCacheTimestamp = currentTime;
+                
+                return genres;
             }
 
             return null;
@@ -501,6 +518,44 @@ public class TMDbService {
             log.error("Error getting genres from TMDb: {}", e.getMessage());
             return null;
         }
+    }
+    
+    /**
+     * Validates if a genre name or ID exists in TMDb genre list
+     */
+    public boolean isValidGenre(String genreName) {
+        JsonNode genres = getGenres();
+        
+        if (genres == null || !genres.isArray()) {
+            return false;
+        }
+        
+        for (JsonNode genre : genres) {
+            if (genre.has("name") && genre.get("name").asText().equals(genreName)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Get a genre ID from a genre name
+     */
+    public Integer getGenreIdByName(String genreName) {
+        JsonNode genres = getGenres();
+        
+        if (genres == null || !genres.isArray()) {
+            return null;
+        }
+        
+        for (JsonNode genre : genres) {
+            if (genre.has("name") && genre.get("name").asText().equals(genreName)) {
+                return genre.get("id").asInt();
+            }
+        }
+        
+        return null;
     }
 
     /**

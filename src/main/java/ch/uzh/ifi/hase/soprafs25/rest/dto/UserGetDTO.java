@@ -9,12 +9,15 @@ public class UserGetDTO {
 
   private Long userId;
   private String username;
+  private String email; // Added email field
+  private String password; // For client compatibility
   private UserStatus status;
   private String token;
   private String bio;
   private List<String> favoriteGenres;
   private List<String> favoriteActors;
   private List<String> favoriteDirectors;
+  private Movie favoriteMovie;
   private List<Movie> watchlist;
   private List<Movie> watchedMovies;
 
@@ -96,5 +99,30 @@ public class UserGetDTO {
 
     public void setFavoriteDirectors(List<String> favoriteDirectors) {
         this.favoriteDirectors = favoriteDirectors;
+    }
+  
+  
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+  
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+  
+    public Movie getFavoriteMovie() {
+        return favoriteMovie;
+    }
+
+    public void setFavoriteMovie(Movie favoriteMovie) {
+        this.favoriteMovie = favoriteMovie;
     }
 }
