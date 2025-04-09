@@ -3,6 +3,7 @@ package ch.uzh.ifi.hase.soprafs25.rest.dto;
 import java.util.List;
 
 public class GroupGetDTO {
+    
     private Long groupId;
     private String groupName;
     private Long creatorId;
