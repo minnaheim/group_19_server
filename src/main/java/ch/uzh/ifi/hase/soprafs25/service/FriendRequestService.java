@@ -62,7 +62,7 @@ public class FriendRequestService {
         }
 
         request.setAccepted(true);
-        // request.setRespondTime(LocalDateTime.now());
+        // request.setResponseTime(LocalDateTime.now());
         
         User sender = request.getSender();
         User receiver = request.getReceiver();
@@ -87,7 +87,7 @@ public class FriendRequestService {
         }
 
         request.setAccepted(false);
-        // request.setRespondTime(LocalDateTime.now());
+        // request.setResponseTime(LocalDateTime.now());
         return friendRequestRepository.save(request);
     }
 
@@ -96,8 +96,8 @@ public class FriendRequestService {
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         return user.getReceivedFriendRequests().stream()
-        // check if respondtime is set which happens only after actual respond
-            .filter(req -> req.getRespondTime() == null)
+        // check if Responsetime is set which happens only after actual Response
+            .filter(req -> req.getResponseTime() == null)
             .collect(Collectors.toList());
     }
 
@@ -106,7 +106,7 @@ public class FriendRequestService {
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         return user.getSentFriendRequests().stream()
-            .filter(req -> req.getRespondTime() == null)
+            .filter(req -> req.getResponseTime() == null)
             .collect(Collectors.toList());
     }
 
@@ -129,6 +129,6 @@ public class FriendRequestService {
     // auxilary function which is used in sendRequest to prevent duplicate requests
     private boolean hasPendingRequest(User sender, User receiver) {
         return receiver.getReceivedFriendRequests().stream()
-            .anyMatch(req -> req.getSender().equals(sender) && req.getRespondTime() == null);
+            .anyMatch(req -> req.getSender().equals(sender) && req.getResponseTime() == null);
     }
 } 

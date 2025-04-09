@@ -1,12 +1,14 @@
 package ch.uzh.ifi.hase.soprafs25.entity;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.persistence.ElementCollection;
 
 /**
  * Internal Movie Representation
@@ -30,16 +32,19 @@ public class Movie implements Serializable {
     private String title;
 
     @Column
-    private String genre;
+    @ElementCollection
+    private List<String> genres = new ArrayList<>();
 
     @Column
     private Integer year;
 
     @Column
-    private String actor; // Comma-separated list of actors, will be parsed into array for client
+    @ElementCollection
+    private List<String> actors = new ArrayList<>();
 
     @Column
-    private String director; // This field holds the main director name
+    @ElementCollection
+    private List<String> directors = new ArrayList<>();
 
     @Column
     private String originallanguage;
@@ -70,12 +75,16 @@ public class Movie implements Serializable {
         this.title = title;
     }
 
-    public String getGenre() {
-        return genre;
+    public List<String> getGenres() {
+        return genres;
     }
 
-    public void setGenre(String genre) {
-        this.genre = genre;
+    public void setGenres(List<String> genres) {
+        this.genres = genres;
+    }
+
+    public void addGenre(String genre) {
+        this.genres.add(genre);
     }
 
     public Integer getYear() {
@@ -86,20 +95,28 @@ public class Movie implements Serializable {
         this.year = year;
     }
 
-    public String getActor() {
-        return actor;
+    public List<String> getActors() {
+        return actors;
     }
 
-    public void setActor(String actor) {
-        this.actor = actor;
+    public void setActorsList(List<String> actors) {
+        this.actors = actors;
     }
 
-    public String getDirector() {
-        return director;
+    public void addActor(String actor) {
+        this.actors.add(actor);
     }
 
-    public void setDirector(String director) {
-        this.director = director;
+    public List<String> getDirectors() {
+        return directors;
+    }
+
+    public void setDirectorsList(List<String> directors) {
+        this.directors = directors;
+    }
+
+    public void addDirector(String director) {
+        this.directors.add(director);
     }
 
     public String getOriginallanguage() {

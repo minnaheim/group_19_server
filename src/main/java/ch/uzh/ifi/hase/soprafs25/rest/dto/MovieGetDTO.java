@@ -1,12 +1,14 @@
 package ch.uzh.ifi.hase.soprafs25.rest.dto;
 
+import java.util.List;
+
 public class MovieGetDTO {
     private long movieId;
     private String title;
-    private String genre;
+    private List<String> genres;
     private Integer year;
-    private String[] actors; // Array of actor names
-    private String director;
+    private List<String> actors;
+    private List<String> directors;
     private String originallanguage;
     private String posterURL;
     private String trailerURL;
@@ -28,12 +30,12 @@ public class MovieGetDTO {
         this.title = title;
     }
 
-    public String getGenre() {
-        return genre;
+    public List<String> getGenres() {
+        return genres;
     }
 
-    public void setGenre(String genre) {
-        this.genre = genre;
+    public void setGenres(List<String> genres) {
+        this.genres = genres;
     }
 
     public Integer getYear() {
@@ -44,21 +46,28 @@ public class MovieGetDTO {
         this.year = year;
     }
 
-    public String[] getActors() {
+    public List<String> getActors() {
         return actors;
     }
 
-    public void setActors(String[] actors) {
+    public void setActorsList(List<String> actors) {
         this.actors = actors;
     }
 
-
-    public String getDirector() {
-        return director;
+    public void addActor(String actor) {
+        this.actors.add(actor);
     }
 
-    public void setDirector(String director) {
-        this.director = director;
+    public List<String> getDirectors() {
+        return directors;
+    }
+
+    public void setDirectorsList(List<String> directors) {
+        this.directors = directors;
+    }
+
+    public void addDirector(String director) {
+        this.directors.add(director);
     }
 
     public String getOriginallanguage() {
@@ -93,5 +102,3 @@ public class MovieGetDTO {
         this.description = description;
     }
 }
-
-

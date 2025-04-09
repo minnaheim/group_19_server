@@ -5,18 +5,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-
-// import javax.persistence.Column;
-// import javax.persistence.Entity;
-// import javax.persistence.GeneratedValue;
-// import javax.persistence.Id;
-// import javax.persistence.JoinColumn;
-// import javax.persistence.JoinTable;
-// import javax.persistence.ManyToMany;
-// import javax.persistence.OneToMany;
-// import javax.persistence.Table;
-
-import javax.persistence.*;
+import javax.persistence.CollectionTable;
+import javax.persistence.Column;
+import javax.persistence.ElementCollection;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
 import ch.uzh.ifi.hase.soprafs25.constant.UserStatus;
 
@@ -59,16 +58,24 @@ public class User implements Serializable {
   @Column
   private String bio;
 
-  @Column
+  @ElementCollection
+  @CollectionTable(name = "user_favorite_genres", joinColumns = @JoinColumn(name = "user_id"))
+  @Column(name = "genre")
   private List<String> favoriteGenres;
 
-  @Column
-  private List<String> favoriteMovies;  
+  @ElementCollection
+  @CollectionTable(name = "user_favorite_movies", joinColumns = @JoinColumn(name = "user_id"))
+  @Column(name = "movie")
+  private List<String> favoriteMovies;
 
-  @Column
+  @ElementCollection
+  @CollectionTable(name = "user_favorite_actors", joinColumns = @JoinColumn(name = "user_id"))
+  @Column(name = "actor")
   private List<String> favoriteActors;
 
-  @Column
+  @ElementCollection
+  @CollectionTable(name = "user_favorite_directors", joinColumns = @JoinColumn(name = "user_id"))
+  @Column(name = "director")
   private List<String> favoriteDirectors;
   
 //   @ElementCollection
