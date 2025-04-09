@@ -9,13 +9,22 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.transaction.Transactional;
+
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 @WebAppConfiguration
 @SpringBootTest
@@ -33,6 +42,11 @@ class UserPreferencesServiceIntegrationTest {
 
     @Autowired
     private MovieService movieService;
+    
+    @MockBean
+    private TMDbService tmdbService;
+    
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private User testUser;
     private Movie testMovie;
@@ -40,6 +54,7 @@ class UserPreferencesServiceIntegrationTest {
     @BeforeEach
     void setup() {
         userRepository.deleteAll();
+        movieRepository.deleteAll();
         
         // Create test user
         testUser = new User();
@@ -58,12 +73,34 @@ class UserPreferencesServiceIntegrationTest {
         testMovie.setDescription("Test description");
         
         movieRepository.save(testMovie);
+        
+        // Configure Mock TMDbService
+        ArrayNode genresArray = objectMapper.createArrayNode();
+
+        ObjectNode actionNode = objectMapper.createObjectNode();
+        actionNode.put("id", 28);
+        actionNode.put("name", "Action");
+        genresArray.add(actionNode);
+
+        ObjectNode dramaNode = objectMapper.createObjectNode();
+        dramaNode.put("id", 18);
+        dramaNode.put("name", "Drama");
+        genresArray.add(dramaNode);
+        
+        ObjectNode comedyNode = objectMapper.createObjectNode();
+        comedyNode.put("id", 35); 
+        comedyNode.put("name", "Comedy");
+        genresArray.add(comedyNode);
+
+        // Mock the TMDbService.getGenres() method to return our controlled genresArray
+        when(tmdbService.getGenres()).thenReturn(genresArray);
     }
 
     @Test
     void saveGenrePreferences_WithValidToken_SavesPreferences() {
         // Arrange
-        List<String> genreNames = List.of("Action", "Drama");
+        // Use exact genre names defined in the mock setup
+        List<String> genreNames = new ArrayList<>(List.of("Action", "Drama"));
 
         // Act
         List<String> result = userPreferencesService.saveGenrePreferences(
@@ -74,7 +111,10 @@ class UserPreferencesServiceIntegrationTest {
         
         // Verify through repository
         User updatedUser = userRepository.findById(testUser.getUserId()).get();
-        assertEquals(genreNames, updatedUser.getFavoriteGenres());
+        assertNotNull(updatedUser.getFavoriteGenres());
+        assertEquals(genreNames.size(), updatedUser.getFavoriteGenres().size());
+        assertTrue(updatedUser.getFavoriteGenres().containsAll(genreNames));
+        assertTrue(genreNames.containsAll(updatedUser.getFavoriteGenres()));
     }
 
     @Test
@@ -92,7 +132,7 @@ class UserPreferencesServiceIntegrationTest {
     @Test
     void getGenrePreferences_ReturnsCorrectPreferences() {
         // Arrange
-        List<String> genreNames = List.of("Action", "Drama");
+        List<String> genreNames = new ArrayList<>(List.of("Action", "Comedy"));
         testUser.setFavoriteGenres(genreNames);
         userRepository.save(testUser);
 
