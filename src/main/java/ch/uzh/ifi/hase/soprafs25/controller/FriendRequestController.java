@@ -1,7 +1,5 @@
 package ch.uzh.ifi.hase.soprafs25.controller;
 
-import java.util.List;
-
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,6 +17,11 @@ import ch.uzh.ifi.hase.soprafs25.rest.dto.UserGetDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
+import java.io.Serializable;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 @RestController
 @RequestMapping("/friends")
 public class FriendRequestController {
@@ -30,11 +33,14 @@ public class FriendRequestController {
         this.userService = userService;
     }
 
-    @GetMapping("{userId}")
+    @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public UserGetDTO getFriend(@RequestHeader("Authorization") String token, @PathVariable Long userId){
-        User user = userService.getUserById(userId);
-        return DTOMapper.INSTANCE.convertEntityToUserGetDTO(user);
+    public List<UserGetDTO> getFriendsOfUser(@RequestHeader("Authorization") String token) {
+    User user = userService.getUserByToken(token);
+    Set<User> friends = user.getFriends(); 
+    return friends.stream()
+                  .map(DTOMapper.INSTANCE::convertEntityToUserGetDTO)
+                  .toList();
     }
     
     @PostMapping("/add/{receiverId}")
