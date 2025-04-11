@@ -16,6 +16,8 @@ import ch.uzh.ifi.hase.soprafs25.service.FriendRequestService;
 import ch.uzh.ifi.hase.soprafs25.service.UserService;
 import ch.uzh.ifi.hase.soprafs25.rest.mapper.DTOMapper;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.UserGetDTO;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 @RestController
 @RequestMapping("/friends")
@@ -29,12 +31,14 @@ public class FriendRequestController {
     }
 
     @GetMapping("{userId}")
+    @ResponseStatus(HttpStatus.OK)
     public UserGetDTO getFriend(@RequestHeader("Authorization") String token, @PathVariable Long userId){
         User user = userService.getUserById(userId);
         return DTOMapper.INSTANCE.convertEntityToUserGetDTO(user);
     }
     
     @PostMapping("/add/{receiverId}")
+    @ResponseStatus(HttpStatus.OK)
     // we should discuss how do we manage token and user authentication - currently I suppose that token is included in requests as header
     // token is needed to identify which user is sending the request - for this I created a special method in UserService
     public User sendFriendRequest(@RequestHeader("Authorization") String token, @PathVariable Long receiverId){
@@ -49,27 +53,31 @@ public class FriendRequestController {
     }
 
     @PostMapping("/friendrequest/{requestId}/reject")
+    @ResponseStatus(HttpStatus.OK)
     public FriendRequest rejectFriendRequest(@RequestHeader("Authorization") String token, @PathVariable Long requestId){
         Long userId = userService.getUserByToken(token).getUserId();
         return friendRequestService.rejectFriendRequest(requestId, userId);
     }
 
     @GetMapping("/friendrequests/sent")
+    @ResponseStatus(HttpStatus.OK)
     public List<FriendRequest> getSentFriendRequests(@RequestHeader("Authorization") String token){
         Long userId = userService.getUserByToken(token).getUserId();
         return friendRequestService.getPendingSentRequests(userId);
     }
 
     @GetMapping("/friendrequests/received")
+    @ResponseStatus(HttpStatus.OK)
     public List<FriendRequest> getReceivedFriendRequests(@RequestHeader("Authorization") String token){
         Long userId = userService.getUserByToken(token).getUserId();
         return friendRequestService.getPendingReceivedRequests(userId);
     }
 
     @DeleteMapping("/remove/{friendId}")
-    public User removeFriend(@RequestHeader("Authorization") String token, @PathVariable Long friendId){
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeFriend(@RequestHeader("Authorization") String token, @PathVariable Long friendId) {
         Long userId = userService.getUserByToken(token).getUserId();
-        return friendRequestService.removeFriend(userId, friendId);
+        friendRequestService.removeFriend(userId, friendId);
     }
 
 }
