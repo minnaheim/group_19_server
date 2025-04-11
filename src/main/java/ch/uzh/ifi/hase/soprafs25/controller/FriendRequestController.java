@@ -14,6 +14,8 @@ import ch.uzh.ifi.hase.soprafs25.entity.FriendRequest;
 import ch.uzh.ifi.hase.soprafs25.entity.User;
 import ch.uzh.ifi.hase.soprafs25.service.FriendRequestService;
 import ch.uzh.ifi.hase.soprafs25.service.UserService;
+import ch.uzh.ifi.hase.soprafs25.rest.mapper.DTOMapper;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.UserGetDTO;
 
 @RestController
 @RequestMapping("/friends")
@@ -26,7 +28,12 @@ public class FriendRequestController {
         this.userService = userService;
     }
 
-
+    @GetMapping("{userId}")
+    public UserGetDTO getFriend(@RequestHeader("Authorization") String token, @PathVariable Long userId){
+        User user = userService.getUserById(userId);
+        return DTOMapper.INSTANCE.convertEntityToUserGetDTO(user);
+    }
+    
     @PostMapping("/add/{receiverId}")
     // we should discuss how do we manage token and user authentication - currently I suppose that token is included in requests as header
     // token is needed to identify which user is sending the request - for this I created a special method in UserService
@@ -35,25 +42,25 @@ public class FriendRequestController {
         return friendRequestService.sendFriendRequest(userId, receiverId);
     }
 
-    @PostMapping("/friendRequest/{requestId}/accept")
+    @PostMapping("/friendrequest/{requestId}/accept")
     public FriendRequest acceptFriendRequest(@RequestHeader("Authorization") String token, @PathVariable Long requestId){
         Long userId = userService.getUserByToken(token).getUserId();
         return friendRequestService.acceptFriendRequest(requestId, userId);
     }
 
-    @PostMapping("/friendRequest/{requestId}/reject")
+    @PostMapping("/friendrequest/{requestId}/reject")
     public FriendRequest rejectFriendRequest(@RequestHeader("Authorization") String token, @PathVariable Long requestId){
         Long userId = userService.getUserByToken(token).getUserId();
         return friendRequestService.rejectFriendRequest(requestId, userId);
     }
 
-    @GetMapping("/friendRequests/sent")
+    @GetMapping("/friendrequests/sent")
     public List<FriendRequest> getSentFriendRequests(@RequestHeader("Authorization") String token){
         Long userId = userService.getUserByToken(token).getUserId();
         return friendRequestService.getPendingSentRequests(userId);
     }
 
-    @GetMapping("/friendRequests/received")
+    @GetMapping("/friendrequests/received")
     public List<FriendRequest> getReceivedFriendRequests(@RequestHeader("Authorization") String token){
         Long userId = userService.getUserByToken(token).getUserId();
         return friendRequestService.getPendingReceivedRequests(userId);
