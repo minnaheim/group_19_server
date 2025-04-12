@@ -12,6 +12,7 @@ import ch.uzh.ifi.hase.soprafs25.entity.Group;
 import ch.uzh.ifi.hase.soprafs25.entity.GroupInvitation;
 import ch.uzh.ifi.hase.soprafs25.entity.Movie;
 import ch.uzh.ifi.hase.soprafs25.entity.User;
+import ch.uzh.ifi.hase.soprafs25.entity.RankingResult;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.FriendRequestGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.FriendRequestPostDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.GroupGetDTO;
@@ -21,6 +22,8 @@ import ch.uzh.ifi.hase.soprafs25.rest.dto.GroupPostDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.MovieGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.UserGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.UserPostDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.MovieRankGetDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.RankingResultGetDTO;
 
 /**
  * DTOMapper
@@ -92,6 +95,16 @@ public interface DTOMapper {
     @Mapping(source = "members", target = "memberIds")
     @Mapping(source = "moviePool", target = "movieIds")
     GroupGetDTO convertEntityToGroupGetDTO(Group group);
+
+    @Mapping(source = "movieId", target = "movieId")
+    @Mapping(source = "title", target = "title")
+    MovieRankGetDTO convertEntityToMovieRankGetDTO(Movie movie);
+
+    @Mapping(source = "id", target = "id")
+    @Mapping(source = "winningMovie", target = "winningMovie")
+    @Mapping(source = "averageRank", target = "averageRank")
+    @Mapping(source = "calculationTimestamp", target = "calculationTimestamp")
+    RankingResultGetDTO convertEntityToRankingResultGetDTO(RankingResult rankingResult);
 
     @Mapping(source = "requestId", target = "requestId")
     @Mapping(source = "sender", target = "sender")
