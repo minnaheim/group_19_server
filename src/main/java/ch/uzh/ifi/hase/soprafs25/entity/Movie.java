@@ -9,6 +9,8 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.ElementCollection;
+import javax.persistence.CollectionTable;
+import javax.persistence.JoinColumn;
 
 /**
  * Internal Movie Representation
@@ -31,19 +33,31 @@ public class Movie implements Serializable {
     @Column
     private String title;
 
-    @Column
     @ElementCollection
+    @CollectionTable(
+            name = "MOVIE_GENRES",
+            joinColumns = @JoinColumn(name = "movie_id")
+    )
+    @Column(name = "genre")
     private List<String> genres = new ArrayList<>();
 
     @Column
     private Integer year;
 
-    @Column
     @ElementCollection
+    @CollectionTable(
+            name = "MOVIE_ACTORS",
+            joinColumns = @JoinColumn(name = "movie_id")
+    )
+    @Column(name = "actor")
     private List<String> actors = new ArrayList<>();
 
-    @Column
     @ElementCollection
+    @CollectionTable(
+            name = "MOVIE_DIRECTORS",
+            joinColumns = @JoinColumn(name = "movie_id")
+    )
+    @Column(name = "director")
     private List<String> directors = new ArrayList<>();
 
     @Column
