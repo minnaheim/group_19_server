@@ -7,10 +7,16 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
 
+import ch.uzh.ifi.hase.soprafs25.entity.FriendRequest;
 import ch.uzh.ifi.hase.soprafs25.entity.Group;
+import ch.uzh.ifi.hase.soprafs25.entity.GroupInvitation;
 import ch.uzh.ifi.hase.soprafs25.entity.Movie;
 import ch.uzh.ifi.hase.soprafs25.entity.User;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.FriendRequestGetDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.FriendRequestPostDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.GroupGetDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.GroupInvitationGetDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.GroupInvitationPostDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.GroupPostDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.MovieGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.UserGetDTO;
@@ -86,6 +92,41 @@ public interface DTOMapper {
     @Mapping(source = "members", target = "memberIds")
     @Mapping(source = "moviePool", target = "movieIds")
     GroupGetDTO convertEntityToGroupGetDTO(Group group);
+
+    @Mapping(source = "requestId", target = "requestId")
+    @Mapping(source = "sender", target = "sender")
+    @Mapping(source = "receiver", target = "receiver")
+    @Mapping(source = "creationTime", target = "creationTime")
+    @Mapping(source = "accepted", target = "accepted")
+    @Mapping(source = "responseTime", target = "responseTime")
+    FriendRequestGetDTO convertEntityToFriendRequestGetDTO(FriendRequest friendRequest);
+
+    @Mapping(target = "requestId", ignore = true)
+    @Mapping(target = "sender", ignore = true)
+    @Mapping(target = "receiver", ignore = true)
+    @Mapping(target = "creationTime", ignore = true)
+    @Mapping(target = "accepted", ignore = true)
+    @Mapping(target = "responseTime", ignore = true)
+    FriendRequest convertFriendRequestPostDTOtoEntity(FriendRequestPostDTO friendRequestPostDTO);
+
+    @Mapping(source = "invitationId", target = "invitationId")
+    @Mapping(source = "sender", target = "sender")
+    @Mapping(source = "receiver", target = "receiver")
+    @Mapping(source = "group", target = "group")
+    @Mapping(source = "creationTime", target = "creationTime")
+    @Mapping(source = "accepted", target = "accepted")
+    @Mapping(source = "responseTime", target = "responseTime")
+    GroupInvitationGetDTO convertEntityToGroupInvitationGetDTO(GroupInvitation groupInvitation);
+
+
+    @Mapping(target = "invitationId", ignore = true)
+    @Mapping(target = "sender", ignore = true)
+    @Mapping(target = "receiver", ignore = true)
+    @Mapping(target = "group", ignore = true)
+    @Mapping(target = "creationTime", ignore = true)
+    @Mapping(target = "accepted", ignore = true)
+    @Mapping(target = "responseTime", ignore = true)
+    GroupInvitation convertGroupInvitationPostDTOtoEntity(GroupInvitationPostDTO groupInvitationPostDTO);
 
     default List<Long> mapUsersToIds(List<User> users) {
       if (users == null) return null;
