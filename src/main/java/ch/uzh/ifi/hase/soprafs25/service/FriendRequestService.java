@@ -27,7 +27,7 @@ public class FriendRequestService {
         this.friendRequestRepository = friendRequestRepository;
     }
 
-    public User sendFriendRequest(Long senderId, Long receiverId) {
+    public FriendRequest sendFriendRequest(Long senderId, Long receiverId) {
         User sender = userRepository.findById(senderId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sender not found"));
         User receiver = userRepository.findById(receiverId)
@@ -48,8 +48,7 @@ public class FriendRequestService {
         FriendRequest request = new FriendRequest();
         request.setSender(sender);
         request.setReceiver(receiver);
-        friendRequestRepository.save(request);
-        return request.getReceiver();
+        return friendRequestRepository.save(request);
     }
 
     public FriendRequest acceptFriendRequest(Long requestId, Long userId) {
