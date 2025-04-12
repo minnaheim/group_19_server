@@ -451,17 +451,139 @@ public class TMDbService {
                     entity,
                     String.class);
 
-            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                JsonNode movieData = objectMapper.readTree(response.getBody());
-                return mapTMDbMovieToEntity(movieData);
+            if (response.getStatusCode() == HttpStatus.OK) {
+                return parseMovieDetails(response.getBody());
+            } else {
+                log.error("Failed to get movie details from TMDb API: {}", response.getStatusCode());
+                return null;
             }
-
-            return null;
         }
         catch (Exception e) {
             log.error("Error getting movie details from TMDb: {}", e.getMessage());
             return null;
         }
+    }
+
+    private Movie parseMovieDetails(String json) {
+        try {
+            JsonNode rootNode = objectMapper.readTree(json);
+
+            Movie movie = mapTMDbMovieToEntity(rootNode);
+
+            if (movie == null) {
+                return null;
+            }
+
+            // Additional details not handled by mapTMDbMovieToEntity
+
+            JsonNode creditsNode = rootNode.path("credits");
+
+            // Extract actors from cast
+            List<String> actors = extractTopActors(creditsNode.path("cast"), creditsNode.path("crew"), 5);
+            movie.setActorsList(actors);
+
+            // Extract directors from crew
+            List<String> directors = extractTopDirectors(creditsNode.path("crew"), 2);
+            movie.setDirectorsList(directors);
+
+            // TODO Parse trailer URL via JsonNode creditsNode = rootNode.path("videos")
+
+            return movie;
+        } catch (Exception e) {
+            log.error("Error parsing movie details: {}", e.getMessage());
+            return null;
+        }
+
+    }
+
+    // method to extract top N actors by popularity from cast and crew
+    private List<String> extractTopActors(JsonNode castNode, JsonNode crewNode, int limit) {
+        if ((castNode == null || !castNode.isArray() || castNode.isEmpty()) &&
+                (crewNode == null || !crewNode.isArray() || crewNode.isEmpty())) {
+            return new ArrayList<>();
+        }
+
+        // Create a map to store actors with their popularity (using map to avoid duplicates)
+        Map<String, Double> actorsPopularityMap = new HashMap<>();
+
+        // Iterate through cast members
+        if (castNode != null && castNode.isArray()) {
+            for (JsonNode castMember : castNode) {
+                // Check if this is an acting role
+                String department = castMember.path("known_for_department").asText();
+                if ("Acting".equals(department)) {
+                    String name = castMember.path("name").asText();
+                    double popularity = castMember.path("popularity").asDouble();
+                    // Store in map, keeping the highest popularity value if the actor appears multiple times
+                    actorsPopularityMap.put(name, Math.max(popularity, actorsPopularityMap.getOrDefault(name, 0.0)));
+                }
+            }
+        }
+
+        // Also search for actors in crew
+        if (crewNode != null && crewNode.isArray()) {
+            for (JsonNode crewMember : crewNode) {
+                String department = crewMember.path("known_for_department").asText();
+                if ("Acting".equals(department)) {
+                    String name = crewMember.path("name").asText();
+                    double popularity = crewMember.path("popularity").asDouble();
+                    // Store in map, keeping the highest popularity value if the actor appears multiple times
+                    actorsPopularityMap.put(name, Math.max(popularity, actorsPopularityMap.getOrDefault(name, 0.0)));
+                }
+            }
+        }
+
+        // Convert map to list of entries for sorting
+        List<Map.Entry<String, Double>> actorsWithPopularity = new ArrayList<>(actorsPopularityMap.entrySet());
+
+        // Sort by popularity (highest first)
+        actorsWithPopularity.sort((a, b) -> Double.compare(b.getValue(), a.getValue()));
+
+        // Extract the top N actor names
+        return actorsWithPopularity.stream()
+                .limit(limit)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+    }
+
+    // Added method to extract top N directors by popularity from crew
+    private List<String> extractTopDirectors(JsonNode crewNode, int limit) {
+        if (crewNode == null || !crewNode.isArray() || crewNode.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        // Create a map to store directors with their popularity (using map to avoid duplicates)
+        Map<String, Double> directorsPopularityMap = new HashMap<>();
+
+
+        // Iterate through crew members
+        for (JsonNode crewMember : crewNode) {
+            // Check if this is a director
+            String department = crewMember.path("known_for_department").asText();
+            if ("Directing".equals(department)) {
+                String name = crewMember.path("name").asText();
+                double popularity = crewMember.path("popularity").asDouble();
+                // Store in map, keeping the highest popularity value if the director appears multiple times
+                directorsPopularityMap.put(name, Math.max(popularity, directorsPopularityMap.getOrDefault(name, 0.0)));
+            }
+        }
+        // Convert map to list of entries for sorting
+        List<Map.Entry<String, Double>> directorsWithPopularity = new ArrayList<>(directorsPopularityMap.entrySet());
+
+        // Sort by popularity (highest first)
+        directorsWithPopularity.sort((a, b) -> Double.compare(b.getValue(), a.getValue()));
+
+        // Extract the top N director names
+        return directorsWithPopularity.stream()
+                .limit(limit)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+    }
+
+    private HttpHeaders createHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Accept", MediaType.APPLICATION_JSON_VALUE);
+        return headers;
     }
 
     /**
