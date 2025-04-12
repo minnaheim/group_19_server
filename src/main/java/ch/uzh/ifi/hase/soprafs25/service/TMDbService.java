@@ -502,10 +502,15 @@ public class TMDbService {
 
     // method to extract top N actors by popularity from cast and crew
     private List<String> extractTopActors(JsonNode castNode, JsonNode crewNode, int limit) {
+        log.info("Extracting top actors. Cast node is null? {}", castNode == null);
+        log.info("Cast node is array? {}", castNode != null && castNode.isArray());
+
+
         if ((castNode == null || !castNode.isArray() || castNode.isEmpty()) &&
                 (crewNode == null || !crewNode.isArray() || crewNode.isEmpty())) {
             return new ArrayList<>();
         }
+        log.info("Cast node size: {}", castNode.size());
 
         // Create a map to store actors with their popularity (using map to avoid duplicates)
         Map<String, Double> actorsPopularityMap = new HashMap<>();
@@ -552,37 +557,42 @@ public class TMDbService {
 
     // Added method to extract top N directors by popularity from crew
     private List<String> extractTopDirectors(JsonNode crewNode, int limit) {
-        if (crewNode == null || !crewNode.isArray() || crewNode.isEmpty()) {
-            return new ArrayList<>();
+        log.info("Extracting top directors. Crew node is null? {}", crewNode == null);
+        log.info("Crew node is array? {}", crewNode != null && crewNode.isArray());
+
+        if (crewNode == null || !crewNode.isArray()) {
+            log.warn("Crew node is null or not an array - returning empty list");
+            return Collections.emptyList();
         }
 
-        // Create a map to store directors with their popularity (using map to avoid duplicates)
-        Map<String, Double> directorsPopularityMap = new HashMap<>();
+        log.info("Crew node size: {}", crewNode.size());
 
+        List<String> directors = new ArrayList<>();
+        int count = 0;
 
-        // Iterate through crew members
-        for (JsonNode crewMember : crewNode) {
-            // Check if this is a director
-            String department = crewMember.path("known_for_department").asText();
-            if ("Directing".equals(department)) {
-                String name = crewMember.path("name").asText();
-                double popularity = crewMember.path("popularity").asDouble();
-                // Store in map, keeping the highest popularity value if the director appears multiple times
-                directorsPopularityMap.put(name, Math.max(popularity, directorsPopularityMap.getOrDefault(name, 0.0)));
+        for (JsonNode member : crewNode) {
+            log.info("Processing crew member: {}", member);
+
+            if (member.has("job") && "Director".equals(member.get("job").asText())) {
+                if (member.has("name")) {
+                    String name = member.get("name").asText();
+                    log.info("Adding director: {}", name);
+                    directors.add(name);
+                    count++;
+
+                    if (count >= limit) {
+                        break;
+                    }
+                } else {
+                    log.warn("Director crew member does not have a 'name' field");
+                }
             }
         }
-        // Convert map to list of entries for sorting
-        List<Map.Entry<String, Double>> directorsWithPopularity = new ArrayList<>(directorsPopularityMap.entrySet());
 
-        // Sort by popularity (highest first)
-        directorsWithPopularity.sort((a, b) -> Double.compare(b.getValue(), a.getValue()));
-
-        // Extract the top N director names
-        return directorsWithPopularity.stream()
-                .limit(limit)
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
+        log.info("Extracted directors: {}", directors);
+        return directors;
     }
+
 
     private HttpHeaders createHeaders() {
         HttpHeaders headers = new HttpHeaders();
