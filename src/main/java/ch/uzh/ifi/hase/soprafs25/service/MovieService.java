@@ -37,52 +37,14 @@ public class MovieService {
     }
 
     /**
-     * Get movies based on search criteria from both local database and TMDb API
+     * Get movies based on search criteria from only TMDb API
      *
-     * @param searchParams Movie object containing search parameters
+     * @param searchParams Movie object containing search parameters searchparams are of type title: string, genres: List<string> year: integer, actors: List<long>, directors: List<long>
      * @return List of movies matching the search criteria without duplicates
      */
     public List<Movie> getMovies(Movie searchParams) {
-        List<Movie> results = new ArrayList<>();
-
-        // Search local database
-        List<Movie> localResults;
-
-        localResults = movieRepository.findBySearchParamsWithLists(
-                searchParams.getTitle(),
-                searchParams.getGenres(),
-                searchParams.getYear(),
-                searchParams.getActors(),
-                searchParams.getDirectors()
-        );
-
-        results.addAll(localResults);
-
         // Search in TMDb API
-        try {
-            List<Movie> tmdbResults = tmdbService.searchMovies(searchParams);
-
-            // Add to results, avoiding duplicates
-            Map<Long, Movie> movieMap = new HashMap<>();
-
-            // Add local results to map
-            for (Movie movie : results) {
-                movieMap.put(movie.getMovieId(), movie);
-            }
-
-            // Add TMDb results to map, avoiding duplicates
-            for (Movie movie : tmdbResults) {
-                if (!movieMap.containsKey(movie.getMovieId())) {
-                    movieMap.put(movie.getMovieId(), movie);
-                    results.add(movie);
-                }
-            }
-        } catch (Exception e) {
-            log.error("Error searching TMDb: {}", e.getMessage());
-            // Continue with just local results if TMDb search fails
-        }
-
-        return results;
+        return tmdbService.searchMovies(searchParams);
     }
 
     /**
