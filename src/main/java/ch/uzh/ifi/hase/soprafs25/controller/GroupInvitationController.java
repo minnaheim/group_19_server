@@ -31,14 +31,17 @@ public class GroupInvitationController {
     }
 
     @PostMapping("/send/{groupId}/{receiverId}")
-    public GroupInvitation sendGroupInvitation(@RequestHeader("Authorization") String token, 
+    @ResponseStatus(HttpStatus.OK)
+    public GroupInvitationGetDTO sendGroupInvitation(@RequestHeader("Authorization") String token, 
                                                 @PathVariable Long groupId, 
                                                 @PathVariable Long receiverId) {
         Long senderId = userService.getUserByToken(token).getUserId();
-        return groupInvitationService.sendInvitation(groupId, senderId, receiverId);
+        GroupInvitation groupInvitation = groupInvitationService.sendInvitation(groupId, senderId, receiverId);
+        return DTOMapper.INSTANCE.convertEntityToGroupInvitationGetDTO(groupInvitation);
     }
 
     @PostMapping("/{invitationId}/accept")
+    @ResponseStatus(HttpStatus.OK)
     public GroupInvitationGetDTO acceptGroupInvitation(@RequestHeader("Authorization") String token, @PathVariable Long invitationId) {
         Long userId = userService.getUserByToken(token).getUserId();
         GroupInvitation invitation = groupInvitationService.respondToInvitation(invitationId, userId, true);
@@ -46,6 +49,7 @@ public class GroupInvitationController {
     }
 
     @PostMapping("/{invitationId}/reject")
+    @ResponseStatus(HttpStatus.OK)
     public GroupInvitationGetDTO rejectGroupInvitation(@RequestHeader("Authorization") String token,
                                                       @PathVariable Long invitationId) {
         Long userId = userService.getUserByToken(token).getUserId();
@@ -63,6 +67,7 @@ public class GroupInvitationController {
     }
 
     @GetMapping("/received")
+    @ResponseStatus(HttpStatus.OK)
     public List<GroupInvitationGetDTO> getReceivedGroupInvitations(@RequestHeader("Authorization") String token) {
         Long userId = userService.getUserByToken(token).getUserId();
         return groupInvitationService.getReceivedInvitations(userId).stream()
@@ -72,6 +77,7 @@ public class GroupInvitationController {
 
     // additionally - I don't know whether we want to have it or not, but I though that it logically suits
     @DeleteMapping("/{invitationId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteGroupInvitation(@RequestHeader("Authorization") String token, @PathVariable Long invitationId) {
         Long userId = userService.getUserByToken(token).getUserId();
         groupInvitationService.deleteInvitation(invitationId, userId);
