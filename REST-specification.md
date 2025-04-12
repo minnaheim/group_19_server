@@ -5,8 +5,29 @@ All authenticated API requests must include the Authorization header with a Bear
 ```
 Authorization: Bearer <token>
 ```
-
 The token is obtained during login and is returned in the response headers.
+
+## Error Responses
+When an error occurs (e.g., invalid input, resource not found, server error), the API returns a standardized JSON response body with the appropriate HTTP status code.
+
+**Format:**
+```json
+{
+  "timestamp": 1678886400000, // Unix timestamp in milliseconds
+  "status": 400,             // HTTP status code
+  "error": "Bad Request",    // HTTP status phrase
+  "message": "Specific error message detailing the issue.", // Developer-friendly error description
+  "path": "/api/users/123/rankings" // The request path that caused the error
+}
+```
+
+**Common Status Codes:**
+- **400 Bad Request:** Invalid input, missing parameters, validation errors (e.g., invalid ranking data).
+- **401 Unauthorized:** Missing or invalid authentication token.
+- **403 Forbidden:** Authenticated user lacks permission to access the resource.
+- **404 Not Found:** Resource not found (e.g., user ID, movie ID, group ID).
+- **409 Conflict:** Action cannot be completed due to a conflict with the current state of the resource (e.g., username already exists).
+- **500 Internal Server Error:** An unexpected server-side error occurred.
 
 ## Entities
 
@@ -48,6 +69,14 @@ The token is obtained during login and is returned in the response headers.
 - **favoriteMovie**: Movie
 - **watchlist**: Movie[]
 - **watchedMovies**: Movie[]
+
+### RankingSubmitDTO (Used in Request Body)
+- **movieId**: long (e.g., 27205) - *Required*
+- **rank**: integer (e.g., 1) - *Required, Min: 1*
+
+### RankingResultGetDTO (Used in Response Body)
+- **calculationTimestamp**: string (ISO 8601 format, e.g., "2025-04-11T21:30:00.123Z")
+- **winningMovie**: Movie(*) - Contains the full details of the winning movie.
 
 ## API Endpoints
 
@@ -167,3 +196,14 @@ The token is obtained during login and is returned in the response headers.
 | `/reviews` | POST | Review | Body | 409 Conflict | Error: reason \<string\> | Submit a review failed because review already exists |
 | `/movies/{movieId}/reviews` | PUT | Review | Body | 204 No Content | Success message \<string\> | Update a review |
 | `/movies/{movieId}/reviews` | DELETE | reviewId \<integer\> | Path | 204 No Content | Success message \<string\> | Delete a review |
+
+### Ranking System
+
+| Endpoint                      | Method | Parameters                    | Parameter Type | Status Code        | Response                  | Description                       |
+|-------------------------------|--------|-------------------------------|----------------|--------------------|---------------------------|-----------------------------------|
+| `/api/users/{userId}/rankings`| POST   | userId <long>                | Path           | 204 No Content     | -                         | Submit user's movie rankings.     |
+|                               |        | Array<RankingSubmitDTO>     | Body           |                    |                           |                                   |
+|                               |        |                               |                | 400 Bad Request    | Error(*)                  | Invalid ranking data (e.g., null `movieId`, null/invalid `rank`, duplicate movieIds). |
+|                               |        |                               |                | 404 Not Found      | Error(*)                  | User with the given `userId` not found. |
+| `/api/rankings/results/latest`| GET    | -                             | -              | 200 OK             | RankingResultGetDTO(*)    | Retrieve the latest calculated ranking result. |
+|                               |        |                               |                | 404 Not Found      | Error(*)                  | No ranking result has been calculated yet. |
