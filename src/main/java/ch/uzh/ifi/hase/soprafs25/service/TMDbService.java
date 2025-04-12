@@ -480,13 +480,17 @@ public class TMDbService {
 
             // Extract actors from cast
             List<String> actors = extractTopActors(creditsNode.path("cast"), creditsNode.path("crew"), 5);
+            log.info("Extracted actors for movie {}: {}", rootNode.path("id").asText(), actors);
             movie.setActorsList(actors);
 
             // Extract directors from crew
             List<String> directors = extractTopDirectors(creditsNode.path("crew"), 2);
+            log.info("Extracted directors for movie {}: {}", rootNode.path("id").asText(), directors);
             movie.setDirectorsList(directors);
 
             // TODO Parse trailer URL via JsonNode creditsNode = rootNode.path("videos")
+            log.info("Movie to be saved - ID: {}, Title: {}, Actors: {}, Directors: {}",
+                    movie.getMovieId(), movie.getTitle(), movie.getActors(), movie.getDirectors());
 
             return movie;
         } catch (Exception e) {
