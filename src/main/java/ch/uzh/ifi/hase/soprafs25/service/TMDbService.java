@@ -488,6 +488,10 @@ public class TMDbService {
             movie.setDirectors(directors);
 
             JsonNode videosNode = rootNode.path("videos");
+            String trailerURL = extractVideoURL(videosNode);
+            if (trailerURL != null) {
+                movie.setTrailerURL(trailerURL);
+            }
 
             log.info("Movie to be saved - ID: {}, Title: {}, Actors: {}, Directors: {}",
                     movie.getMovieId(), movie.getTitle(), movie.getActors(), movie.getDirectors());
@@ -500,6 +504,67 @@ public class TMDbService {
 
 
     }
+
+    /**
+     * Extracts the YouTube video URL from a movie response with priority ordering:
+     * 1. First YouTube trailer
+     * 2. First YouTube teaser if no trailer exists
+     * 3. First YouTube video of any type if no trailer or teaser exists
+     *
+     * @param videosNode the JSON response from TMDb API containing video information
+     * @return the YouTube URL for the movie video, or null if none is found
+     */
+    public String extractVideoURL(JsonNode videosNode) {
+        if (videosNode == null) {
+            return null;
+        }
+
+        JsonNode videos = videosNode.get("results");
+        if (videos == null || videos.isEmpty()) {
+            return null;
+        }
+
+        // First priority: YouTube trailer
+        String youtubeTrailerUrl = findYouTubeVideoByType(videos, "Trailer");
+        if (youtubeTrailerUrl != null) {
+            return youtubeTrailerUrl;
+        }
+
+        // Second priority: YouTube teaser
+        String youtubeTeaserUrl = findYouTubeVideoByType(videos, "Teaser");
+        if (youtubeTeaserUrl != null) {
+            return youtubeTeaserUrl;
+        }
+
+        // Third priority: Any YouTube video
+        for (JsonNode video : videos) {
+            if (video.has("site") && "YouTube".equals(video.get("site").asText()) &&
+                    video.has("key") && !video.get("key").asText().isEmpty()) {
+                return "https://www.youtube.com/watch?v=" + video.get("key").asText();
+            }
+        }
+
+        return null;  // No YouTube videos found
+    }
+
+    /**
+     * Helper method to find a YouTube video of a specific type
+     *
+     * @param videos JSON array of videos
+     * @param type the desired video type (e.g., "Trailer", "Teaser")
+     * @return YouTube URL for the first matching video, or null if none found
+     */
+    private String findYouTubeVideoByType(JsonNode videos, String type) {
+        for (JsonNode video : videos) {
+            if (video.has("site") && "YouTube".equals(video.get("site").asText()) &&
+                    video.has("type") && type.equals(video.get("type").asText()) &&
+                    video.has("key") && !video.get("key").asText().isEmpty()) {
+                return "https://www.youtube.com/watch?v=" + video.get("key").asText();
+            }
+        }
+        return null;
+    }
+
 
     /**
      * Extracts top actors from the cast and crew nodes of the TMDb API response.
