@@ -446,10 +446,12 @@ public class TMDbService {
 
             // Make API call
             ResponseEntity<String> response = restTemplate.exchange(
-                    detailsEndpoint,
+                    builder.toUriString(),
                     HttpMethod.GET,
                     entity,
                     String.class);
+            log.info("response: {}", response);
+
 
             if (response.getStatusCode() == HttpStatus.OK) {
                 return parseMovieDetails(response.getBody());
@@ -473,18 +475,28 @@ public class TMDbService {
             if (movie == null) {
                 return null;
             }
+            log.info("rootNode is null? {}", rootNode == null);
+            log.info("rootNode is array? {}", rootNode.isArray());
+            log.info("rootNode type: {}", rootNode.getClass().getName());
+            log.info("rootNode node type: {}", rootNode.getNodeType());
+
+
 
             // Additional details not handled by mapTMDbMovieToEntity
-
             JsonNode creditsNode = rootNode.path("credits");
+            log.info("Credits node is null? {}", creditsNode == null);
+            log.info("Credits node is array? {}", creditsNode.isArray());
+            log.info("Credits node type: {}", creditsNode.getClass().getName());
+            log.info("Credits node node type: {}", creditsNode.getNodeType());
+            log.info("Type of creditsNode: {}", creditsNode.getClass().getName());
 
-            // Extract actors from cast
-            List<String> actors = extractTopActors(creditsNode.path("cast"), creditsNode.path("crew"));
+            // Extract actors from cast and crew
+            List<String> actors = extractTopActors(creditsNode);
             log.info("Extracted actors for movie {}: {}", rootNode.path("id").asText(), actors);
             movie.setActorsList(actors);
 
             // Extract directors from crew
-            List<String> directors = extractTopDirectors(creditsNode.path("crew"));
+            List<String> directors = extractTopDirectors(creditsNode);
             log.info("Extracted directors for movie {}: {}", rootNode.path("id").asText(), directors);
             movie.setDirectorsList(directors);
 
@@ -498,6 +510,7 @@ public class TMDbService {
             return null;
         }
 
+
     }
 
     /**
@@ -505,42 +518,44 @@ public class TMDbService {
      * Actors are identified by "known_for_department": "Acting"
      * Results are ordered by popularity in descending order.
      */
-    private List<String> extractTopActors(JsonNode castNode, JsonNode crewNode) {
-        log.info("Extracting top actors. Cast node is null? {}", castNode == null);
+    private List<String> extractTopActors(JsonNode creditsNode) {
+
+
+        if (creditsNode == null || creditsNode.isMissingNode()) {
+            log.warn("Credits node is missing - returning empty list");
+            return Collections.emptyList();
+        }
 
         List<ActorData> actors = new ArrayList<>();
 
         // Extract actors from cast node if available
-        if (castNode != null && !castNode.isMissingNode()) {
-            log.info("Cast node is array? {}", castNode.isArray());
-            if (castNode.isArray()) {
-                for (JsonNode actor : castNode) {
-                    if (actor.has("known_for_department") &&
-                            "Acting".equals(actor.get("known_for_department").asText())) {
+        JsonNode castNode = creditsNode.path("cast");
+        if (castNode != null && !castNode.isMissingNode() && castNode.isArray()) {
+            for (JsonNode actor : castNode) {
+                if (actor.has("known_for_department") &&
+                        "Acting".equals(actor.get("known_for_department").asText())) {
 
-                        String name = actor.has("name") ? actor.get("name").asText() : "";
-                        double popularity = actor.has("popularity") ? actor.get("popularity").asDouble() : 0.0;
+                    String name = actor.has("name") ? actor.get("name").asText() : "";
+                    double popularity = actor.has("popularity") ? actor.get("popularity").asDouble() : 0.0;
 
-                        actors.add(new ActorData(name, popularity));
-                    }
+                    actors.add(new ActorData(name, popularity));
                 }
             }
         }
 
         // Extract actors from crew node if available (some actors might also be in crew)
-        if (crewNode != null && !crewNode.isMissingNode()) {
-            if (crewNode.isArray()) {
-                for (JsonNode crewMember : crewNode) {
-                    if (crewMember.has("known_for_department") &&
-                            "Acting".equals(crewMember.get("known_for_department").asText())) {
+        JsonNode crewNode = creditsNode.path("crew");
+        if (crewNode != null && !crewNode.isMissingNode() && crewNode.isArray()) {
+            for (JsonNode crewMember : crewNode) {
+                if (crewMember.has("known_for_department") &&
+                        "Acting".equals(crewMember.get("known_for_department").asText())) {
 
-                        String name = crewMember.has("name") ? crewMember.get("name").asText() : "";
-                        double popularity = crewMember.has("popularity") ? crewMember.get("popularity").asDouble() : 0.0;
+                    String name = crewMember.has("name") ? crewMember.get("name").asText() : "";
+                    double popularity = crewMember.has("popularity") ? crewMember.get("popularity").asDouble() : 0.0;
 
-                        // Only add if not already added from cast
-                        if (actors.stream().noneMatch(a -> a.name.equals(name))) {
-                            actors.add(new ActorData(name, popularity));
-                        }
+                    // Only add if not already added from cast
+                    if (actors.stream().noneMatch(a -> a.name.equals(name))) {
+                        actors.add(new ActorData(name, popularity));
                     }
                 }
             }
@@ -554,40 +569,38 @@ public class TMDbService {
                 .map(a -> a.name)
                 .collect(Collectors.toList());
 
-        log.info("Extracted actors for movie {}: {}", "movieId", actorNames);
         return actorNames;
     }
 
     /**
-     * Extracts top directors from the crew node of the TMDb API response.
-     * Directors are identified by "known_for_department": "Directing"
+     * Extracts top directors from the credits node of the TMDb API response.
+     * Directors are identified by "known_for_department": "Directing" and "job": "Director"
      * Results are ordered by popularity in descending order.
      */
-    private List<String> extractTopDirectors(JsonNode crewNode) {
-        log.info("Extracting top directors. Crew node exists? {}", crewNode != null && !crewNode.isMissingNode());
+    private List<String> extractTopDirectors(JsonNode creditsNode) {
+        if (creditsNode == null || creditsNode.isMissingNode()) {
+            log.warn("Credits node is missing - returning empty list");
+            return Collections.emptyList();
+        }
 
-        List<ActorData> directors = new ArrayList<>();
-
-        if (crewNode == null || crewNode.isMissingNode()) {
+        JsonNode crewNode = creditsNode.path("crew");
+        if (crewNode == null || crewNode.isMissingNode() || !crewNode.isArray()) {
             log.warn("Crew node is missing - returning empty list");
             return Collections.emptyList();
         }
 
-        log.info("Crew node is array? {}", crewNode.isArray());
-        if (!crewNode.isArray()) {
-            log.warn("Crew node is not an array - returning empty list");
-            return Collections.emptyList();
-        }
+        List<DirectorData> directors = new ArrayList<>();
 
-        // Extract directors from crew
         for (JsonNode crewMember : crewNode) {
             if (crewMember.has("known_for_department") &&
-                    "Directing".equals(crewMember.get("known_for_department").asText())) {
+                    "Directing".equals(crewMember.get("known_for_department").asText()) &&
+                    crewMember.has("job") &&
+                    "Director".equals(crewMember.get("job").asText())) {
 
                 String name = crewMember.has("name") ? crewMember.get("name").asText() : "";
                 double popularity = crewMember.has("popularity") ? crewMember.get("popularity").asDouble() : 0.0;
 
-                directors.add(new ActorData(name, popularity));
+                directors.add(new DirectorData(name, popularity));
             }
         }
 
@@ -599,21 +612,29 @@ public class TMDbService {
                 .map(d -> d.name)
                 .collect(Collectors.toList());
 
-        log.info("Extracted directors for movie {}: {}", "movieId", directorNames);
         return directorNames;
     }
 
-    // Helper class to store name and popularity for sorting
+    // Helper classes for sorting by popularity
     private static class ActorData {
         final String name;
         final double popularity;
 
-        ActorData(String name, double popularity) {
+        public ActorData(String name, double popularity) {
             this.name = name;
             this.popularity = popularity;
         }
     }
 
+    private static class DirectorData {
+        final String name;
+        final double popularity;
+
+        public DirectorData(String name, double popularity) {
+            this.name = name;
+            this.popularity = popularity;
+        }
+    }
 
     /**
      * Get list of all genres from TMDb
@@ -740,10 +761,9 @@ public class TMDbService {
                     movie.addGenre(genreName);
                 }
             } else {
-                // For other endpoints not yet used but kept for future usages (not delete as else condition should never be true anyways)
-                // ToDo delete if not needed
                 JsonNode genresNode = movieData.path("genres");
                 if (genresNode.isArray()) {
+                    log.info("genresNode {}", genresNode.isArray());
                     for (JsonNode genreNode : genresNode) {
                         int genreId = genreNode.path("id").asInt();
                         String genreName = genreNode.path("name").asText();
