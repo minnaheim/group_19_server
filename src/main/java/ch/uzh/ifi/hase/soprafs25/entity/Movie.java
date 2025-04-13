@@ -63,13 +63,13 @@ public class Movie implements Serializable {
     @Column
     private String originallanguage;
 
-    @Column(length = 10000)
+    @Column
     private String trailerURL;
 
     @Column
     private String posterURL;
 
-    @Column
+    @Column(length = 10000)
     private String description;
 
     // Getters and setters
