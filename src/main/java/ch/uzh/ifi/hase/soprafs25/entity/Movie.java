@@ -69,7 +69,7 @@ public class Movie implements Serializable {
     @Column
     private String posterURL;
 
-    @Column
+    @Column(length = 10000) //inorder to get large descriptions
     private String description;
 
     // Getters and setters
