@@ -2,6 +2,9 @@ package ch.uzh.ifi.hase.soprafs25.rest.mapper;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.HashMap;
+import javax.persistence.MapKeyColumn;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

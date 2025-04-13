@@ -1,23 +1,12 @@
 package ch.uzh.ifi.hase.soprafs25.entity;
 
 import java.io.Serializable;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.Map;
+import java.util.HashMap;
+import javax.persistence.MapKeyColumn;
 
-import javax.persistence.CollectionTable;
-import javax.persistence.Column;
-import javax.persistence.ElementCollection;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import ch.uzh.ifi.hase.soprafs25.constant.UserStatus;
 
@@ -72,13 +61,15 @@ public class User implements Serializable {
   @ElementCollection
   @CollectionTable(name = "user_favorite_actors", joinColumns = @JoinColumn(name = "user_id"))
   @Column(name = "actor")
-  private List<String> favoriteActors;
+  private Map<String, String> favoriteActors = new HashMap<>();
 
   @ElementCollection
   @CollectionTable(name = "user_favorite_directors", joinColumns = @JoinColumn(name = "user_id"))
-  @Column(name = "director")
-  private List<String> favoriteDirectors;
-  
+  @MapKeyColumn(name = "directorId")
+  @Column(name = "director_name")
+  private Map<String, String> favoriteDirectors = new HashMap<>();
+
+
 //   @ElementCollection
 //   @CollectionTable(name = "user_preferences", joinColumns = @JoinColumn(name = "user_id"))
 //   @Column(name = "preference")
@@ -209,19 +200,19 @@ public class User implements Serializable {
         this.favoriteMovie = favoriteMovie;
     }
 
-    public List<String> getFavoriteActors() {
+    public Map<String, String> getFavoriteActors() {
         return favoriteActors;
     }
 
-    public void setFavoriteActors(List<String> favoriteActors) {
+    public void setFavoriteActors(Map<String, String> favoriteActors) {
         this.favoriteActors = favoriteActors;
     }
 
-    public List<String> getFavoriteDirectors() {
+    public Map<String, String> getFavoriteDirectors() {
         return favoriteDirectors;
     }
 
-    public void setFavoriteDirectors(List<String> favoriteDirectors) {
+    public void setFavoriteDirectors(Map<String, String> favoriteDirectors) {
         this.favoriteDirectors = favoriteDirectors;
     }
 
