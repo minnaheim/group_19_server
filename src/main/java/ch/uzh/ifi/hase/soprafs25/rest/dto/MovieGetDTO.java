@@ -9,6 +9,7 @@ public class MovieGetDTO {
     private Integer year;
     private List<String> actors;
     private List<String> directors;
+    private List<String> spokenlanguages;
     private String originallanguage;
     private String posterURL;
     private String trailerURL;
@@ -68,6 +69,18 @@ public class MovieGetDTO {
 
     public void addDirector(String director) {
         this.directors.add(director);
+    }
+
+    public List<String> getSpokenlanguages() {
+        return spokenlanguages;
+    }
+
+    public void setSpokenlanguages(List<String> spokenlanguages) {
+        this.spokenlanguages = spokenlanguages;
+    }
+
+    public void addSpokenlanguage(String spokenlanguage) {
+        this.spokenlanguages.add(spokenlanguage);
     }
 
     public String getOriginallanguage() {

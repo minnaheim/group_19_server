@@ -60,6 +60,14 @@ public class Movie implements Serializable {
     @Column(name = "director")
     private List<String> directors = new ArrayList<>();
 
+    @ElementCollection
+    @CollectionTable(
+            name = "MOVIE_SPOKENLANGUAGES",
+            joinColumns = @JoinColumn(name = "movie_id")
+    )
+    @Column(name = "spokenlanguages")
+    private List<String> spokenlanguages = new ArrayList<>();
+
     @Column
     private String originallanguage;
 
@@ -131,6 +139,18 @@ public class Movie implements Serializable {
 
     public void addDirector(String director) {
         this.directors.add(director);
+    }
+
+    public List<String> getSpokenlanguages() {
+        return spokenlanguages;
+    }
+
+    public void setSpokenlanguages(List<String> spokenlanguages) {
+        this.spokenlanguages = spokenlanguages;
+    }
+
+    public void addSpokenlanguage(String spokenlanguage) {
+        this.spokenlanguages.add(spokenlanguage);
     }
 
     public String getOriginallanguage() {
