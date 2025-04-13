@@ -113,7 +113,7 @@ public class Movie implements Serializable {
         return actors;
     }
 
-    public void setActorsList(List<String> actors) {
+    public void setActors(List<String> actors) {
         this.actors = actors;
     }
 
@@ -125,7 +125,7 @@ public class Movie implements Serializable {
         return directors;
     }
 
-    public void setDirectorsList(List<String> directors) {
+    public void setDirectors(List<String> directors) {
         this.directors = directors;
     }
 

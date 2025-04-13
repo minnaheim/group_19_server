@@ -493,12 +493,12 @@ public class TMDbService {
             // Extract actors from cast and crew
             List<String> actors = extractTopActors(creditsNode);
             log.info("Extracted actors for movie {}: {}", rootNode.path("id").asText(), actors);
-            movie.setActorsList(actors);
+            movie.setActors(actors);
 
             // Extract directors from crew
             List<String> directors = extractTopDirectors(creditsNode);
             log.info("Extracted directors for movie {}: {}", rootNode.path("id").asText(), directors);
-            movie.setDirectorsList(directors);
+            movie.setDirectors(directors);
 
             // TODO Parse trailer URL via JsonNode creditsNode = rootNode.path("videos")
             log.info("Movie to be saved - ID: {}, Title: {}, Actors: {}, Directors: {}",
