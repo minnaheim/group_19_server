@@ -63,7 +63,7 @@ public class Movie implements Serializable {
     @Column
     private String originallanguage;
 
-    @Column
+    @Column(length = 10000)
     private String trailerURL;
 
     @Column
