@@ -479,12 +479,12 @@ public class TMDbService {
             JsonNode creditsNode = rootNode.path("credits");
 
             // Extract actors from cast
-            List<String> actors = extractTopActors(creditsNode.path("cast"), creditsNode.path("crew"), 5);
+            List<String> actors = extractTopActors(creditsNode.path("cast"), creditsNode.path("crew"));
             log.info("Extracted actors for movie {}: {}", rootNode.path("id").asText(), actors);
             movie.setActorsList(actors);
 
             // Extract directors from crew
-            List<String> directors = extractTopDirectors(creditsNode.path("crew"), 2);
+            List<String> directors = extractTopDirectors(creditsNode.path("crew"));
             log.info("Extracted directors for movie {}: {}", rootNode.path("id").asText(), directors);
             movie.setDirectorsList(directors);
 
@@ -500,105 +500,120 @@ public class TMDbService {
 
     }
 
-    // method to extract top N actors by popularity from cast and crew
-    private List<String> extractTopActors(JsonNode castNode, JsonNode crewNode, int limit) {
+    /**
+     * Extracts top actors from the cast and crew nodes of the TMDb API response.
+     * Actors are identified by "known_for_department": "Acting"
+     * Results are ordered by popularity in descending order.
+     */
+    private List<String> extractTopActors(JsonNode castNode, JsonNode crewNode) {
         log.info("Extracting top actors. Cast node is null? {}", castNode == null);
-        log.info("Cast node is array? {}", castNode != null && castNode.isArray());
 
+        List<ActorData> actors = new ArrayList<>();
 
-        if ((castNode == null || !castNode.isArray() || castNode.isEmpty()) &&
-                (crewNode == null || !crewNode.isArray() || crewNode.isEmpty())) {
-            return new ArrayList<>();
-        }
-        log.info("Cast node size: {}", castNode.size());
+        // Extract actors from cast node if available
+        if (castNode != null && !castNode.isMissingNode()) {
+            log.info("Cast node is array? {}", castNode.isArray());
+            if (castNode.isArray()) {
+                for (JsonNode actor : castNode) {
+                    if (actor.has("known_for_department") &&
+                            "Acting".equals(actor.get("known_for_department").asText())) {
 
-        // Create a map to store actors with their popularity (using map to avoid duplicates)
-        Map<String, Double> actorsPopularityMap = new HashMap<>();
+                        String name = actor.has("name") ? actor.get("name").asText() : "";
+                        double popularity = actor.has("popularity") ? actor.get("popularity").asDouble() : 0.0;
 
-        // Iterate through cast members
-        if (castNode != null && castNode.isArray()) {
-            for (JsonNode castMember : castNode) {
-                // Check if this is an acting role
-                String department = castMember.path("known_for_department").asText();
-                if ("Acting".equals(department)) {
-                    String name = castMember.path("name").asText();
-                    double popularity = castMember.path("popularity").asDouble();
-                    // Store in map, keeping the highest popularity value if the actor appears multiple times
-                    actorsPopularityMap.put(name, Math.max(popularity, actorsPopularityMap.getOrDefault(name, 0.0)));
+                        actors.add(new ActorData(name, popularity));
+                    }
                 }
             }
         }
 
-        // Also search for actors in crew
-        if (crewNode != null && crewNode.isArray()) {
-            for (JsonNode crewMember : crewNode) {
-                String department = crewMember.path("known_for_department").asText();
-                if ("Acting".equals(department)) {
-                    String name = crewMember.path("name").asText();
-                    double popularity = crewMember.path("popularity").asDouble();
-                    // Store in map, keeping the highest popularity value if the actor appears multiple times
-                    actorsPopularityMap.put(name, Math.max(popularity, actorsPopularityMap.getOrDefault(name, 0.0)));
+        // Extract actors from crew node if available (some actors might also be in crew)
+        if (crewNode != null && !crewNode.isMissingNode()) {
+            if (crewNode.isArray()) {
+                for (JsonNode crewMember : crewNode) {
+                    if (crewMember.has("known_for_department") &&
+                            "Acting".equals(crewMember.get("known_for_department").asText())) {
+
+                        String name = crewMember.has("name") ? crewMember.get("name").asText() : "";
+                        double popularity = crewMember.has("popularity") ? crewMember.get("popularity").asDouble() : 0.0;
+
+                        // Only add if not already added from cast
+                        if (actors.stream().noneMatch(a -> a.name.equals(name))) {
+                            actors.add(new ActorData(name, popularity));
+                        }
+                    }
                 }
             }
         }
 
-        // Convert map to list of entries for sorting
-        List<Map.Entry<String, Double>> actorsWithPopularity = new ArrayList<>(actorsPopularityMap.entrySet());
+        // Sort by popularity (descending)
+        actors.sort((a1, a2) -> Double.compare(a2.popularity, a1.popularity));
 
-        // Sort by popularity (highest first)
-        actorsWithPopularity.sort((a, b) -> Double.compare(b.getValue(), a.getValue()));
-
-        // Extract the top N actor names
-        return actorsWithPopularity.stream()
-                .limit(limit)
-                .map(Map.Entry::getKey)
+        // Extract only names
+        List<String> actorNames = actors.stream()
+                .map(a -> a.name)
                 .collect(Collectors.toList());
+
+        log.info("Extracted actors for movie {}: {}", "movieId", actorNames);
+        return actorNames;
     }
 
-    // Added method to extract top N directors by popularity from crew
-    private List<String> extractTopDirectors(JsonNode crewNode, int limit) {
-        log.info("Extracting top directors. Crew node is null? {}", crewNode == null);
-        log.info("Crew node is array? {}", crewNode != null && crewNode.isArray());
+    /**
+     * Extracts top directors from the crew node of the TMDb API response.
+     * Directors are identified by "known_for_department": "Directing"
+     * Results are ordered by popularity in descending order.
+     */
+    private List<String> extractTopDirectors(JsonNode crewNode) {
+        log.info("Extracting top directors. Crew node exists? {}", crewNode != null && !crewNode.isMissingNode());
 
-        if (crewNode == null || !crewNode.isArray()) {
-            log.warn("Crew node is null or not an array - returning empty list");
+        List<ActorData> directors = new ArrayList<>();
+
+        if (crewNode == null || crewNode.isMissingNode()) {
+            log.warn("Crew node is missing - returning empty list");
             return Collections.emptyList();
         }
 
-        log.info("Crew node size: {}", crewNode.size());
+        log.info("Crew node is array? {}", crewNode.isArray());
+        if (!crewNode.isArray()) {
+            log.warn("Crew node is not an array - returning empty list");
+            return Collections.emptyList();
+        }
 
-        List<String> directors = new ArrayList<>();
-        int count = 0;
+        // Extract directors from crew
+        for (JsonNode crewMember : crewNode) {
+            if (crewMember.has("known_for_department") &&
+                    "Directing".equals(crewMember.get("known_for_department").asText())) {
 
-        for (JsonNode member : crewNode) {
-            log.info("Processing crew member: {}", member);
+                String name = crewMember.has("name") ? crewMember.get("name").asText() : "";
+                double popularity = crewMember.has("popularity") ? crewMember.get("popularity").asDouble() : 0.0;
 
-            if (member.has("job") && "Director".equals(member.get("job").asText())) {
-                if (member.has("name")) {
-                    String name = member.get("name").asText();
-                    log.info("Adding director: {}", name);
-                    directors.add(name);
-                    count++;
-
-                    if (count >= limit) {
-                        break;
-                    }
-                } else {
-                    log.warn("Director crew member does not have a 'name' field");
-                }
+                directors.add(new ActorData(name, popularity));
             }
         }
 
-        log.info("Extracted directors: {}", directors);
-        return directors;
+        // Sort by popularity (descending)
+        directors.sort((d1, d2) -> Double.compare(d2.popularity, d1.popularity));
+
+        // Extract only names
+        List<String> directorNames = directors.stream()
+                .map(d -> d.name)
+                .collect(Collectors.toList());
+
+        log.info("Extracted directors for movie {}: {}", "movieId", directorNames);
+        return directorNames;
     }
 
+    // Helper class to store name and popularity for sorting
+    private static class ActorData {
+        final String name;
+        final double popularity;
 
-    private HttpHeaders createHeaders() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Accept", MediaType.APPLICATION_JSON_VALUE);
-        return headers;
+        ActorData(String name, double popularity) {
+            this.name = name;
+            this.popularity = popularity;
+        }
     }
+
 
     /**
      * Get list of all genres from TMDb
