@@ -475,32 +475,20 @@ public class TMDbService {
             if (movie == null) {
                 return null;
             }
-            log.info("rootNode is null? {}", rootNode == null);
-            log.info("rootNode is array? {}", rootNode.isArray());
-            log.info("rootNode type: {}", rootNode.getClass().getName());
-            log.info("rootNode node type: {}", rootNode.getNodeType());
-
-
 
             // Additional details not handled by mapTMDbMovieToEntity
             JsonNode creditsNode = rootNode.path("credits");
-            log.info("Credits node is null? {}", creditsNode == null);
-            log.info("Credits node is array? {}", creditsNode.isArray());
-            log.info("Credits node type: {}", creditsNode.getClass().getName());
-            log.info("Credits node node type: {}", creditsNode.getNodeType());
-            log.info("Type of creditsNode: {}", creditsNode.getClass().getName());
 
             // Extract actors from cast and crew
             List<String> actors = extractTopActors(creditsNode);
-            log.info("Extracted actors for movie {}: {}", rootNode.path("id").asText(), actors);
             movie.setActors(actors);
 
             // Extract directors from crew
             List<String> directors = extractTopDirectors(creditsNode);
-            log.info("Extracted directors for movie {}: {}", rootNode.path("id").asText(), directors);
             movie.setDirectors(directors);
 
-            // TODO Parse trailer URL (via JsonNode creditsNode = rootNode.path("videos"))
+            JsonNode videosNode = rootNode.path("videos");
+
             log.info("Movie to be saved - ID: {}, Title: {}, Actors: {}, Directors: {}",
                     movie.getMovieId(), movie.getTitle(), movie.getActors(), movie.getDirectors());
 
