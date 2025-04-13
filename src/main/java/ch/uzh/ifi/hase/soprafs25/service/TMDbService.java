@@ -500,7 +500,7 @@ public class TMDbService {
             log.info("Extracted directors for movie {}: {}", rootNode.path("id").asText(), directors);
             movie.setDirectors(directors);
 
-            // TODO Parse trailer URL via JsonNode creditsNode = rootNode.path("videos")
+            // TODO Parse trailer URL (via JsonNode creditsNode = rootNode.path("videos"))
             log.info("Movie to be saved - ID: {}, Title: {}, Actors: {}, Directors: {}",
                     movie.getMovieId(), movie.getTitle(), movie.getActors(), movie.getDirectors());
 
