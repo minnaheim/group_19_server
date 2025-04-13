@@ -68,6 +68,7 @@ public class MovieService {
                 if (movie != null) {
                     movieRepository.save(movie);
                 }
+                log.info("getActors size is? {}", movie.getActors().size());
             } catch (Exception e) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Movie with ID " + movieId + " was not found");
