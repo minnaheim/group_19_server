@@ -281,7 +281,8 @@ public class TMDbService {
     /**
      * Search for movies in TMDb API
      *
-     * @param searchParams Movie object containing search parameters
+     * @param searchParams Movie object containing search parameters searchparams are of type title: string, genres: List<string> year: integer, actors: List<long>, directors: List<long>
+     *                     searchparams cannot be spokenlanguages: List<string>!
      * @return List of movies matching the search criteria
      */
     public List<Movie> searchMovies(Movie searchParams) {
@@ -323,7 +324,6 @@ public class TMDbService {
                         Movie movie = mapTMDbMovieToEntity(movieNode);
                         movies.add(movie);
                     }
-
                     return movies;
                 }
             }
@@ -350,7 +350,6 @@ public class TMDbService {
                         builder.queryParam("with_genres", genreIds);
                     }
                 }
-
 
                 // actor
                 if (searchParams.getActors() != null && !searchParams.getActors().isEmpty()) {
@@ -390,15 +389,6 @@ public class TMDbService {
                     List<Movie> movies = new ArrayList<>();
                     for (JsonNode movieNode : results) {
                         Movie movie = mapTMDbMovieToEntity(movieNode);
-
-                        // ToDo, analyse whether filters need to be applied here
-                        /*if (searchParams.getGenres() != null && !searchParams.getGenres().isEmpty() && movie.getGenres() != null) {
-                            if (!movie.getGenres().contains(searchParams.getGenres())) {
-                                continue;
-                            }
-                        }
-                        */
-
                         movies.add(movie);
                     }
 
@@ -477,6 +467,19 @@ public class TMDbService {
             }
 
             // Additional details not handled by mapTMDbMovieToEntity
+
+            //TODO add mapping "spoken_languages" to spoekenlanguages
+            JsonNode spokenlanguagesNode = rootNode.path("spoken_languages");
+            List<String> spokenlanguages = new ArrayList<>();
+            if (spokenlanguagesNode.isArray()) {
+                for (JsonNode languageNode : spokenlanguagesNode) {
+                    if (languageNode.has("name")) {
+                        spokenlanguages.add(languageNode.get("name").asText().trim());
+                    }
+                }
+            }
+            movie.setSpokenlanguages(spokenlanguages);
+
             JsonNode creditsNode = rootNode.path("credits");
 
             // Extract actors from cast and crew

@@ -40,6 +40,7 @@ public class MovieService {
      * Get movies based on search criteria from only TMDb API
      *
      * @param searchParams Movie object containing search parameters searchparams are of type title: string, genres: List<string> year: integer, actors: List<long>, directors: List<long>
+     *                     searchparams cannot be spokenlanguages: List<string>!
      * @return List of movies matching the search criteria without duplicates
      */
     public List<Movie> getMovies(Movie searchParams) {
