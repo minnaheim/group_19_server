@@ -137,8 +137,8 @@ public class MovieController {
         searchParams.setTitle(title);
         searchParams.setGenres(genres);
         searchParams.setYear(year);
-        searchParams.setActorsList(actors);
-        searchParams.setDirectorsList(directors);
+        searchParams.setActors(actors);
+        searchParams.setDirectors(directors);
 
         List<Movie> movies = movieService.getMovies(searchParams);
 
