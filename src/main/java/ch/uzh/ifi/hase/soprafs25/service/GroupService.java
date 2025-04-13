@@ -44,7 +44,7 @@ public class GroupService {
         newGroup.setCreator(creator);
         newGroup.setMembers(new ArrayList<>());
         newGroup.getMembers().add(creator);
-        newGroup.setMoviePool(new ArrayList<>());
+        // newGroup.setMoviePool(new ArrayList<>());
 
         return groupRepository.save(newGroup);
     }
