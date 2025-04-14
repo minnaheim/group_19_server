@@ -64,6 +64,9 @@ public interface DTOMapper {
     @Mapping(source = "status", target = "status")
     UserGetDTO convertEntityToUserGetDTO(User user);
 
+    // for friends search
+    List<UserGetDTO> convertEntityListToUserGetDTOList(List<User> users);
+
     @Mapping(source = "movieId", target = "movieId")
     @Mapping(source = "title", target = "title")
     @Mapping(source = "genres", target = "genres")

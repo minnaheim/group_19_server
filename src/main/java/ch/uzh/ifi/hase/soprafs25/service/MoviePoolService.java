@@ -2,7 +2,6 @@ package ch.uzh.ifi.hase.soprafs25.service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -25,16 +24,15 @@ public class MoviePoolService {
     private final MoviePoolRepository moviePoolRepository;
     private final GroupRepository groupRepository;
     private final MovieRepository movieRepository;
-    private final GroupService groupService;
 
 
     @Autowired
-    public MoviePoolService(MoviePoolRepository moviePoolRepository, GroupRepository groupRepository, MovieRepository movieRepository, GroupService groupService) {
+    public MoviePoolService(MoviePoolRepository moviePoolRepository, GroupRepository groupRepository, MovieRepository movieRepository) {
         
         this.moviePoolRepository = moviePoolRepository;
         this.groupRepository = groupRepository;
         this.movieRepository = movieRepository;
-        this.groupService = groupService;
+        // this.groupService = groupService;
     }
 
     public MoviePool createMoviePool(Group group) {
@@ -52,7 +50,7 @@ public class MoviePoolService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
 
         // check if user is a member of the group
-        boolean isMember = groupService.isUserMemberOfGroup(group, userId);
+        boolean isMember = isMemberOfGroup(group, userId);
         
         if (!isMember) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not a member of this group");
@@ -66,91 +64,91 @@ public class MoviePoolService {
         return moviePool;
     }
 
-    // probably, it's redundant to have different methods for adding movies - addMovies can also add one movie
 
-    // public MoviePool addMovie(Long groupId, Long movieId, Long userId) {
-    //     Group group = groupRepository.findById(groupId)
-    //             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
-
-    //     boolean isMember = groupService.isUserMemberOfGroup(group, userId);
-
-    //     if (!isMember) {
-    //         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not a member of this group");
-    //     }
-
-    //     Movie movie = movieRepository.findById(movieId)
-    //             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Movie not found"));
-
-    //     MoviePool moviePool = moviePoolRepository.findByGroup_GroupId(groupId);
-    //     if (moviePool == null) {
-    //         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Movie pool not found for this group");
-    //     }
-
-    //     // check if user has already added 2 movies
-    //     if (moviePool.getMoviesAddedByUser(userId) >= 2) {
-    //         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User has already added maximum number of movies (2) - delete at least one before adding one more");
-    //     }
-
-    //     // check if movie is already in the pool
-    //     // I'm not sure what has to be done if a movie is already in the pool - exception or just a message
-    //     if (moviePool.getMovies().contains(movie)) {
-    //         throw new ResponseStatusException(HttpStatus.CONFLICT, "Movie is already in the pool");
-    //     }
-
-    //     moviePool.addMovie(movie, userId);
-    //     moviePool.setLastUpdated(LocalDateTime.now());
-    //     return moviePoolRepository.save(moviePool);
-    // }
-
-    public MoviePool addMovies(Long groupId, List<Long> movieIds, Long userId) {
+    public MoviePool addMovie(Long groupId, Long movieId, Long userId) {
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
 
-        boolean isMember = groupService.isUserMemberOfGroup(group, userId);
+        boolean isMember = isMemberOfGroup(group, userId);
 
-        
         if (!isMember) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not a member of this group");
         }
+
+        Movie movie = movieRepository.findById(movieId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Movie not found"));
 
         MoviePool moviePool = moviePoolRepository.findByGroup_GroupId(groupId);
         if (moviePool == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Movie pool not found for this group");
         }
 
-        // check if adding these movies would violate the limit
-        int currentMovies = moviePool.getMoviesAddedByUser(userId);
-        if (currentMovies + movieIds.size() > 2) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, 
-                String.format("Adding these movies would exceed the limit of 2 movies. You have already added %d movies.", currentMovies));
+        // check if user has already added 2 movies
+        if (moviePool.getMoviesAddedByUser(userId) >= 2) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User has already added maximum number of movies (2) - delete at least one before adding one more");
         }
 
-        List<Movie> movies = movieRepository.findAllById(movieIds);
-        // if some movies are not found
-        if (movies.size() != movieIds.size()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "One or more movies not found");
-        }
-        // adding all movies that aren't already in the pool
-        boolean changed = false;
-        for (Movie movie : movies) {
-            if (!moviePool.getMovies().contains(movie)) {
-                moviePool.addMovie(movie, userId);
-                changed = true;
-            }
+        // check if movie is already in the pool
+        // I'm not sure what has to be done if a movie is already in the pool - exception or just a message
+        if (moviePool.getMovies().contains(movie)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Movie is already in the pool");
         }
 
-        if (changed) {
-            moviePool.setLastUpdated(LocalDateTime.now());
-        }
+        moviePool.addMovie(movie, userId);
+        moviePool.setLastUpdated(LocalDateTime.now());
         return moviePoolRepository.save(moviePool);
     }
+
+    // i decided that anyhow user will click "add" button separately for each movie
+    
+    // public MoviePool addMovies(Long groupId, List<Long> movieIds, Long userId) {
+    //     Group group = groupRepository.findById(groupId)
+    //             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
+
+    //     boolean isMember = groupService.isUserMemberOfGroup(group, userId);
+
+        
+    //     if (!isMember) {
+    //         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not a member of this group");
+    //     }
+
+    //     MoviePool moviePool = moviePoolRepository.findByGroup_GroupId(groupId);
+    //     if (moviePool == null) {
+    //         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Movie pool not found for this group");
+    //     }
+
+    //     // check if adding these movies would violate the limit
+    //     int currentMovies = moviePool.getMoviesAddedByUser(userId);
+    //     if (currentMovies + movieIds.size() > 2) {
+    //         throw new ResponseStatusException(HttpStatus.FORBIDDEN, 
+    //             String.format("Adding these movies would exceed the limit of 2 movies. You have already added %d movies.", currentMovies));
+    //     }
+
+    //     List<Movie> movies = movieRepository.findAllById(movieIds);
+    //     // if some movies are not found
+    //     if (movies.size() != movieIds.size()) {
+    //         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "One or more movies not found");
+    //     }
+    //     // adding all movies that aren't already in the pool
+    //     boolean changed = false;
+    //     for (Movie movie : movies) {
+    //         if (!moviePool.getMovies().contains(movie)) {
+    //             moviePool.addMovie(movie, userId);
+    //             changed = true;
+    //         }
+    //     }
+
+    //     if (changed) {
+    //         moviePool.setLastUpdated(LocalDateTime.now());
+    //     }
+    //     return moviePoolRepository.save(moviePool);
+    // }
 
     public MoviePool removeMovie(Long groupId, Long movieId, Long userId) {
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
 
-        boolean isMember = group.getMembers().stream()
-                .anyMatch(member -> member.getUserId().equals(userId));
+        boolean isMember = isMemberOfGroup(group, userId);
         
         if (!isMember) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not a member of this group");
@@ -171,5 +169,9 @@ public class MoviePoolService {
         moviePool.removeMovie(movie);
         moviePool.setLastUpdated(LocalDateTime.now());
         return moviePoolRepository.save(moviePool);
+    }
+
+    private Boolean isMemberOfGroup(Group group, Long userId){
+        return group.getMembers().stream().anyMatch(member -> member.getUserId().equals(userId));
     }
 } 

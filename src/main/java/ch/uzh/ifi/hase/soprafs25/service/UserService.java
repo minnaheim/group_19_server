@@ -1,5 +1,6 @@
 package ch.uzh.ifi.hase.soprafs25.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -188,5 +189,13 @@ public class UserService {
     
     // Save and return the updated user
     return userRepository.save(existingUser);
+  }
+
+  public List<User> searchUsersByUsername(String username) {
+    // in case nothing is there
+    if (username == null || username.trim().isEmpty()) {
+      return new ArrayList<>();
+    }
+    return userRepository.findByUsernameContainingIgnoreCase(username);
   }
 }

@@ -1,17 +1,17 @@
 package ch.uzh.ifi.hase.soprafs25.rest.dto;
 
-import java.util.List;
+// import java.util.List;
 
 public class MoviePoolPostDTO {
-    private List<Long> movieIds;
+    private Long movieId;
 
     // for optimized transformation - not sure here what approach is better: ids or movies (entities)
 
-    public List<Long> getMovieIds() {
-        return movieIds;
+    public Long getMovieId() {
+        return movieId;
     }
 
-    public void setMovieIds(List<Long> movieIds) {
-        this.movieIds = movieIds;
+    public void setMovieId(Long movieId) {
+        this.movieId = movieId;
     }
 } 

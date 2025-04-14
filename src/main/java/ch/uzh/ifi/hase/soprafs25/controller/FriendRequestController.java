@@ -43,7 +43,7 @@ public class FriendRequestController {
                      .map(DTOMapper.INSTANCE::convertEntityToUserGetDTO)
                      .collect(Collectors.toSet());
     }
-    
+
     @PostMapping("/add/{receiverId}")
     @ResponseStatus(HttpStatus.OK)
     public FriendRequestGetDTO sendFriendRequest(@RequestHeader("Authorization") String token,@PathVariable Long receiverId) {
