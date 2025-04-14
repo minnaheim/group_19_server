@@ -137,7 +137,7 @@ public class UserController {
     return DTOMapper.INSTANCE.convertEntityToUserGetDTO(updatedUser);
   }
 
-  @GetMapping("/search")
+  @GetMapping("/users/search")
   @ResponseStatus(HttpStatus.OK)
   public List<UserGetDTO> searchUsersByUsername(@RequestParam(required = false) String username, @RequestHeader("Authorization") String token) {
       userService.getUserByToken(token);
