@@ -10,20 +10,30 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import ch.uzh.ifi.hase.soprafs25.entity.Group;
+import ch.uzh.ifi.hase.soprafs25.entity.MoviePool;
 import ch.uzh.ifi.hase.soprafs25.entity.User;
 import ch.uzh.ifi.hase.soprafs25.repository.GroupRepository;
+import ch.uzh.ifi.hase.soprafs25.repository.MovieRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
+
 
 @Service
 @Transactional
 public class GroupService {
+
     private final GroupRepository groupRepository;
     private final UserRepository userRepository;
+    
+    private final MovieRepository movieRepository;
+    private final MoviePoolService moviePoolService;
 
     @Autowired
-    public GroupService(GroupRepository groupRepository, UserRepository userRepository){
+    public GroupService(GroupRepository groupRepository, UserRepository userRepository,
+                            MovieRepository movieRepository, MoviePoolService moviePoolService){
         this.groupRepository = groupRepository;
         this.userRepository = userRepository;
+        this.movieRepository = movieRepository;
+        this.moviePoolService = moviePoolService;
     }
 
     public Group createGroup(String groupName, Long creatorId){
@@ -44,10 +54,15 @@ public class GroupService {
         newGroup.setCreator(creator);
         newGroup.setMembers(new ArrayList<>());
         newGroup.getMembers().add(creator);
-        // newGroup.setMoviePool(new ArrayList<>());
+
+        MoviePool moviePool = moviePoolService.createMoviePool(newGroup);
+        newGroup.setMoviePool(moviePool);
 
         return groupRepository.save(newGroup);
     }
+
+
+    
     private void validateGroupName(String groupName) {
         if (groupName == null || groupName.trim().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Group name cannot be empty");
@@ -93,5 +108,10 @@ public class GroupService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the group creator can delete the group");
         }
         groupRepository.delete(group);
+    }
+    // helpful for moviepool service 
+    public boolean isUserMemberOfGroup(Group group, Long userId) {
+        return group.getMembers().stream()
+                .anyMatch(member -> member.getUserId().equals(userId));
     }
 }

@@ -40,6 +40,7 @@ public class MoviePool implements Serializable {
     )
     private List<Movie> movies = new ArrayList<>();
 
+    // for checking number of added movies
     @ElementCollection
     @CollectionTable(name = "moviepool_user_movies", 
         joinColumns = @JoinColumn(name = "pool_id"))
