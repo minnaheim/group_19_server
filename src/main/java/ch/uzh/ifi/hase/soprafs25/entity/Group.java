@@ -3,6 +3,7 @@ package ch.uzh.ifi.hase.soprafs25.entity;
 import java.io.Serializable;
 import java.util.List;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -11,6 +12,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 @Entity
@@ -36,13 +38,9 @@ public class Group implements Serializable {
     )
     private List<User> members;
 
-    @ManyToMany
-    @JoinTable(
-            name = "group_movies",
-            joinColumns = @JoinColumn(name = "group_id"),
-            inverseJoinColumns = @JoinColumn(name = "movie_id")
-    )
-    private List<Movie> moviePool;
+    // cascade for sync actions to group with moviepool
+    @OneToOne(mappedBy = "group", cascade = CascadeType.ALL)
+    private MoviePool moviePool;
 
     public Long getGroupId() {
         return groupId;
@@ -76,13 +74,10 @@ public class Group implements Serializable {
         this.members = members;
     }
 
-    public List<Movie> getMoviePool() {
+    public MoviePool getMoviePool() {
         return moviePool;
     }
-
-    public void setMoviePool(List<Movie> moviePool) {
+    public void setMoviePool(MoviePool moviePool) {
         this.moviePool = moviePool;
     }
-
-
 }

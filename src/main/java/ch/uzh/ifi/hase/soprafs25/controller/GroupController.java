@@ -1,7 +1,10 @@
 package ch.uzh.ifi.hase.soprafs25.controller;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -10,21 +13,26 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import ch.uzh.ifi.hase.soprafs25.entity.Group;
+import ch.uzh.ifi.hase.soprafs25.entity.MoviePool;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.GroupGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.GroupPostDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.MovieGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.mapper.DTOMapper;
 import ch.uzh.ifi.hase.soprafs25.service.GroupService;
+import ch.uzh.ifi.hase.soprafs25.service.MoviePoolService;
 import ch.uzh.ifi.hase.soprafs25.service.UserService;
 
 @RestController
-
 public class GroupController {
+
     private final GroupService groupService;
     private final UserService userService;
+    private final MoviePoolService moviePoolService;
 
-    GroupController(GroupService groupService, UserService userService){
+    GroupController(GroupService groupService, UserService userService, MoviePoolService moviePoolService){
         this.groupService = groupService;
         this.userService = userService;
+        this.moviePoolService = moviePoolService;
     }
 
     @PostMapping("/groups")
@@ -41,5 +49,29 @@ public class GroupController {
     public void deleteGroup(@PathVariable Long groupId, @RequestHeader("Authorization") String token) {
         Long userId = userService.getUserByToken(token).getUserId();
         groupService.deleteGroup(groupId, userId);
+    }
+
+    // get movie pool
+    @GetMapping("/groups/{groupId}/pool")
+    @ResponseStatus(HttpStatus.OK)
+    public List<MovieGetDTO> getGroupMoviePool( @RequestHeader("Authorization") String token, @PathVariable Long groupId) {
+        Long userId = userService.getUserByToken(token).getUserId();
+        MoviePool moviePool = moviePoolService.getMoviePool(groupId, userId);
+        return DTOMapper.INSTANCE.convertEntityListToMovieGetDTOList(moviePool.getMovies());
+    }
+
+    // add movies(can be up to 2) to a pool 
+    @PostMapping("/groups/{groupId}/pool/{movieId}")
+    @ResponseStatus(HttpStatus.OK)
+    public MoviePool addMoviesToGroupPool(@RequestHeader("Authorization") String token, @PathVariable Long groupId, @PathVariable Long movieId) {
+        Long userId = userService.getUserByToken(token).getUserId();
+        return moviePoolService.addMovie(groupId, movieId, userId);
+    }
+
+    @DeleteMapping("/groups/{groupId}/pool/{movieId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeMovieFromGroupPool(@RequestHeader("Authorization") String token, @PathVariable Long groupId, @PathVariable Long movieId) {
+        Long userId = userService.getUserByToken(token).getUserId();
+        moviePoolService.removeMovie(groupId, movieId, userId);
     }
 }

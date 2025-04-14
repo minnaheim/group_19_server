@@ -14,6 +14,7 @@ import ch.uzh.ifi.hase.soprafs25.entity.FriendRequest;
 import ch.uzh.ifi.hase.soprafs25.entity.Group;
 import ch.uzh.ifi.hase.soprafs25.entity.GroupInvitation;
 import ch.uzh.ifi.hase.soprafs25.entity.Movie;
+import ch.uzh.ifi.hase.soprafs25.entity.MoviePool;
 import ch.uzh.ifi.hase.soprafs25.entity.User;
 import ch.uzh.ifi.hase.soprafs25.entity.RankingResult;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.FriendRequestGetDTO;
@@ -23,6 +24,8 @@ import ch.uzh.ifi.hase.soprafs25.rest.dto.GroupInvitationGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.GroupInvitationPostDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.GroupPostDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.MovieGetDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.MoviePoolGetDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.MoviePoolPostDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.UserGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.UserPostDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.MovieRankGetDTO;
@@ -61,6 +64,9 @@ public interface DTOMapper {
     @Mapping(source = "status", target = "status")
     UserGetDTO convertEntityToUserGetDTO(User user);
 
+    // for friends search
+    List<UserGetDTO> convertEntityListToUserGetDTOList(List<User> users);
+
     @Mapping(source = "movieId", target = "movieId")
     @Mapping(source = "title", target = "title")
     @Mapping(source = "genres", target = "genres")
@@ -98,7 +104,7 @@ public interface DTOMapper {
     @Mapping(source = "groupName", target = "groupName")
     @Mapping(source = "creator.userId", target = "creatorId")
     @Mapping(source = "members", target = "memberIds")
-    @Mapping(source = "moviePool", target = "movieIds")
+    @Mapping(source = "moviePool.movies", target = "movieIds")
     GroupGetDTO convertEntityToGroupGetDTO(Group group);
 
     @Mapping(source = "movieId", target = "movieId")
@@ -146,6 +152,18 @@ public interface DTOMapper {
     @Mapping(target = "responseTime", ignore = true)
     GroupInvitation convertGroupInvitationPostDTOtoEntity(GroupInvitationPostDTO groupInvitationPostDTO);
 
+    @Mapping(source = "poolId", target = "poolId")
+    @Mapping(source = "group.groupId", target = "groupId")
+    @Mapping(source = "movies", target = "movies")
+    @Mapping(source = "lastUpdated", target = "lastUpdated")
+    MoviePoolGetDTO convertEntityToMoviePoolGetDTO(MoviePool moviePool);
+
+
+    @Mapping(target = "poolId", ignore = true)
+    @Mapping(target = "group", ignore = true)
+    @Mapping(target = "lastUpdated", ignore = true)
+    MoviePool convertMoviePoolPostDTOtoEntity(MoviePoolPostDTO moviePoolPostDTO);
+
     default List<Long> mapUsersToIds(List<User> users) {
       if (users == null) return null;
       return users.stream()
@@ -159,4 +177,12 @@ public interface DTOMapper {
                   .map(Movie::getMovieId)
                   .collect(Collectors.toList());
     }
+
+    // for convenient transformation of list of movies to list of movieGetDTO
+    default List<MovieGetDTO> convertEntityListToMovieGetDTOList(List<Movie> movies) {
+      if (movies == null) return null;
+      return movies.stream()
+                  .map(this::convertEntityToMovieGetDTO)
+                  .collect(Collectors.toList());
+  }
 }

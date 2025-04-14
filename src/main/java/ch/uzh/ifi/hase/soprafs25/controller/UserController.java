@@ -1,5 +1,7 @@
 package ch.uzh.ifi.hase.soprafs25.controller;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -134,4 +136,13 @@ public class UserController {
     // Return updated user data
     return DTOMapper.INSTANCE.convertEntityToUserGetDTO(updatedUser);
   }
+
+  @GetMapping("/search")
+  @ResponseStatus(HttpStatus.OK)
+  public List<UserGetDTO> searchUsersByUsername(@RequestParam(required = false) String username, @RequestHeader("Authorization") String token) {
+      userService.getUserByToken(token);
+      List<User> users = userService.searchUsersByUsername(username);
+      return DTOMapper.INSTANCE.convertEntityListToUserGetDTOList(users);
+  }
+
 }

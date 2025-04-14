@@ -1,15 +1,12 @@
 package ch.uzh.ifi.hase.soprafs25.controller;
 
-import ch.uzh.ifi.hase.soprafs25.entity.Movie;
-import ch.uzh.ifi.hase.soprafs25.entity.RankingResult;
-import ch.uzh.ifi.hase.soprafs25.entity.User;
-import ch.uzh.ifi.hase.soprafs25.entity.UserMovieRanking;
-import ch.uzh.ifi.hase.soprafs25.repository.*;
-import ch.uzh.ifi.hase.soprafs25.rest.dto.RankingSubmitDTO;
-import ch.uzh.ifi.hase.soprafs25.constant.UserStatus;
-import ch.uzh.ifi.hase.soprafs25.service.RankingService;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.hamcrest.Matchers.containsString;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,19 +14,25 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import ch.uzh.ifi.hase.soprafs25.constant.UserStatus;
+import ch.uzh.ifi.hase.soprafs25.entity.Movie;
+import ch.uzh.ifi.hase.soprafs25.entity.RankingResult;
+import ch.uzh.ifi.hase.soprafs25.entity.User;
+import ch.uzh.ifi.hase.soprafs25.entity.UserMovieRanking;
+import ch.uzh.ifi.hase.soprafs25.repository.MovieRepository;
+import ch.uzh.ifi.hase.soprafs25.repository.RankingResultRepository;
+import ch.uzh.ifi.hase.soprafs25.repository.RankingSubmissionLogRepository;
+import ch.uzh.ifi.hase.soprafs25.repository.UserMovieRankingRepository;
+import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.RankingSubmitDTO;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -181,8 +184,8 @@ class RankingControllerTest {
         movie.setTitle(title);
         movie.setYear(2024); // Default year
         movie.setGenres(new ArrayList<>()); // Default empty list
-        movie.setActorsList(new ArrayList<>()); // Default empty list
-        movie.setDirectorsList(new ArrayList<>()); // Default empty list
+        // movie.setActorsList(new ArrayList<>()); // Default empty list
+        // movie.setDirectorsList(new ArrayList<>()); // Default empty list
         movie.setOriginallanguage("en"); // Default language
         movie.setTrailerURL("http://example.com/trailer"); // Default URL
         movie.setPosterURL("http://example.com/poster"); // Default URL
