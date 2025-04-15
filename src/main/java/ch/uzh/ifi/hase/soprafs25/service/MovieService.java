@@ -1,7 +1,9 @@
 package ch.uzh.ifi.hase.soprafs25.service;
 
 import ch.uzh.ifi.hase.soprafs25.entity.Movie;
+import ch.uzh.ifi.hase.soprafs25.entity.User;
 import ch.uzh.ifi.hase.soprafs25.repository.MovieRepository;
+import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,10 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -29,11 +28,13 @@ public class MovieService {
     private final Logger log = LoggerFactory.getLogger(MovieService.class);
     private final MovieRepository movieRepository;
     private final TMDbService tmdbService;
+    private final UserRepository userRepository;
 
     @Autowired
-    public MovieService(@Qualifier("movieRepository") MovieRepository movieRepository, TMDbService tmdbService) {
+    public MovieService(@Qualifier("movieRepository") MovieRepository movieRepository, TMDbService tmdbService, UserRepository userRepository) {
         this.movieRepository = movieRepository;
         this.tmdbService = tmdbService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -106,5 +107,194 @@ public class MovieService {
 
         // Save the movie
         return movieRepository.save(movie);
+    }
+
+    /**
+     * Get personalized movie suggestions for a user
+     * CHANGE: New method to generate movie suggestions based on user preferences
+     *
+     * @param userId User ID for which to generate suggestions
+     * @param limit Maximum number of suggestions to return
+     * @return List of suggested movies
+     */
+    public List<Movie> getMovieSuggestions(Long userId, int limit) {
+        // Find the user
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "User with ID " + userId + " not found"));
+
+        // Create sets of movies to exclude (already watched or in watchlist)
+        Set<Long> excludedMovieIds = new HashSet<>();
+        if (user.getWatchedMovies() != null) {
+            user.getWatchedMovies().forEach(movie -> excludedMovieIds.add(movie.getMovieId()));
+        }
+        if (user.getWatchlist() != null) {
+            user.getWatchlist().forEach(movie -> excludedMovieIds.add(movie.getMovieId()));
+        }
+
+        // Collect all user preferences
+        List<String> favoriteGenres = user.getFavoriteGenres();
+        List<String> favoriteActorIds = new ArrayList<>();
+        List<String> favoriteDirectorIds = new ArrayList<>();
+
+        // Extract actor and director IDs
+        if (user.getFavoriteActors() != null) {
+            favoriteActorIds.addAll(user.getFavoriteActors().keySet());
+        }
+
+        if (user.getFavoriteDirectors() != null) {
+            favoriteDirectorIds.addAll(user.getFavoriteDirectors().keySet());
+        }
+
+        // Maximum number of API calls to prevent excessive requests
+        final int MAX_API_CALLS = 200;
+        int apiCallCount = 0;
+
+        // Resulting list of suggested movies
+        Set<Movie> suggestions = new HashSet<>();
+
+        // Generate all permutations of search parameters, starting with most specific
+        List<Movie> searchQueries = generateSearchPermutations(favoriteGenres, favoriteActorIds, favoriteDirectorIds);
+
+        log.info("Generated {} search permutations for user {}", searchQueries.size(), userId, searchQueries);
+
+        // Execute searches in order until we have enough suggestions or reach API call limit
+        for (Movie searchParams : searchQueries) {
+            if (suggestions.size() >= limit || apiCallCount >= MAX_API_CALLS) {
+                break;
+            }
+
+            List<Movie> results = tmdbService.searchMovies(searchParams);
+            apiCallCount++;
+
+            // Filter out excluded movies and add to suggestions
+            for (Movie movie : results) {
+                if (!excludedMovieIds.contains(movie.getMovieId())) {
+                    suggestions.add(movie);
+
+                    if (suggestions.size() >= limit) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        // If we still don't have enough suggestions, try a search with empty params
+        if (suggestions.size() < limit && apiCallCount < MAX_API_CALLS) {
+            Movie emptySearch = new Movie();
+            log.info("Count of suggested Movies before empty search {}", suggestions.size());
+            List<Movie> results = tmdbService.searchMovies(emptySearch);
+
+            apiCallCount++;
+
+            for (Movie movie : results) {
+                if (!excludedMovieIds.contains(movie.getMovieId())) {
+                    suggestions.add(movie);
+
+                    if (suggestions.size() >= limit) {
+                        log.info("Count of suggested Movies including empty search {}", suggestions.size());
+                        break;
+                    }
+                }
+            }
+        }
+
+        log.info("Generated {} movie suggestions for user {} using {} API calls",
+                suggestions.size(), userId, apiCallCount);
+
+        // Convert to list and return
+        return new ArrayList<>(suggestions);
+    }
+
+    /**
+     * Generate search parameter permutations ordered by specificity
+     * CHANGE: New helper method to generate search parameter permutations
+     *
+     * @param genres List of genre names
+     * @param actors List of actor IDs
+     * @param directors List of director IDs
+     * @return List of Movie objects with search parameters
+     */
+    private List<Movie> generateSearchPermutations(List<String> genres, List<String> actors, List<String> directors) {
+        List<Movie> searchQueries = new ArrayList<>();
+
+        // Start with the most specific search (all parameters)
+        if (!genres.isEmpty() && !actors.isEmpty() && !directors.isEmpty()) {
+            Movie fullSearch = new Movie();
+            fullSearch.setGenres(new ArrayList<>(genres));
+            fullSearch.setActors(actors.stream().collect(Collectors.toList()));
+            fullSearch.setDirectors(directors.stream().collect(Collectors.toList()));
+            searchQueries.add(fullSearch);
+        }
+
+        // Generate permutations with one parameter missing
+        // Genres + Actors
+        if (!genres.isEmpty() && !actors.isEmpty()) {
+            Movie search = new Movie();
+            search.setGenres(new ArrayList<>(genres));
+            search.setActors(actors.stream().collect(Collectors.toList()));
+            searchQueries.add(search);
+        }
+
+        // Genres + Directors
+        if (!genres.isEmpty() && !directors.isEmpty()) {
+            Movie search = new Movie();
+            search.setGenres(new ArrayList<>(genres));
+            search.setDirectors(directors.stream().collect(Collectors.toList()));
+            searchQueries.add(search);
+        }
+
+        // Actors + Directors
+        if (!actors.isEmpty() && !directors.isEmpty()) {
+            Movie search = new Movie();
+            search.setActors(actors.stream().collect(Collectors.toList()));
+            search.setDirectors(directors.stream().collect(Collectors.toList()));
+            searchQueries.add(search);
+        }
+
+        // Single parameter searches
+        // Only Genres
+        if (!genres.isEmpty()) {
+            Movie search = new Movie();
+            search.setGenres(new ArrayList<>(genres));
+            searchQueries.add(search);
+        }
+
+        // Only Actors
+        if (!actors.isEmpty()) {
+            Movie search = new Movie();
+            search.setActors(actors.stream().collect(Collectors.toList()));
+            searchQueries.add(search);
+        }
+
+        // Only Directors
+        if (!directors.isEmpty()) {
+            Movie search = new Movie();
+            search.setDirectors(directors.stream().collect(Collectors.toList()));
+            searchQueries.add(search);
+        }
+
+        // Add individual genre searches
+        for (String genre : genres) {
+            Movie search = new Movie();
+            search.setGenres(Collections.singletonList(genre));
+            searchQueries.add(search);
+        }
+
+        // Add individual actor searches
+        for (String actor : actors) {
+            Movie search = new Movie();
+            search.setActors(Collections.singletonList(actor));
+            searchQueries.add(search);
+        }
+
+        // Add individual director searches
+        for (String director : directors) {
+            Movie search = new Movie();
+            search.setDirectors(Collections.singletonList(director));
+            searchQueries.add(search);
+        }
+
+        return searchQueries;
     }
 }
