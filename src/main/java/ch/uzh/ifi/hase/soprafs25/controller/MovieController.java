@@ -13,6 +13,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Movie Controller
@@ -27,6 +28,8 @@ public class MovieController {
     private static final int CURRENT_YEAR = LocalDate.now().getYear();
     private static final int MIN_MOVIE_YEAR = 1888; // First movie ever made
     private static final int MIN_SEARCH_TERM_LENGTH = 1;
+    private static final int DEFAULT_SUGGESTION_LIMIT = 100; //
+
 
     MovieController(MovieService movieService, TMDbService tmdbService) {
         this.movieService = movieService;
@@ -171,5 +174,30 @@ public class MovieController {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Could not fetch genres from TMDB");
         }
         return genres;
+    }
+
+    /**
+     * Get personalized movie suggestions for a user
+     * CHANGE: New endpoint to retrieve personalized movie suggestions based on user preferences
+     *
+     * @param userId The user ID for which to generate suggestions
+     * @return List of suggested movies
+     */
+    @GetMapping("/movies/suggestions/{userId}")
+    @ResponseStatus(HttpStatus.OK)
+    public List<MovieGetDTO> getMovieSuggestions(@PathVariable Long userId) {
+        // Get movie suggestions from service
+        List<Movie> suggestions = movieService.getMovieSuggestions(userId, DEFAULT_SUGGESTION_LIMIT);
+
+        // Convert to simplified DTO format with only essential information
+        return suggestions.stream()
+                .map(movie -> {
+                    MovieGetDTO dto = new MovieGetDTO();
+                    dto.setMovieId(movie.getMovieId());
+                    dto.setTitle(movie.getTitle());
+                    dto.setPosterURL(movie.getPosterURL());
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 }

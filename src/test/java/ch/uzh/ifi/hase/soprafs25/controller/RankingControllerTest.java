@@ -184,8 +184,8 @@ class RankingControllerTest {
         movie.setTitle(title);
         movie.setYear(2024); // Default year
         movie.setGenres(new ArrayList<>()); // Default empty list
-        // movie.setActorsList(new ArrayList<>()); // Default empty list
-        // movie.setDirectorsList(new ArrayList<>()); // Default empty list
+        movie.setActors(new ArrayList<>()); // Default empty list
+        movie.setDirectors(new ArrayList<>()); // Default empty list
         movie.setOriginallanguage("en"); // Default language
         movie.setTrailerURL("http://example.com/trailer"); // Default URL
         movie.setPosterURL("http://example.com/poster"); // Default URL
