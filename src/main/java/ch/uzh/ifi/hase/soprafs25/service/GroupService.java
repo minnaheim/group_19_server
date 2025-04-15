@@ -114,4 +114,20 @@ public class GroupService {
         return group.getMembers().stream()
                 .anyMatch(member -> member.getUserId().equals(userId));
     }
+
+    public void leaveGroup(Long groupId, Long userId) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        // check if provided user is actually member of provided group
+        if (!group.getMembers().contains(user)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not a member of this group");
+        }
+
+        group.getMembers().remove(user);
+        groupRepository.save(group);
+    }
 }

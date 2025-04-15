@@ -29,7 +29,7 @@ public class GroupController {
     private final UserService userService;
     private final MoviePoolService moviePoolService;
 
-    GroupController(GroupService groupService, UserService userService, MoviePoolService moviePoolService){
+    public GroupController(GroupService groupService, UserService userService, MoviePoolService moviePoolService){
         this.groupService = groupService;
         this.userService = userService;
         this.moviePoolService = moviePoolService;
@@ -60,10 +60,10 @@ public class GroupController {
         return DTOMapper.INSTANCE.convertEntityListToMovieGetDTOList(moviePool.getMovies());
     }
 
-    // add movies(can be up to 2) to a pool 
+    // add movie
     @PostMapping("/groups/{groupId}/pool/{movieId}")
     @ResponseStatus(HttpStatus.OK)
-    public MoviePool addMoviesToGroupPool(@RequestHeader("Authorization") String token, @PathVariable Long groupId, @PathVariable Long movieId) {
+    public MoviePool addMovieToGroupPool(@RequestHeader("Authorization") String token, @PathVariable Long groupId, @PathVariable Long movieId) {
         Long userId = userService.getUserByToken(token).getUserId();
         return moviePoolService.addMovie(groupId, movieId, userId);
     }
@@ -73,5 +73,12 @@ public class GroupController {
     public void removeMovieFromGroupPool(@RequestHeader("Authorization") String token, @PathVariable Long groupId, @PathVariable Long movieId) {
         Long userId = userService.getUserByToken(token).getUserId();
         moviePoolService.removeMovie(groupId, movieId, userId);
+    }
+
+    @DeleteMapping("/groups/{groupId}/leave")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void leaveGroup(@RequestHeader("Authorization") String token, @PathVariable Long groupId) {
+        Long userId = userService.getUserByToken(token).getUserId();
+        groupService.leaveGroup(groupId, userId);
     }
 }

@@ -31,7 +31,7 @@ public class UserController {
 
   private final UserService userService;
 
-  UserController(UserService userService) {
+  public UserController(UserService userService) {
     this.userService = userService;
   }
 
@@ -136,6 +136,7 @@ public class UserController {
     // Return updated user data
     return DTOMapper.INSTANCE.convertEntityToUserGetDTO(updatedUser);
   }
+
 
   @GetMapping("/users/search")
   @ResponseStatus(HttpStatus.OK)
