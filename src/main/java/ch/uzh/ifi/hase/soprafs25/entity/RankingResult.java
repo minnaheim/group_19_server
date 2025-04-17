@@ -19,6 +19,11 @@ public class RankingResult implements Serializable {
     // @Column(nullable = false)
     // private Long rankingPeriodId;
 
+    @ManyToOne(fetch = FetchType.LAZY) // Lazy fetch is usually better here unless always needed
+    @JoinColumn(name = "group_id", nullable = false)
+    @NotNull
+    private Group group; // Added group reference
+
     @ManyToOne(fetch = FetchType.EAGER) // Eager fetch might be useful for displaying winner details
     @JoinColumn(name = "winning_movie_id", nullable = false)
     @NotNull
@@ -39,6 +44,14 @@ public class RankingResult implements Serializable {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Group getGroup() {
+        return group;
+    }
+
+    public void setGroup(Group group) {
+        this.group = group;
     }
 
     public Movie getWinningMovie() {

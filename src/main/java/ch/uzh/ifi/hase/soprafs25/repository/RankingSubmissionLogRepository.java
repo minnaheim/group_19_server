@@ -15,6 +15,6 @@ public interface RankingSubmissionLogRepository extends JpaRepository<RankingSub
     
     // Find all submission logs for a specific user
     List<RankingSubmissionLog> findByUser(User user);
-    
+
     // Potentially add findByUserAndRankingPeriodId if that concept is added
 }
