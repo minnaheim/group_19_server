@@ -719,6 +719,9 @@ public class TMDbService {
             HttpHeaders headers = new HttpHeaders();
             headers.setBearerAuth(tmdbConfig.getApiKey());
             headers.setContentType(MediaType.APPLICATION_JSON);
+            log.info("Making TMDb API request to: {}", headers);
+            log.info("API key present: {}", !tmdbConfig.getApiKey().isEmpty());
+
 
             HttpEntity<String> entity = new HttpEntity<>(headers);
 
