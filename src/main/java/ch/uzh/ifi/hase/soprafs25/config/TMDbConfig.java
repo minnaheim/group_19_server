@@ -8,8 +8,8 @@ import org.springframework.context.annotation.PropertySource;
 @PropertySource(value = "file:./local.properties", ignoreResourceNotFound = true)
 public class TMDbConfig {
 
-    @Value("${TMDB_API_TOKEN:${tmdb.api.key:}}")
-    //    @Value("${tmdb.api.key:}")
+    //@Value("${TMDB_API_TOKEN:${tmdb.api.key:}}")
+    @Value("${tmdb.api.key:}")
     private String apiKey;
 
     @Value("${tmdb.api.base-url:https://api.themoviedb.org/3}")
