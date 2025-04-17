@@ -26,6 +26,11 @@ public class UserMovieRanking implements Serializable {
     @NotNull
     private Movie movie;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id", nullable = false)
+    @NotNull
+    private Group group;
+
     @Column(nullable = false)
     @NotNull
     @Min(1) // Rank must be at least 1
@@ -55,6 +60,14 @@ public class UserMovieRanking implements Serializable {
 
     public void setMovie(Movie movie) {
         this.movie = movie;
+    }
+
+    public Group getGroup() {
+        return group;
+    }
+
+    public void setGroup(Group group) {
+        this.group = group;
     }
 
     public Integer getRank() {

@@ -33,6 +33,20 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
     }
 
+    // Handler for GroupNotFoundException (404)
+    @ExceptionHandler(GroupNotFoundException.class)
+    public ResponseEntity<Object> handleGroupNotFoundException(GroupNotFoundException ex, WebRequest request) {
+        log.error("GroupNotFoundException caught: {}", ex.getMessage());
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", System.currentTimeMillis());
+        body.put("status", HttpStatus.NOT_FOUND.value());
+        body.put("error", "Not Found");
+        body.put("message", ex.getMessage());
+        body.put("path", request.getDescription(false).replace("uri=", "")); // Get request path
+
+        return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
+    }
+
     // Handler for InvalidRankingException (400)
     @ExceptionHandler(InvalidRankingException.class)
     public ResponseEntity<Object> handleInvalidRankingException(InvalidRankingException ex, WebRequest request) {

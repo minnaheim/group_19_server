@@ -24,6 +24,9 @@ public class RankingSubmissionLog implements Serializable {
     @NotNull
     private LocalDateTime submissionTime;
 
+    @Column
+    private Integer numberOfMoviesRanked;
+    
     // Could add more details like rankingPeriodId if needed later
     
     // Getters and Setters
@@ -49,5 +52,13 @@ public class RankingSubmissionLog implements Serializable {
 
     public void setSubmissionTime(LocalDateTime submissionTime) {
         this.submissionTime = submissionTime;
+    }
+
+    public Integer getNumberOfMoviesRanked() {
+        return numberOfMoviesRanked;
+    }
+
+    public void setNumberOfMoviesRanked(Integer numberOfMoviesRanked) {
+        this.numberOfMoviesRanked = numberOfMoviesRanked;
     }
 }

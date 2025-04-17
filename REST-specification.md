@@ -199,11 +199,16 @@ When an error occurs (e.g., invalid input, resource not found, server error), th
 
 ### Ranking System
 
-| Endpoint                      | Method | Parameters                    | Parameter Type | Status Code        | Response                  | Description                       |
-|-------------------------------|--------|-------------------------------|----------------|--------------------|---------------------------|-----------------------------------|
-| `/api/users/{userId}/rankings`| POST   | userId <long>                | Path           | 204 No Content     | -                         | Submit user's movie rankings.     |
-|                               |        | Array<RankingSubmitDTO>     | Body           |                    |                           |                                   |
-|                               |        |                               |                | 400 Bad Request    | Error(*)                  | Invalid ranking data (e.g., null `movieId`, null/invalid `rank`, duplicate movieIds). |
-|                               |        |                               |                | 404 Not Found      | Error(*)                  | User with the given `userId` not found. |
-| `/api/rankings/results/latest`| GET    | -                             | -              | 200 OK             | RankingResultGetDTO(*)    | Retrieve the latest calculated ranking result. |
-|                               |        |                               |                | 404 Not Found      | Error(*)                  | No ranking result has been calculated yet. |
+| Endpoint                                             | Method | Parameters                    | Parameter Type | Status Code        | Response                        | Description |
+|------------------------------------------------------|--------|-------------------------------|----------------|--------------------|----------------------------------|-------------|
+| `/groups/{groupId}/users/{userId}/rankings`      | POST   | `groupId` (long), `userId` (long) | Path           | 204 No Content     | -                                | Submit a user's movie rankings for a specific group. |
+|                                                      |        | Array<RankingSubmitDTO>       | Body           | 400 Bad Request    | Error(*)                         | Invalid ranking data (e.g., invalid rank, duplicate movies, wrong number of movies ranked). |
+|                                                      |        |                               |                | 404 Not Found      | Error(*)                         | User or Group with the given ID not found. |
+| `/groups/{groupId}/rankings/result`              | GET    | `groupId` (long)              | Path           | 200 OK             | RankingResultGetDTO(*)           | Retrieve the latest calculated ranking result for the group (the winning movie and its average rank). |
+|                                                      |        |                               |                | 404 Not Found      | Error(*)                         | Group not found or no ranking result exists for the group yet. |
+| `/groups/{groupId}/movies/rankable`              | GET    | `groupId` (long)              | Path           | 200 OK             | List<MovieGetDTO>(*)             | Retrieve the list of movies available for ranking in the group's pool. |
+|                                                      |        |                               |                | 404 Not Found      | Error(*)                         | Group not found or group has no movie pool. |
+| `/groups/{groupId}/rankings/details`             | GET    | `groupId` (long)              | Path           | 200 OK             | List<MovieAverageRankDTO>(*)     | Retrieve the detailed average ranking results for all movies in the group (each movie with its average rank, sorted by best rank). |
+|                                                      |        |                               |                | 404 Not Found      | Error(*)                         | Group not found. |
+
+### 5. Movie Search
