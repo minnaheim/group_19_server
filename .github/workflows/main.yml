@@ -37,11 +37,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Create env_variables.yaml
+      - name: Add environment variables to app.yaml
         run: |
-          echo "env_variables:" > env_variables.yaml
-          echo "  TMDB_API_TOKEN: ${{ secrets.TMDB_API_TOKEN }}" >> env_variables.yaml
-
+          echo "" >> app.yaml
+          echo "env_variables:" >> app.yaml
+          echo "  TMDB_API_TOKEN: '${{ secrets.TMDB_API_TOKEN }}'" >> app.yaml
 
       - name: Deploy to App Engine
         id: deploy
@@ -51,9 +51,9 @@ jobs:
           deliverables: app.yaml
           version: v1
           credentials: ${{ secrets.GCP_SERVICE_CREDENTIALS }}
-          yaml_files: env_variables.yaml
 
-
+      - name: Revert app.yaml changes
+        run: git checkout -- app.yaml
 
       - name: Test
         run: curl "${{ steps.deploy.outputs.url }}"
