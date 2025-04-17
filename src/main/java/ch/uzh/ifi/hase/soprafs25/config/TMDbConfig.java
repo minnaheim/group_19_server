@@ -24,9 +24,18 @@ public class TMDbConfig implements CommandLineRunner {
         String envToken = System.getenv("TMDB_API_TOKEN");
         if (envToken != null && !envToken.isBlank()) {
             logger.info("TMDB_API_TOKEN is available as an environment variable.");
+            // Use the environment variable value directly
+            apiKey = envToken;
         } else {
             logger.info("TMDB_API_TOKEN is not set as an environment variable. Using local properties.");
         }
+
+        if (apiKey == null || apiKey.isBlank()) {
+            logger.error("TMDb API key is not configured! Neither environment variable nor local property is available.");
+        } else {
+            logger.info("TMDb API key is configured successfully.");
+        }
+
         logger.info("TMDb Base URL is set to: {}", baseUrl);
     }
 
