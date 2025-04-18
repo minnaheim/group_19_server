@@ -289,83 +289,15 @@ public class TMDbService {
         try {
             // Don't search if no API key is configured
             if (tmdbConfig.getApiKey().isEmpty()) {
-                log.warn("TMDB API key is not configured. Skipping external search.");
+                log.info("TMDB API key is not configured. Skipping external search.");
                 return Collections.emptyList();
             }
 
-            if (searchParams.getTitle() != null) {
-                String searchEndpoint = tmdbConfig.getBaseUrl() + "/search/movie";
-                UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(searchEndpoint)
-                        .queryParam("sort_by", "popularity.desc");
-
-                builder.queryParam("query", searchParams.getTitle().trim());
-
-                // Setup authentication headers
-                HttpHeaders headers = new HttpHeaders();
-                headers.setBearerAuth(tmdbConfig.getApiKey());
-                headers.setContentType(MediaType.APPLICATION_JSON);
-
-                HttpEntity<String> entity = new HttpEntity<>(headers);
-
-                // Make the API call
-                ResponseEntity<String> response = restTemplate.exchange(
-                        builder.toUriString(),
-                        HttpMethod.GET,
-                        entity,
-                        String.class);
-
-                // Parse the response
-                if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                    JsonNode root = objectMapper.readTree(response.getBody());
-                    JsonNode results = root.path("results");
-
-                    List<Movie> movies = new ArrayList<>();
-                    for (JsonNode movieNode : results) {
-                        Movie movie = mapTMDbMovieToEntity(movieNode);
-                        movies.add(movie);
-                    }
-                    return movies;
-                }
-            }
-            else if (searchParams.getTitle() == null) {
-                String searchEndpoint = tmdbConfig.getBaseUrl() + "/discover/movie";
-                UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(searchEndpoint)
-                        .queryParam("sort_by", "popularity.desc");
-
-                // Add search parameters if available
-                // years
-                if (searchParams.getYear() != null) {
-                    builder.queryParam("primary_release_year", searchParams.getYear());
-                }
-
-                // genre
-                if (searchParams.getGenres() != null && !searchParams.getGenres().isEmpty()) {
-                    // Convert genre names to IDs and join with comma
-                    String genreIds = searchParams.getGenres().stream()
-                            .map(genre -> GENRE_NAME_TO_ID.getOrDefault(genre, ""))
-                            .filter(id -> !id.isEmpty())
-                            .collect(Collectors.joining(","));
-
-                    if (!genreIds.isEmpty()) {
-                        builder.queryParam("with_genres", genreIds);
-                    }
-                }
-
-                // actor
-                if (searchParams.getActors() != null && !searchParams.getActors().isEmpty()) {
-                    builder.queryParam("with_cast", searchParams.getActors());
-                }
-                // TODO: implement actor search with person IDs
-                // This would require additional API calls to convert actor names to IDs
-
-
-                // director
-                if (searchParams.getDirectors() != null && !searchParams.getDirectors().isEmpty()) {
-                    builder.queryParam("with_crew", searchParams.getDirectors());
-                }
-                // TODO: implement director search with person IDs
-                // This would require additional API calls to convert director names to IDs
-
+            try {
+                List<Movie> resultMovies = new ArrayList<>();
+                int page = 1;
+                int maxMovies = 100; // Maximum number of movies to return
+                boolean hasMorePages = true;
 
                 // Setup authentication headers
                 HttpHeaders headers = new HttpHeaders();
@@ -374,28 +306,132 @@ public class TMDbService {
 
                 HttpEntity<String> entity = new HttpEntity<>(headers);
 
-                // Make the API call
-                ResponseEntity<String> response = restTemplate.exchange(
-                        builder.toUriString(),
-                        HttpMethod.GET,
-                        entity,
-                        String.class);
+                while (hasMorePages && resultMovies.size() < maxMovies) {
+                    if (searchParams.getTitle() != null) {
+                        String searchEndpoint = tmdbConfig.getBaseUrl() + "/search/movie";
+                        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(searchEndpoint)
+                                .queryParam("sort_by", "popularity.desc")
+                                .queryParam("page", page);
 
-                // Parse the response
-                if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                    JsonNode root = objectMapper.readTree(response.getBody());
-                    JsonNode results = root.path("results");
+                        builder.queryParam("query", searchParams.getTitle().trim());
 
-                    List<Movie> movies = new ArrayList<>();
-                    for (JsonNode movieNode : results) {
-                        Movie movie = mapTMDbMovieToEntity(movieNode);
-                        movies.add(movie);
+                        // Make the API call
+                        ResponseEntity<String> response = restTemplate.exchange(
+                                builder.toUriString(),
+                                HttpMethod.GET,
+                                entity,
+                                String.class);
+
+                        // Parse the response
+                        if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                            JsonNode root = objectMapper.readTree(response.getBody());
+                            JsonNode results = root.path("results");
+
+                            // Check if there are more pages
+                            int totalPages = root.path("total_pages").asInt();
+                            hasMorePages = page < totalPages;
+
+
+                            for (JsonNode movieNode : results) {
+                                Movie movie = mapTMDbMovieToEntity(movieNode);
+                                resultMovies.add(movie);
+                            }
+                            resultMovies.stream()
+                                    .filter(movie -> movie.getPosterURL() != null &&
+                                            movie.getMovieId() != 0 &&
+                                            movie.getTitle() != null)
+                                    .collect(Collectors.toList());
+                            page++;
+
+                        } else {
+                            log.error("Error fetching movies from TMDb: {}", response.getStatusCode());
+                            hasMorePages = false;
+                        }
+
+                    } else if (searchParams.getTitle() == null) {
+                        String searchEndpoint = tmdbConfig.getBaseUrl() + "/discover/movie";
+                        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(searchEndpoint)
+                                .queryParam("sort_by", "popularity.desc")
+                                .queryParam("page", page);
+
+                        // Add search parameters if available
+                        // years
+                        if (searchParams.getYear() != null) {
+                            builder.queryParam("primary_release_year", searchParams.getYear());
+                        }
+
+                        // genre
+                        if (searchParams.getGenres() != null && !searchParams.getGenres().isEmpty()) {
+                            // Convert genre names to IDs and join with comma
+                            String genreIds = searchParams.getGenres().stream()
+                                    .map(genre -> GENRE_NAME_TO_ID.getOrDefault(genre, ""))
+                                    .filter(id -> !id.isEmpty())
+                                    .collect(Collectors.joining(","));
+
+                            if (!genreIds.isEmpty()) {
+                                builder.queryParam("with_genres", genreIds);
+                            }
+                        }
+
+                        // actor
+                        if (searchParams.getActors() != null && !searchParams.getActors().isEmpty()) {
+                            builder.queryParam("with_cast", searchParams.getActors());
+                        }
+                        // TODO: implement actor search with person IDs
+                        // This would require additional API calls to convert actor names to IDs
+
+
+                        // director
+                        if (searchParams.getDirectors() != null && !searchParams.getDirectors().isEmpty()) {
+                            builder.queryParam("with_crew", searchParams.getDirectors());
+                        }
+                        // TODO: implement director search with person IDs
+                        // This would require additional API calls to convert director names to IDs
+
+                        // Make the API call
+                        ResponseEntity<String> response = restTemplate.exchange(
+                                builder.toUriString(),
+                                HttpMethod.GET,
+                                entity,
+                                String.class);
+
+                        // Parse the response
+                        if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                            JsonNode root = objectMapper.readTree(response.getBody());
+                            JsonNode results = root.path("results");
+
+                            // Check if there are more pages
+                            int totalPages = root.path("total_pages").asInt();
+                            hasMorePages = page < totalPages;
+
+
+                            for (JsonNode movieNode : results) {
+                                Movie movie = mapTMDbMovieToEntity(movieNode);
+                                resultMovies.add(movie);
+                            }
+                            resultMovies.stream()
+                                    .filter(movie -> movie.getPosterURL() != null &&
+                                            movie.getMovieId() != 0 &&
+                                            movie.getTitle() != null)
+                                    .collect(Collectors.toList());
+                            page++;
+                        } else {
+                            log.error("Error fetching movies from TMDb: {}", response.getStatusCode());
+                            hasMorePages = false;
+                        }
+                    }  else {
+                        return Collections.emptyList();
                     }
-
-                    return movies;
                 }
+                return resultMovies;
+            } catch (RestClientException e) {
+                log.error("Error searching for movies: {}", e.getMessage());
+                return Collections.emptyList();
             }
-            return Collections.emptyList();
+            catch (Exception e) {
+                log.error("Unexpected error during searching for movies: {}", e.getMessage());
+                return Collections.emptyList();
+            }
         }
         catch (RestClientException e) {
             log.error("Error communicating with TMDb API: {}", e.getMessage());
@@ -406,6 +442,7 @@ public class TMDbService {
             return Collections.emptyList();
         }
     }
+
 
     /**
      * Get detailed movie information from TMDb API
