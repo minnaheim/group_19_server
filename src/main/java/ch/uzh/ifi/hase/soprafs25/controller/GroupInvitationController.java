@@ -17,6 +17,7 @@ import ch.uzh.ifi.hase.soprafs25.rest.dto.GroupInvitationGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.mapper.DTOMapper;
 import ch.uzh.ifi.hase.soprafs25.service.GroupInvitationService;
 import ch.uzh.ifi.hase.soprafs25.service.UserService;
+import ch.uzh.ifi.hase.soprafs25.utils.AuthorizationUtil;
 
 @RestController
 @RequestMapping("/groups/invitations")
@@ -35,6 +36,7 @@ public class GroupInvitationController {
     public GroupInvitationGetDTO sendGroupInvitation(@RequestHeader("Authorization") String token, 
                                                 @PathVariable Long groupId, 
                                                 @PathVariable Long receiverId) {
+        token = AuthorizationUtil.extractToken(token);
         Long senderId = userService.getUserByToken(token).getUserId();
         GroupInvitation groupInvitation = groupInvitationService.sendInvitation(groupId, senderId, receiverId);
         return DTOMapper.INSTANCE.convertEntityToGroupInvitationGetDTO(groupInvitation);
@@ -43,6 +45,7 @@ public class GroupInvitationController {
     @PostMapping("/{invitationId}/accept")
     @ResponseStatus(HttpStatus.OK)
     public GroupInvitationGetDTO acceptGroupInvitation(@RequestHeader("Authorization") String token, @PathVariable Long invitationId) {
+        token = AuthorizationUtil.extractToken(token);
         Long userId = userService.getUserByToken(token).getUserId();
         GroupInvitation invitation = groupInvitationService.respondToInvitation(invitationId, userId, true);
         return DTOMapper.INSTANCE.convertEntityToGroupInvitationGetDTO(invitation);
@@ -52,6 +55,7 @@ public class GroupInvitationController {
     @ResponseStatus(HttpStatus.OK)
     public GroupInvitationGetDTO rejectGroupInvitation(@RequestHeader("Authorization") String token,
                                                       @PathVariable Long invitationId) {
+        token = AuthorizationUtil.extractToken(token);
         Long userId = userService.getUserByToken(token).getUserId();
         GroupInvitation invitation = groupInvitationService.respondToInvitation(invitationId, userId, false);
         return DTOMapper.INSTANCE.convertEntityToGroupInvitationGetDTO(invitation);
@@ -60,6 +64,7 @@ public class GroupInvitationController {
     @GetMapping("/sent")
     @ResponseStatus(HttpStatus.OK)
     public List<GroupInvitationGetDTO> getSentGroupInvitations(@RequestHeader("Authorization") String token) {
+        token = AuthorizationUtil.extractToken(token);
         Long userId = userService.getUserByToken(token).getUserId();
         return groupInvitationService.getSentInvitations(userId).stream()
                 .map(DTOMapper.INSTANCE::convertEntityToGroupInvitationGetDTO)
@@ -69,6 +74,7 @@ public class GroupInvitationController {
     @GetMapping("/received")
     @ResponseStatus(HttpStatus.OK)
     public List<GroupInvitationGetDTO> getReceivedGroupInvitations(@RequestHeader("Authorization") String token) {
+        token = AuthorizationUtil.extractToken(token);
         Long userId = userService.getUserByToken(token).getUserId();
         return groupInvitationService.getReceivedInvitations(userId).stream()
                 .map(DTOMapper.INSTANCE::convertEntityToGroupInvitationGetDTO)
@@ -79,6 +85,7 @@ public class GroupInvitationController {
     @DeleteMapping("/{invitationId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteGroupInvitation(@RequestHeader("Authorization") String token, @PathVariable Long invitationId) {
+        token = AuthorizationUtil.extractToken(token);
         Long userId = userService.getUserByToken(token).getUserId();
         groupInvitationService.deleteInvitation(invitationId, userId);
     }

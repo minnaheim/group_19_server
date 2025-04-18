@@ -21,6 +21,7 @@ import ch.uzh.ifi.hase.soprafs25.rest.mapper.DTOMapper;
 import ch.uzh.ifi.hase.soprafs25.service.GroupService;
 import ch.uzh.ifi.hase.soprafs25.service.MoviePoolService;
 import ch.uzh.ifi.hase.soprafs25.service.UserService;
+import ch.uzh.ifi.hase.soprafs25.utils.AuthorizationUtil;
 
 @RestController
 public class GroupController {
@@ -38,6 +39,7 @@ public class GroupController {
     @PostMapping("/groups")
     @ResponseStatus(HttpStatus.CREATED)
     public GroupGetDTO createGroup(@RequestHeader("Authorization") String token, @RequestBody GroupPostDTO groupPostDTO){
+        token = AuthorizationUtil.extractToken(token);
         Long userId = userService.getUserByToken(token).getUserId();
         Group createdGroup = groupService.createGroup(groupPostDTO.getGroupName(), userId);
 
@@ -47,6 +49,7 @@ public class GroupController {
     @DeleteMapping("/groups/{groupId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteGroup(@PathVariable Long groupId, @RequestHeader("Authorization") String token) {
+        token = AuthorizationUtil.extractToken(token);
         Long userId = userService.getUserByToken(token).getUserId();
         groupService.deleteGroup(groupId, userId);
     }
@@ -55,6 +58,7 @@ public class GroupController {
     @GetMapping("/groups/{groupId}/pool")
     @ResponseStatus(HttpStatus.OK)
     public List<MovieGetDTO> getGroupMoviePool( @RequestHeader("Authorization") String token, @PathVariable Long groupId) {
+        token = AuthorizationUtil.extractToken(token);
         Long userId = userService.getUserByToken(token).getUserId();
         MoviePool moviePool = moviePoolService.getMoviePool(groupId, userId);
         return DTOMapper.INSTANCE.convertEntityListToMovieGetDTOList(moviePool.getMovies());
@@ -64,6 +68,7 @@ public class GroupController {
     @PostMapping("/groups/{groupId}/pool/{movieId}")
     @ResponseStatus(HttpStatus.OK)
     public MoviePool addMovieToGroupPool(@RequestHeader("Authorization") String token, @PathVariable Long groupId, @PathVariable Long movieId) {
+        token = AuthorizationUtil.extractToken(token);
         Long userId = userService.getUserByToken(token).getUserId();
         return moviePoolService.addMovie(groupId, movieId, userId);
     }
@@ -71,6 +76,7 @@ public class GroupController {
     @DeleteMapping("/groups/{groupId}/pool/{movieId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeMovieFromGroupPool(@RequestHeader("Authorization") String token, @PathVariable Long groupId, @PathVariable Long movieId) {
+        token = AuthorizationUtil.extractToken(token);
         Long userId = userService.getUserByToken(token).getUserId();
         moviePoolService.removeMovie(groupId, movieId, userId);
     }
@@ -78,6 +84,7 @@ public class GroupController {
     @DeleteMapping("/groups/{groupId}/leave")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void leaveGroup(@RequestHeader("Authorization") String token, @PathVariable Long groupId) {
+        token = AuthorizationUtil.extractToken(token);
         Long userId = userService.getUserByToken(token).getUserId();
         groupService.leaveGroup(groupId, userId);
     }

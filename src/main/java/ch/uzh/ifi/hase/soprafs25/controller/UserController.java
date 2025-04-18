@@ -18,6 +18,7 @@ import ch.uzh.ifi.hase.soprafs25.rest.dto.UserGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.UserPostDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.mapper.DTOMapper;
 import ch.uzh.ifi.hase.soprafs25.service.UserService;
+import ch.uzh.ifi.hase.soprafs25.utils.AuthorizationUtil;
 
 /**
  * User Controller
@@ -141,6 +142,7 @@ public class UserController {
   @GetMapping("/users/search")
   @ResponseStatus(HttpStatus.OK)
   public List<UserGetDTO> searchUsersByUsername(@RequestParam(required = false) String username, @RequestHeader("Authorization") String token) {
+      token = AuthorizationUtil.extractToken(token);
       userService.getUserByToken(token);
       List<User> users = userService.searchUsersByUsername(username);
       return DTOMapper.INSTANCE.convertEntityListToUserGetDTOList(users);
