@@ -324,7 +324,11 @@ public class TMDbService {
                         Movie movie = mapTMDbMovieToEntity(movieNode);
                         movies.add(movie);
                     }
-                    return movies;
+                    return movies.stream()
+                            .filter(movie -> movie.getPosterURL() != null &&
+                                    movie.getMovieId() != 0 &&
+                                    movie.getTitle() != null)
+                            .collect(Collectors.toList());
                 }
             }
             else if (searchParams.getTitle() == null) {
@@ -392,8 +396,13 @@ public class TMDbService {
                         movies.add(movie);
                     }
 
-                    return movies;
+                    return movies.stream()
+                            .filter(movie -> movie.getPosterURL() != null &&
+                                    movie.getMovieId() != 0 &&
+                                    movie.getTitle() != null)
+                            .collect(Collectors.toList());
                 }
+
             }
             return Collections.emptyList();
         }
