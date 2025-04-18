@@ -158,6 +158,21 @@ public class MovieService {
 
         log.info("Generated {} search permutations for user {}", searchQueries.size(), userId, searchQueries);
 
+        if (searchQueries.isEmpty()) {
+            Movie passallgenres = new Movie();
+
+            // Use Arrays.asList() to create a list from array elements
+            List<String> allGenres = Arrays.asList(
+                    "Action", "Adventure", "Animation", "Comedy", "Crime",
+                    "Documentary", "Drama", "Family", "Fantasy", "History",
+                    "Horror", "Music", "Mystery", "Romance", "Science Fiction",
+                    "TV Movie", "Thriller", "War", "Western");
+
+            passallgenres.setGenres(new ArrayList<>(allGenres));
+            searchQueries.add(passallgenres);
+        }
+
+
         // Execute searches in order until we have enough suggestions or reach API call limit
         for (Movie searchParams : searchQueries) {
             if (suggestions.size() >= limit || apiCallCount >= MAX_API_CALLS) {
