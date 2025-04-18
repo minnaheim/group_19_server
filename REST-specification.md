@@ -17,7 +17,7 @@ When an error occurs (e.g., invalid input, resource not found, server error), th
   "status": 400,             // HTTP status code
   "error": "Bad Request",    // HTTP status phrase
   "message": "Specific error message detailing the issue.", // Developer-friendly error description
-  "path": "/api/users/123/rankings" // The request path that caused the error
+  "path": "/users/123/rankings" // The request path that caused the error
 }
 ```
 
@@ -125,21 +125,81 @@ When an error occurs (e.g., invalid input, resource not found, server error), th
 
 ### User Preferences Management
 
-<!--| `/genres` | GET | - | - | 200 OK | Array of genre objects | Retrieve all available genres from TMDb |
-| `/api/genres` | GET | - | - | 500 Internal Server Error | Error: reason \<string\> | Error occurred while fetching genres from TMDb |-->
-
 | Endpoint | Method | Parameters | Parameter Type | Status Code | Response | Description |
 |----------|--------|------------|---------------|-------------|----------|-------------|
-| `/users/{userId}/preferences/genres` | POST | userId \<integer\>, genreIds List\<string\> | Path, Body | 200 OK | { success: true, genres: [...] } | Save genre preferences for a user |
-| `/users/{userId}/preferences/genres` | GET | userId \<integer\> | Path | 200 OK | { genres: [...] } | Get genre preferences for a user |
-| `/users/{userId}/preferences/genres` | POST | userId \<integer\>, genreIds List\<string\> | Path, Body | 400 Bad Request | Error: reason \<string\> | Invalid genre ID(s) provided | 
+| `/genres` | GET | - | - | 200 OK | Array of genre objects | Retrieve all available genres from TMDb |
+| `/users/{userId}/preferences/genres` | POST | userId <integer>, genreIds List<string> | Path, Body | 200 OK | { "genreIds": ["Action", "Adventure"] } | Save genre preferences for a user |
+| `/users/{userId}/preferences/genres` | GET | userId <integer> | Path | 200 OK | { "genreIds": ["Action", "Adventure"] } | Get genre preferences for a user |
+| `/users/{userId}/preferences/favorite-movie` | POST | userId <integer>, movieId <integer> | Path, Body | 200 OK | { "movieId": 123 } | Save favorite movie for a user |
+| `/users/{userId}/preferences/favorite-movie` | GET | userId <integer> | Path | 200 OK | { "movie": { ...Movie fields... } } | Get favorite movie for a user |
+| `/users/{userId}/preferences` | GET | userId <integer> | Path | 200 OK | { "favoriteGenres": ["Action", "Adventure"], "favoriteMovie": { ...Movie fields... } } | Get all preferences for a user |
+| `/users/{userId}/preferences/genres` | POST | userId <integer>, genreIds List<string> | Path, Body | 400 Bad Request | Error: reason <string> | Invalid genre ID(s) provided | 
 | `/users/{userId}/preferences/genres` | POST | userId <integer>, genreIds List<string> | Path, Body | 401 Unauthorized | Error: reason <string> | Invalid or missing authentication token | 
 | `/users/{userId}/preferences/genres` | POST | userId <integer>, genreIds List<string> | Path, Body | 404 Not Found | Error: reason <string> | User not found | 
-| `/users/{userId}/preferences/favorite-movie` | POST | userId \<integer\>, movieId \<integer\> | Path, Body | 200 OK | { success: true, movie: {...} } | Save favorite movie for a user |
-| `/users/{userId}/preferences/favorite-movie` | GET | userId \<integer\> | Path | 200 OK | { movie: {...} } | Get favorite movie for a user |
 | `/users/{userId}/preferences/favorite-movie` | POST | userId <integer>, movieId <integer> | Path, Body | 400 Bad Request | Error: reason <string> | Invalid movie ID provided | 
 | `/users/{userId}/preferences/favorite-movie` | POST | userId <integer>, movieId <integer> | Path, Body | 401 Unauthorized | Error: reason <string> | Invalid or missing authentication token | 
 | `/users/{userId}/preferences/favorite-movie` | POST | userId <integer>, movieId <integer> | Path, Body | 404 Not Found | Error: reason <string> | User or movie not found | 
+
+#### Example Responses
+
+
+**POST /users/{userId}/preferences/genres**
+```json
+{
+  "genreIds": ["Action", "Adventure"]
+}
+```
+
+**GET /users/{userId}/preferences/genres**
+```json
+{
+  "genreIds": ["Action", "Adventure"]
+}
+```
+
+**POST /users/{userId}/preferences/favorite-movie**
+```json
+{
+  "movieId": 123
+}
+```
+
+**GET /users/{userId}/preferences/favorite-movie**
+```json
+{
+  "movie": {
+    "movieId": 123,
+    "title": "Test Movie",
+    "genres": ["Action", "Adventure"],
+    "year": 2020,
+    "actors": ["Actor 1", "Actor 2"],
+    "directors": ["Director 1"],
+    "originallanguage": "English",
+    "trailerURL": "https://...",
+    "posterURL": "https://...",
+    "description": "A movie description."
+  }
+}
+```
+
+**GET /users/{userId}/preferences**
+```json
+{
+  "favoriteGenres": ["Action", "Adventure"],
+  "favoriteMovie": {
+    "movieId": 123,
+    "title": "Test Movie",
+    "genres": ["Action", "Adventure"],
+    "year": 2020,
+    "actors": ["Actor 1", "Actor 2"],
+    "directors": ["Director 1"],
+    "originallanguage": "English",
+    "trailerURL": "https://...",
+    "posterURL": "https://...",
+    "description": "A movie description."
+  }
+}
+```
 
 ### Movie Management
 
