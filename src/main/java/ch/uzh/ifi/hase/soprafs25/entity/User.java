@@ -54,7 +54,7 @@ public class User implements Serializable {
   @Column(name = "genre")
   private List<String> favoriteGenres;
 
-  @OneToOne
+  @ManyToOne
   @JoinColumn(name = "favorite_movie_id")
   private Movie favoriteMovie;
 
