@@ -64,27 +64,18 @@ public class UserMovieService {
      */
     public List<Movie> addToWatchlist(Long userId, Long movieId, String requesterToken) {
         User user = getUserById(userId);
-        
         // Authorization check
         authorizeUserAction(user, requesterToken);
-        
-        // Get and save the movie to ensure it exists in our database
+        // Fetch full movie details and save to DB if not already present
         Movie movie = getAndSaveMovieById(movieId);
-        
-        // Get the watchlist (this ensures initialization)
+        // Add to user's watchlist as usual
         List<Movie> watchlist = getWatchlist(userId);
-        
-        // Check if movie is already in watchlist
         if (isMovieInList(watchlist, movieId)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, 
-                "Movie is already in your watchlist");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Movie is already in your watchlist");
         }
-        
-        // Add movie to watchlist
         watchlist.add(movie);
         user.setWatchlist(watchlist);
         userRepository.save(user);
-        
         return user.getWatchlist();
     }
 
@@ -147,33 +138,22 @@ public class UserMovieService {
      */
     public List<Movie> addToWatchedMovies(Long userId, Long movieId, String requesterToken) {
         User user = getUserById(userId);
-        
         // Authorization check
         authorizeUserAction(user, requesterToken);
-        
-        // Get and save the movie to ensure it exists in our database
+        // Fetch full movie details and save to DB if not already present
         Movie movie = getAndSaveMovieById(movieId);
-        
-        // Get the watched movies list (this ensures initialization)
+        // Add to user's watched movies as usual
         List<Movie> watchedMovies = getWatchedMovies(userId);
-        
-        // Check if movie is already in watched movies
         if (isMovieInList(watchedMovies, movieId)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, 
-                "Movie is already in your watched movies list");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Movie is already in your watched movies list");
         }
-        
-        // Add movie to watched movies
         watchedMovies.add(movie);
         user.setWatchedMovies(watchedMovies);
-        
-        // Get the watchlist and remove the movie if it exists there
+        // Remove from watchlist if present
         List<Movie> watchlist = getWatchlist(userId);
         removeMovieFromList(watchlist, movieId);
         user.setWatchlist(watchlist);
-        
         userRepository.save(user);
-        
         return user.getWatchedMovies();
     }
 

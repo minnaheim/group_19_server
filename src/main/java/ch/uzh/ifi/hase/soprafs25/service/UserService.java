@@ -17,6 +17,8 @@ import ch.uzh.ifi.hase.soprafs25.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs25.entity.User;
 import ch.uzh.ifi.hase.soprafs25.repository.FriendRequestRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
+import ch.uzh.ifi.hase.soprafs25.repository.MovieRepository;
+import ch.uzh.ifi.hase.soprafs25.entity.Movie;
 
 /**
  * User Service
@@ -33,9 +35,13 @@ public class UserService {
 
   private final UserRepository userRepository;
 
+  private final MovieRepository movieRepository;
+
   @Autowired
-  public UserService(@Qualifier("userRepository") UserRepository userRepository) {
+  public UserService(@Qualifier("userRepository") UserRepository userRepository,
+                     @Qualifier("movieRepository") MovieRepository movieRepository) {
     this.userRepository = userRepository;
+    this.movieRepository = movieRepository;
   }
 
   // for friends functionality
@@ -185,6 +191,19 @@ public class UserService {
     
     if (updatedUser.getBio() != null) {
       existingUser.setBio(updatedUser.getBio());
+    }
+
+    if (updatedUser.getFavoriteMovie() != null) {
+      Movie updatedFavorite = updatedUser.getFavoriteMovie();
+      if (updatedFavorite.getMovieId() != 0) {
+        Movie managedMovie = movieRepository.findByMovieId(updatedFavorite.getMovieId());
+        if (managedMovie == null) {
+          throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Favorite movie not found");
+        }
+        existingUser.setFavoriteMovie(managedMovie);
+      } else {
+        existingUser.setFavoriteMovie(null);
+      }
     }
     
     // Save and return the updated user

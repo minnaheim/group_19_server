@@ -49,14 +49,14 @@ public class User implements Serializable {
   @Column
   private String bio;
 
+  @ManyToOne
+  @JoinColumn(name = "favorite_movie_id")
+  private Movie favoriteMovie;
+
   @ElementCollection
   @CollectionTable(name = "user_favorite_genres", joinColumns = @JoinColumn(name = "user_id"))
   @Column(name = "genre")
   private List<String> favoriteGenres;
-
-  @OneToOne
-  @JoinColumn(name = "favorite_movie_id")
-  private Movie favoriteMovie;
 
   @ElementCollection
   @CollectionTable(name = "user_favorite_actors", joinColumns = @JoinColumn(name = "user_id"))
@@ -68,12 +68,6 @@ public class User implements Serializable {
   @MapKeyColumn(name = "directorId")
   @Column(name = "director_name")
   private Map<String, String> favoriteDirectors = new HashMap<>();
-
-
-//   @ElementCollection
-//   @CollectionTable(name = "user_preferences", joinColumns = @JoinColumn(name = "user_id"))
-//   @Column(name = "preference")
-//   private List<String> preferences;
 
 
   @ManyToMany

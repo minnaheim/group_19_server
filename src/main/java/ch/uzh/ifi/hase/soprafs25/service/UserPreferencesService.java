@@ -73,18 +73,23 @@ public class UserPreferencesService {
      * @return the updated list of genre preferences
      */
     public List<String> saveGenrePreferences(Long userId, List<String> genreNames, String requesterToken) {
+        log.info("saveGenrePreferences called with userId={}, genres={}", userId, genreNames);
         User user = getUserById(userId);
-        
+        log.info("User found: {}", user != null ? user.getUsername() : "null");
+
         // Authorization check
         authorizeUserAction(user, requesterToken);
-        
+        log.info("Authorization passed");
+
         // Validate genres against TMDb list
         validateGenres(genreNames);
-        
+        log.info("Genres validated: {}", genreNames);
+
         // Save genre preferences
         user.setFavoriteGenres(genreNames);
         userRepository.save(user);
-        
+        log.info("Favorite genres saved for user {}: {}", user.getUsername(), genreNames);
+
         return user.getFavoriteGenres();
     }
 
@@ -113,17 +118,12 @@ public class UserPreferencesService {
      */
     public Movie saveFavoriteMovie(Long userId, Long movieId, String requesterToken) {
         User user = getUserById(userId);
-        
-        // Authorization check
         authorizeUserAction(user, requesterToken);
-        
-        // Get and save the movie to ensure it exists in our database
+        // Fetch full movie details and save to DB if not already present
         Movie movie = movieService.getMovieById(movieId);
-        
-        // Set as favorite movie
+        movie = movieService.saveMovie(movie);
         user.setFavoriteMovie(movie);
         userRepository.save(user);
-        
         return movie;
     }
 

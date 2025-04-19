@@ -69,6 +69,7 @@ class UserPreferencesServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(userRepository.findByToken("validToken")).thenReturn(testUser);
         when(movieService.getMovieById(123L)).thenReturn(testMovie);
+        when(movieService.saveMovie(any(Movie.class))).thenReturn(testMovie);
         when(tmdbService.getGenres()).thenReturn(genresNode);
     }
 
@@ -139,7 +140,7 @@ class UserPreferencesServiceTest {
         Movie result = userPreferencesService.saveFavoriteMovie(1L, 123L, "validToken");
 
         // Assert
-        assertEquals(testMovie, result);
+        assertEquals(testMovie.getMovieId(), result.getMovieId());
         verify(userRepository).save(any(User.class));
     }
 

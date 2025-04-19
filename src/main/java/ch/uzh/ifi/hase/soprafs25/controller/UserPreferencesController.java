@@ -2,6 +2,9 @@ package ch.uzh.ifi.hase.soprafs25.controller;
 
 import ch.uzh.ifi.hase.soprafs25.entity.Movie;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.MovieGetDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.UserPreferencesGenresDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.UserPreferencesFavoriteMovieDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.UserPreferencesDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.mapper.DTOMapper;
 import ch.uzh.ifi.hase.soprafs25.service.UserPreferencesService;
 import org.springframework.http.HttpStatus;
@@ -25,22 +28,13 @@ public class UserPreferencesController {
     }
     
     /**
-     * GET /api/genres - Get all available genres from TMDb
+     * POST /users/{userId}/preferences/genres - Save genre preferences for a user
      */
-    @GetMapping("/api/genres")
+    @PostMapping("/users/{userId}/preferences/genres")
     @ResponseStatus(HttpStatus.OK)
-    public List<Map<String, Object>> getAllGenres() {
-        return userPreferencesService.getAllGenres();
-    }
-    
-    /**
-     * POST /api/users/{userId}/preferences/genres - Save genre preferences for a user
-     */
-    @PostMapping("/api/users/{userId}/preferences/genres")
-    @ResponseStatus(HttpStatus.OK)
-    public Map<String, Object> saveGenrePreferences(
+    public UserPreferencesGenresDTO saveGenrePreferences(
             @PathVariable("userId") Long userId,
-            @RequestBody Map<String, List<String>> genrePreferences,
+            @RequestBody UserPreferencesGenresDTO genresDTO,
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         
         // Extract token from Authorization header
@@ -50,53 +44,49 @@ public class UserPreferencesController {
         }
         
         List<String> updatedPreferences = userPreferencesService.saveGenrePreferences(
-                userId, genrePreferences.get("genreIds"), token);
+                userId, genresDTO.getGenreIds(), token);
         
-        return Map.of(
-            "success", true,
-            "genres", updatedPreferences
-        );
+        UserPreferencesGenresDTO responseDTO = new UserPreferencesGenresDTO();
+        responseDTO.setGenreIds(updatedPreferences);
+        return responseDTO;
     }
     
     /**
-     * GET /api/users/{userId}/preferences/genres - Get genre preferences for a user
+     * GET /users/{userId}/preferences/genres - Get genre preferences for a user
      */
-    @GetMapping("/api/users/{userId}/preferences/genres")
+    @GetMapping("/users/{userId}/preferences/genres")
     @ResponseStatus(HttpStatus.OK)
-    public Map<String, Object> getGenrePreferences(@PathVariable("userId") Long userId) {
+    public UserPreferencesGenresDTO getGenrePreferences(@PathVariable("userId") Long userId) {
         List<String> genres = userPreferencesService.getGenrePreferences(userId);
-        return Map.of("genres", genres);
+        UserPreferencesGenresDTO responseDTO = new UserPreferencesGenresDTO();
+        responseDTO.setGenreIds(genres);
+        return responseDTO;
     }
     
     /**
-     * POST /api/users/{userId}/preferences/favorite-movie - Save favorite movie for a user
+     * POST /users/{userId}/preferences/favorite-movie - Save favorite movie for a user
      */
-    @PostMapping("/api/users/{userId}/preferences/favorite-movie")
+    @PostMapping("/users/{userId}/preferences/favorite-movie")
     @ResponseStatus(HttpStatus.OK)
-    public Map<String, Object> saveFavoriteMovie(
+    public UserPreferencesFavoriteMovieDTO saveFavoriteMovie(
             @PathVariable("userId") Long userId,
-            @RequestBody Map<String, Long> favoriteMovie,
+            @RequestBody UserPreferencesFavoriteMovieDTO favoriteMovieDTO,
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        
         // Extract token from Authorization header
         String token = null;
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
         }
-        
-        Movie movie = userPreferencesService.saveFavoriteMovie(userId, favoriteMovie.get("movieId"), token);
-        MovieGetDTO movieDTO = DTOMapper.INSTANCE.convertEntityToMovieGetDTO(movie);
-        
-        return Map.of(
-            "success", true,
-            "movie", movieDTO
-        );
+        Movie movie = userPreferencesService.saveFavoriteMovie(userId, favoriteMovieDTO.getMovieId(), token);
+        UserPreferencesFavoriteMovieDTO responseDTO = new UserPreferencesFavoriteMovieDTO();
+        responseDTO.setMovieId(movie != null ? movie.getMovieId() : null);
+        return responseDTO;
     }
     
     /**
-     * GET /api/users/{userId}/preferences/favorite-movie - Get favorite movie for a user
+     * GET /users/{userId}/preferences/favorite-movie - Get favorite movie for a user
      */
-    @GetMapping("/api/users/{userId}/preferences/favorite-movie")
+    @GetMapping("/users/{userId}/preferences/favorite-movie")
     @ResponseStatus(HttpStatus.OK)
     public Map<String, Object> getFavoriteMovie(@PathVariable("userId") Long userId) {
         Movie movie = userPreferencesService.getFavoriteMovie(userId);
@@ -110,5 +100,17 @@ public class UserPreferencesController {
             response.put("movie", null);
             return response;
         }
+    }
+
+    /**
+     * GET /users/{userId}/preferences - Get all preferences for a user (favorite genres and favorite movie)
+     */
+    @GetMapping("/users/{userId}/preferences")
+    @ResponseStatus(HttpStatus.OK)
+    public UserPreferencesDTO getAllPreferences(@PathVariable("userId") Long userId) {
+        UserPreferencesDTO dto = new UserPreferencesDTO();
+        dto.setFavoriteGenres(userPreferencesService.getGenrePreferences(userId));
+        dto.setFavoriteMovie(userPreferencesService.getFavoriteMovie(userId));
+        return dto;
     }
 }
