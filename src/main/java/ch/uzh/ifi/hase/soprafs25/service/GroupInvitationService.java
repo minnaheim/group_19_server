@@ -53,7 +53,7 @@ public class GroupInvitationService {
         }
 
         // Check if an invitation already exists
-        if (groupInvitationRepository.existsByGroupAndReceiver(groupId, receiver)) {
+        if (groupInvitationRepository.existsByGroupAndReceiver(group, receiver)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Invitation already exists");
         }
 

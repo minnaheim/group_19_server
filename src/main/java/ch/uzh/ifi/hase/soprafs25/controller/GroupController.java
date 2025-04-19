@@ -73,7 +73,7 @@ public class GroupController {
         return DTOMapper.INSTANCE.convertEntityListToUserGetDTOList(group.getMembers());
     }
 
-    // get movie pool
+    // get movie pool 
     @GetMapping("/groups/{groupId}/pool")
     @ResponseStatus(HttpStatus.OK)
     public List<MovieGetDTO> getGroupMoviePool( @RequestHeader("Authorization") String token, @PathVariable Long groupId) {
@@ -86,10 +86,11 @@ public class GroupController {
     // add movie
     @PostMapping("/groups/{groupId}/pool/{movieId}")
     @ResponseStatus(HttpStatus.OK)
-    public MoviePool addMovieToGroupPool(@RequestHeader("Authorization") String token, @PathVariable Long groupId, @PathVariable Long movieId) {
+    public List<MovieGetDTO> addMovieToGroupPool(@RequestHeader("Authorization") String token, @PathVariable Long groupId, @PathVariable Long movieId) {
         token = AuthorizationUtil.extractToken(token);
         Long userId = userService.getUserByToken(token).getUserId();
-        return moviePoolService.addMovie(groupId, movieId, userId);
+        MoviePool moviePool = moviePoolService.addMovie(groupId, movieId, userId);
+        return DTOMapper.INSTANCE.convertEntityListToMovieGetDTOList(moviePool.getMovies());
     }
 
     @DeleteMapping("/groups/{groupId}/pool/{movieId}")

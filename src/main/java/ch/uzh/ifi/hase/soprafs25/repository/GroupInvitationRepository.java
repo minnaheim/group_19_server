@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import ch.uzh.ifi.hase.soprafs25.entity.Group;
 import ch.uzh.ifi.hase.soprafs25.entity.GroupInvitation;
 import ch.uzh.ifi.hase.soprafs25.entity.User;
 
@@ -18,5 +19,5 @@ public interface GroupInvitationRepository extends JpaRepository<GroupInvitation
     // otherwise an error appear, due to some naming collisions
     List<GroupInvitation> findByGroup_GroupId(Long groupId);
 
-    boolean existsByGroupAndReceiver(Long groupId, User receiver);
+    boolean existsByGroupAndReceiver(Group group, User receiver);
 } 
