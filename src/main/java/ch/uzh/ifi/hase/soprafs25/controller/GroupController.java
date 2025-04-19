@@ -17,6 +17,7 @@ import ch.uzh.ifi.hase.soprafs25.entity.MoviePool;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.GroupGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.GroupPostDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.MovieGetDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.UserGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.mapper.DTOMapper;
 import ch.uzh.ifi.hase.soprafs25.service.GroupService;
 import ch.uzh.ifi.hase.soprafs25.service.MoviePoolService;
@@ -35,6 +36,15 @@ public class GroupController {
         this.userService = userService;
         this.moviePoolService = moviePoolService;
     }
+    
+    @GetMapping("/groups")
+    @ResponseStatus(HttpStatus.OK)
+    public List<GroupGetDTO> getUserGroups(@RequestHeader("Authorization") String token) {
+        token = AuthorizationUtil.extractToken(token);
+        Long userId = userService.getUserByToken(token).getUserId();
+        List<Group> userGroups = groupService.getGroupsByUserId(userId);
+        return DTOMapper.INSTANCE.convertEntityListToGroupGetDTOList(userGroups);
+    }
 
     @PostMapping("/groups")
     @ResponseStatus(HttpStatus.CREATED)
@@ -52,6 +62,15 @@ public class GroupController {
         token = AuthorizationUtil.extractToken(token);
         Long userId = userService.getUserByToken(token).getUserId();
         groupService.deleteGroup(groupId, userId);
+    }
+
+    @GetMapping("/groups/{groupId}/members")
+    @ResponseStatus(HttpStatus.OK)
+    public List<UserGetDTO> getGroupMembers(@RequestHeader("Authorization") String token, @PathVariable Long groupId){
+        token = AuthorizationUtil.extractToken(token);
+        Long userId = userService.getUserByToken(token).getUserId();
+        Group group = groupService.getGroup(groupId, userId);
+        return DTOMapper.INSTANCE.convertEntityListToUserGetDTOList(group.getMembers());
     }
 
     // get movie pool

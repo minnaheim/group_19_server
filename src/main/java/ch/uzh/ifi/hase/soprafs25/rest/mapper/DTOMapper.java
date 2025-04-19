@@ -2,9 +2,6 @@ package ch.uzh.ifi.hase.soprafs25.rest.mapper;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.Map;
-import java.util.HashMap;
-import javax.persistence.MapKeyColumn;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -15,8 +12,8 @@ import ch.uzh.ifi.hase.soprafs25.entity.Group;
 import ch.uzh.ifi.hase.soprafs25.entity.GroupInvitation;
 import ch.uzh.ifi.hase.soprafs25.entity.Movie;
 import ch.uzh.ifi.hase.soprafs25.entity.MoviePool;
-import ch.uzh.ifi.hase.soprafs25.entity.User;
 import ch.uzh.ifi.hase.soprafs25.entity.RankingResult;
+import ch.uzh.ifi.hase.soprafs25.entity.User;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.FriendRequestGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.FriendRequestPostDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.GroupGetDTO;
@@ -26,10 +23,10 @@ import ch.uzh.ifi.hase.soprafs25.rest.dto.GroupPostDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.MovieGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.MoviePoolGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.MoviePoolPostDTO;
-import ch.uzh.ifi.hase.soprafs25.rest.dto.UserGetDTO;
-import ch.uzh.ifi.hase.soprafs25.rest.dto.UserPostDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.MovieRankGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.RankingResultGetDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.UserGetDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.UserPostDTO;
 
 /**
  * DTOMapper
@@ -106,6 +103,9 @@ public interface DTOMapper {
     @Mapping(source = "members", target = "memberIds")
     @Mapping(source = "moviePool.movies", target = "movieIds")
     GroupGetDTO convertEntityToGroupGetDTO(Group group);
+
+    List<GroupGetDTO> convertEntityListToGroupGetDTOList(List<Group> groups);
+
 
     @Mapping(source = "movieId", target = "movieId")
     @Mapping(source = "title", target = "title")

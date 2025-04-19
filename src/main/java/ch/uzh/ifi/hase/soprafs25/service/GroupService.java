@@ -1,6 +1,7 @@
 package ch.uzh.ifi.hase.soprafs25.service;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -109,10 +110,22 @@ public class GroupService {
         }
         groupRepository.delete(group);
     }
-    // helpful for moviepool service 
-    public boolean isUserMemberOfGroup(Group group, Long userId) {
+
+    public boolean isUserMemberOfGroup(Long groupId, Long userId) {
+        Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
         return group.getMembers().stream()
                 .anyMatch(member -> member.getUserId().equals(userId));
+    }
+
+    public Group getGroup(Long groupId, Long userId){
+        Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
+        boolean isMember = isUserMemberOfGroup(groupId, userId);
+        if(isMember){
+            return group;
+        }
+        else{
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not a member of this group");
+        }
     }
 
     public void leaveGroup(Long groupId, Long userId) {
@@ -129,5 +142,9 @@ public class GroupService {
 
         group.getMembers().remove(user);
         groupRepository.save(group);
+    }
+
+    public List<Group> getGroupsByUserId(Long userId) {
+        return groupRepository.findAllByMembers_UserId(userId);
     }
 }
