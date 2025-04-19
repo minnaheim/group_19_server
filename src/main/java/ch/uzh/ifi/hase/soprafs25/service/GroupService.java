@@ -41,6 +41,7 @@ public class GroupService {
         User creator = userRepository.findById(creatorId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Creator not found"));
 
+        // System.out.println(groupName);
         validateGroupName(groupName);
         // for creating similar/unique name
         // if (groupName == null || groupName.trim().isEmpty()){
@@ -55,6 +56,7 @@ public class GroupService {
         newGroup.setCreator(creator);
         newGroup.setMembers(new ArrayList<>());
         newGroup.getMembers().add(creator);
+        groupRepository.saveAndFlush(newGroup);
 
         MoviePool moviePool = moviePoolService.createMoviePool(newGroup);
         newGroup.setMoviePool(moviePool);
