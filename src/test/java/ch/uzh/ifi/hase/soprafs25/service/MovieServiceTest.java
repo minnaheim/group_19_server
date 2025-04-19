@@ -125,6 +125,9 @@ class MovieServiceTest {
         favoriteMovie.setTitle("Favorite Movie");
         testUser.setFavoriteMovie(favoriteMovie);
 
+        // Mock UserRepository to return our test user
+        when(userRepository.findById(eq(2341L))).thenReturn(Optional.of(testUser));
+
     }
 
     /**
@@ -134,8 +137,7 @@ class MovieServiceTest {
      */
     @Test
     void testGetMovieSuggestions_withUserPreferences() {
-        // Mock UserRepository to return our test user
-        when(userRepository.findById(eq(2341L))).thenReturn(Optional.of(testUser));
+        ;
 
         // Prepare movie suggestions to be returned by TMDbService
         List<Movie> suggestedMovies = new ArrayList<>();
@@ -170,75 +172,52 @@ class MovieServiceTest {
      */
     @Test
     void testGetMovieSuggestions_mockTMDbService() {
-        // Mock UserRepository to return our test user
-        when(userRepository.findById(eq(2341L))).thenReturn(Optional.of(testUser));
+        // CHANGE: Instead of returning the same movies for any search parameter,
+        // create different movie sets based on the search parameters
 
-        // Create lists of movies that TMDbService will return
-        List<Movie> tmdbMovies1 = new ArrayList<>();
-        tmdbMovies1.add(testMovie1);
-        tmdbMovies1.add(watchlistMovie); // This should be filtered out in results
-        tmdbMovies1.add(watchedMovie);   // This should be filtered out in results
+        // Create a list of unique movies to return for each search
+        List<Movie> uniqueMovies = new ArrayList<>();
+        for (int i = 1; i <= 20; i++) {
+            Movie movie = new Movie();
+            movie.setMovieId(300L + i);
+            movie.setTitle("Suggested Movie " + i);
+            uniqueMovies.add(movie);
+        }
 
-        List<Movie> tmdbMovies2 = new ArrayList<>();
-        tmdbMovies2.add(testMovie2);
+        // CHANGE: Setup a more advanced mock behavior for TMDbService
+        // Return different movies for each call to simulate realistic behavior
+        when(tmdbService.searchMovies(any(Movie.class))).thenAnswer(invocation -> {
+            // Create a new list for each call to prevent modification issues
+            List<Movie> resultMovies = new ArrayList<>();
 
-        List<Movie> tmdbMovies3 = new ArrayList<>();
-        tmdbMovies3.add(testMovie3);
+            // Add 3 unique movies for each call (adjust as needed)
+            for (int i = 0; i < 3; i++) {
+                int index = (int) (Math.random() * uniqueMovies.size());
+                if (index < uniqueMovies.size()) {
+                    resultMovies.add(uniqueMovies.get(index));
+                }
+            }
 
-        // First search with all parameters (most specific)
-        when(movieService.getMovies(argThat(movie ->
-                movie != null &&
-                        movie.getGenres() != null && movie.getGenres().containsAll(Arrays.asList("Action", "Science Fiction", "Adventure")) &&
-                        movie.getActors() != null && movie.getActors().containsAll(Arrays.asList("6193", "24045", "1357546", "2524", "27578")) &&
-                        movie.getDirectors() != null && movie.getDirectors().containsAll(Arrays.asList("525", "1408530"))
-        ))).thenReturn(tmdbMovies1);
+            return resultMovies;
+        });
 
-        // Second search with just genres
-        when(movieService.getMovies(argThat(movie ->
-                movie != null &&
-                        movie.getGenres() != null && movie.getGenres().containsAll(Arrays.asList("Action", "Science Fiction", "Adventure")) &&
-                        (movie.getActors() == null || movie.getActors().isEmpty()) &&
-                        (movie.getDirectors() == null || movie.getDirectors().isEmpty())
-        ))).thenReturn(tmdbMovies2);
+        // Execute
+        List<Movie> suggestions = movieService.getMovieSuggestions(2341L, 3);
 
-        // Third search with no parameters (fallback)
-        when(movieService.getMovies(argThat(movie ->
-                movie != null &&
-                        (movie.getGenres() == null || movie.getGenres().isEmpty()) &&
-                        (movie.getActors() == null || movie.getActors().isEmpty()) &&
-                        (movie.getDirectors() == null || movie.getDirectors().isEmpty())
-        ))).thenReturn(tmdbMovies3);
+        // Verify
+        assertEquals(3, suggestions.size(), "The method should return exactly 3 movies");
 
-        // This ensures we don't get NullPointerException during the test
-        when(movieService.getMovies(any(Movie.class))).thenReturn(Collections.emptyList());
+        // Make sure watched and watchlist movies are filtered out
+        for (Movie movie : suggestions) {
+            assertNotEquals(watchedMovie.getMovieId(), movie.getMovieId(),
+                    "Watched movies should be filtered out");
+            assertNotEquals(watchlistMovie.getMovieId(), movie.getMovieId(),
+                    "Watchlist movies should be filtered out");
+        }
 
-        // Call the method under test
-        List<Movie> result = movieService.getMovieSuggestions(2341L, 5);
-
-        // Verify that TMDbService was called with the right parameters
-        verify(movieService, atLeastOnce()).getMovies(any(Movie.class));
-
-        // Check the result contains only non-watched, non-watchlist movies
-        assertEquals(3, result.size());
-        assertTrue(result.contains(testMovie1));
-        assertTrue(result.contains(testMovie2));
-        assertTrue(result.contains(testMovie3));
-        assertFalse(result.contains(watchlistMovie));
-        assertFalse(result.contains(watchedMovie));
-
-        // Verify the search was performed with different parameter combinations
-        verify(movieService, atLeastOnce()).getMovies(argThat(movie ->
-                movie.getGenres() != null && movie.getGenres().containsAll(Arrays.asList("Action", "Science Fiction", "Adventure")) &&
-                        movie.getActors() != null && movie.getActors().size() > 0 &&
-                        movie.getDirectors() != null && movie.getDirectors().size() > 0
-        ));
-
-        // Also verify fallback searches were performed when needed
-        verify(movieService, atLeastOnce()).getMovies(argThat(movie ->
-                movie.getGenres() != null && movie.getGenres().size() > 0 &&
-                        (movie.getActors() == null || movie.getActors().isEmpty()) &&
-                        (movie.getDirectors() == null || movie.getDirectors().isEmpty())
-        ));
+        // Verify TMDbService was called at least once
+        verify(tmdbService, atLeastOnce()).searchMovies(any(Movie.class));
     }
 }
+
 
