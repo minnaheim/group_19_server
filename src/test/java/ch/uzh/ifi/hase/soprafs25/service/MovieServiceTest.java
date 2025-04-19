@@ -9,8 +9,13 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.*;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -390,6 +395,221 @@ class MovieServiceTest {
         assertTrue(suggestions.containsAll(defaultMovies));
     }
 }
+
+class MovieServiceSearchPermutationsTest {
+
+    @Mock
+    private MovieRepository movieRepository;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private TMDbService tmdbService;
+
+    private MovieService movieService;
+    private Method generateSearchPermutationsMethod;
+
+    @BeforeEach
+    public void setup() throws NoSuchMethodException {
+        MockitoAnnotations.openMocks(this);
+
+        // Create the MovieService instance with mocked dependencies
+        movieService = new MovieService(movieRepository, tmdbService, userRepository);
+
+        // Use reflection to access the private method
+        generateSearchPermutationsMethod = MovieService.class.getDeclaredMethod(
+                "generateSearchPermutations",
+                List.class, List.class, List.class
+        );
+        generateSearchPermutationsMethod.setAccessible(true);
+    }
+
+    /**
+     * Test 2.1: Test with various combinations of input parameters
+     */
+    @Test
+    public void testGenerateSearchPermutationsWithVariousCombinations() throws Exception {
+        // Define test input
+        List<String> genres = Arrays.asList("Action", "Adventure");
+        List<String> actors = Arrays.asList("123", "456");
+        List<String> directors = Arrays.asList("789");
+
+        // Call the private method via reflection
+        @SuppressWarnings("unchecked")
+        List<Movie> result = (List<Movie>) generateSearchPermutationsMethod.invoke(
+                movieService, genres, actors, directors
+        );
+
+        // Assertions for various combinations Verify that all expected combinations are generated
+        assertFalse(result.isEmpty(), "Search permutations should not be empty");
+
+        // Check if the most specific search (all parameters) is first
+        Movie firstSearch = result.get(0);
+        assertEquals(genres, firstSearch.getGenres(), "First search should have all genres");
+        assertEquals(actors, firstSearch.getActors(), "First search should have all actors");
+        assertEquals(directors, firstSearch.getDirectors(), "First search should have all directors");
+
+        // Verify total number of permutations
+        // 1 (all params) + 3 (two params) + 3 (single category) + 2 (individual genres) + 2 (individual actors) + 1 (individual director)
+        assertEquals(12, result.size(), "Should generate correct number of permutations");
+
+        // Verify some specific permutations exist (sampling a few)
+        boolean foundGenresOnly = false;
+        boolean foundActorsOnly = false;
+        boolean foundDirectorsOnly = false;
+
+        for (Movie search : result) {
+            if (!search.getGenres().isEmpty() && search.getActors().isEmpty() && search.getDirectors().isEmpty()) {
+                foundGenresOnly = true;
+            }
+            if (search.getGenres().isEmpty() && !search.getActors().isEmpty() && search.getDirectors().isEmpty()) {
+                foundActorsOnly = true;
+            }
+            if (search.getGenres().isEmpty() && search.getActors().isEmpty() && !search.getDirectors().isEmpty()) {
+                foundDirectorsOnly = true;
+            }
+        }
+
+        assertTrue(foundGenresOnly, "Should include genres-only search");
+        assertTrue(foundActorsOnly, "Should include actors-only search");
+        assertTrue(foundDirectorsOnly, "Should include directors-only search");
+    }
+
+    /**
+     * Test 2.2: Verify the permutations are generated in the correct order (most specific to least)
+     */
+    @Test
+    public void testSearchPermutationsOrder() throws Exception {
+        // Define test input
+        List<String> genres = Arrays.asList("Action", "Adventure");
+        List<String> actors = Arrays.asList("123", "456");
+        List<String> directors = Arrays.asList("789");
+
+        // Call the private method via reflection
+        @SuppressWarnings("unchecked")
+        List<Movie> result = (List<Movie>) generateSearchPermutationsMethod.invoke(
+                movieService, genres, actors, directors
+        );
+
+        // Verify the order is from most specific to least specific First should have all parameters
+        Movie firstSearch = result.get(0);
+        assertFalse(firstSearch.getGenres().isEmpty());
+        assertFalse(firstSearch.getActors().isEmpty());
+        assertFalse(firstSearch.getDirectors().isEmpty());
+
+        // Check that single parameter searches come after multi-parameter searches
+        // (This assumes the implementation follows the ordering: all params, 2 params, 1 param, individual items)
+        boolean foundAllDualParamBeforeSingleParam = true;
+        boolean foundSingleParam = false;
+
+        for (int i = 1; i < 4; i++) { // Next 3 should be dual-parameter searches
+            Movie search = result.get(i);
+            int paramCount = 0;
+            if (!search.getGenres().isEmpty()) paramCount++;
+            if (!search.getActors().isEmpty()) paramCount++;
+            if (!search.getDirectors().isEmpty()) paramCount++;
+
+            if (paramCount != 2) {
+                foundAllDualParamBeforeSingleParam = false;
+                break;
+            }
+        }
+
+        for (int i = 4; i < 7; i++) { // Next 3 should be single-category searches
+            Movie search = result.get(i);
+            int paramCount = 0;
+            if (!search.getGenres().isEmpty()) paramCount++;
+            if (!search.getActors().isEmpty()) paramCount++;
+            if (!search.getDirectors().isEmpty()) paramCount++;
+
+            if (paramCount == 1) {
+                foundSingleParam = true;
+            }
+        }
+
+        assertTrue(foundAllDualParamBeforeSingleParam, "Dual-parameter searches should come before single-parameter searches");
+        assertTrue(foundSingleParam, "Should include single-parameter searches after dual-parameter searches");
+    }
+
+    /**
+     * Test 2.3: Check edge cases like empty input lists
+     */
+    @Test
+    public void testGenerateSearchPermutationsWithEmptyLists() throws Exception {
+        // Call with empty lists
+        @SuppressWarnings("unchecked")
+        List<Movie> result = (List<Movie>) generateSearchPermutationsMethod.invoke(
+                movieService,
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList()
+        );
+
+        // Verify that an empty list is returned when all inputs are empty
+        assertTrue(result.isEmpty(), "Should return empty list when all inputs are empty");
+
+        // Test with only one non-empty list
+        @SuppressWarnings("unchecked")
+        List<Movie> resultWithGenres = (List<Movie>) generateSearchPermutationsMethod.invoke(
+                movieService,
+                Arrays.asList("Action"),
+                Collections.emptyList(),
+                Collections.emptyList()
+        );
+
+        assertEquals("Action", resultWithGenres.get(0).getGenres().get(0), "Should include the provided genre");
+    }
+
+    /**
+     * Test 2.4:  test to verify individual item permutations
+     */
+    @Test
+    public void testIndividualItemPermutations() throws Exception {
+        // Setup multiple items in each category
+        List<String> genres = Arrays.asList("Action", "Adventure", "Comedy");
+        List<String> actors = Arrays.asList("123", "456");
+        List<String> directors = Arrays.asList("789", "012");
+
+        // Call the method
+        @SuppressWarnings("unchecked")
+        List<Movie> result = (List<Movie>) generateSearchPermutationsMethod.invoke(
+                movieService, genres, actors, directors
+        );
+
+        // Verify individual item permutations are included Count individual genre permutations
+        int individualGenreCount = 0;
+        for (Movie search : result) {
+            if (search.getGenres() != null && search.getGenres().size() == 1 &&
+                    search.getActors().isEmpty() && search.getDirectors().isEmpty()) {
+                individualGenreCount++;
+            }
+        }
+        assertEquals(3, individualGenreCount, "Should have a permutation for each individual genre");
+
+        // Count individual actor permutations
+        int individualActorCount = 0;
+        for (Movie search : result) {
+            if (search.getGenres().isEmpty() &&
+                    search.getActors() != null && search.getActors().size() == 1 &&
+                    search.getDirectors().isEmpty()) {
+                individualActorCount++;
+            }
+        }
+        assertEquals(2, individualActorCount, "Should have a permutation for each individual actor");
+
+        // Count individual director permutations
+        int individualDirectorCount = 0;
+        for (Movie search : result) {
+            if (search.getGenres().isEmpty() && search.getActors().isEmpty() &&
+                    search.getDirectors() != null && search.getDirectors().size() == 1) {
+                individualDirectorCount++;
+            }
+        }
+        assertEquals(2, individualDirectorCount, "Should have a permutation for each individual director");
+    }
+}
+
 
 
 
