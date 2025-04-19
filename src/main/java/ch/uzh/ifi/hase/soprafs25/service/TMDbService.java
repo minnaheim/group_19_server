@@ -334,13 +334,12 @@ public class TMDbService {
 
                             for (JsonNode movieNode : results) {
                                 Movie movie = mapTMDbMovieToEntity(movieNode);
-                                resultMovies.add(movie);
+                                if (movie.getPosterURL() != null && movie.getMovieId() != 0 && movie.getTitle() != null) {
+                                    resultMovies.add(movie);
+
+                                }
                             }
-                            resultMovies.stream()
-                                    .filter(movie -> movie.getPosterURL() != null &&
-                                            movie.getMovieId() != 0 &&
-                                            movie.getTitle() != null)
-                                    .collect(Collectors.toList());
+
                             page++;
 
                         } else {
@@ -407,14 +406,14 @@ public class TMDbService {
 
                             for (JsonNode movieNode : results) {
                                 Movie movie = mapTMDbMovieToEntity(movieNode);
-                                resultMovies.add(movie);
+                                if (movie.getPosterURL() != null && movie.getMovieId() != 0 && movie.getTitle() != null) {
+                                    resultMovies.add(movie);
+
+                                }
                             }
-                            resultMovies.stream()
-                                    .filter(movie -> movie.getPosterURL() != null &&
-                                            movie.getMovieId() != 0 &&
-                                            movie.getTitle() != null)
-                                    .collect(Collectors.toList());
+
                             page++;
+
                         } else {
                             log.error("Error fetching movies from TMDb: {}", response.getStatusCode());
                             hasMorePages = false;
