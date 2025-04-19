@@ -70,12 +70,6 @@ public class User implements Serializable {
   private Map<String, String> favoriteDirectors = new HashMap<>();
 
 
-//   @ElementCollection
-//   @CollectionTable(name = "user_preferences", joinColumns = @JoinColumn(name = "user_id"))
-//   @Column(name = "preference")
-//   private List<String> preferences;
-
-
   @ManyToMany
   @JoinTable(
           name = "user_watchlist",
