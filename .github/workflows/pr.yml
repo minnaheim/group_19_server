@@ -30,10 +30,3 @@ jobs:
         run: ./gradlew test
         env:
           TMDB_API_TOKEN: ${{ secrets.TMDB_API_TOKEN }}
-
-      - name: Upload test reports
-        uses: actions/upload-artifact@v2
-        if: always()
-        with:
-          name: test-reports
-          path: build/reports/tests/test
