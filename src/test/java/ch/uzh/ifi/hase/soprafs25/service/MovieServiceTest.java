@@ -142,8 +142,6 @@ class MovieServiceTest {
      */
     @Test
     void testGetMovieSuggestions_withUserPreferences() {
-        ;
-
         // Prepare movie suggestions to be returned by TMDbService
         List<Movie> suggestedMovies = new ArrayList<>();
         suggestedMovies.add(testMovie3); // Suggested movie that is not in watchlist or watched
@@ -270,7 +268,16 @@ class MovieServiceTest {
             java.lang.reflect.Method method = MovieService.class.getDeclaredMethod(
                     "generateSearchPermutations", List.class, List.class, List.class);
             method.setAccessible(true);
-            permutations = (List<Movie>) method.invoke(spyMovieService, genres, actors, directors);
+            Object result = method.invoke(spyMovieService, genres, actors, directors);
+
+            // Type-safe check before casting
+            if (result instanceof List<?>) {
+                @SuppressWarnings("unchecked")
+                List<Movie> castedResult = (List<Movie>) result;
+                permutations = castedResult;
+            } else {
+                fail("Method did not return a List");
+            }
         } catch (Exception e) {
             fail("Failed to call private method: " + e.getMessage());
         }
