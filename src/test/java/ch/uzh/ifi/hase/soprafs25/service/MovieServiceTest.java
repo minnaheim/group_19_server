@@ -262,7 +262,7 @@ class MovieServiceTest {
         // Create spy on movieService to test private method
         MovieService spyMovieService = spy(movieService);
 
-        // Use reflection to make the private method accessible
+        // Use reflection making the private method accessible
         List<Movie> permutations = null;
         try {
             java.lang.reflect.Method method = MovieService.class.getDeclaredMethod(
