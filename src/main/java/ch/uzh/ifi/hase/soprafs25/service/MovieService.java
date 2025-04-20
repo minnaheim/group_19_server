@@ -2,6 +2,7 @@ package ch.uzh.ifi.hase.soprafs25.service;
 
 import ch.uzh.ifi.hase.soprafs25.entity.Movie;
 import ch.uzh.ifi.hase.soprafs25.entity.User;
+import ch.uzh.ifi.hase.soprafs25.exceptions.SearchValidationException;
 import ch.uzh.ifi.hase.soprafs25.repository.MovieRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
 import org.slf4j.Logger;
@@ -97,6 +98,14 @@ public class MovieService {
         // Set required fields if not set
         if (movie.getMovieId() <= 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Movie ID is required");
+        }
+
+        boolean isTrailerBlank = (movie.getTrailerURL() == null || movie.getTrailerURL().isBlank());
+        boolean isActorsEmpty = (movie.getActors() == null ||movie.getActors().stream().allMatch(item -> item == null || item.trim().isEmpty()));
+        boolean isDirectorsEmpty = (movie.getDirectors() == null || movie.getDirectors().stream().allMatch(item -> item == null || item.trim().isEmpty()));
+
+        if (isTrailerBlank  && isActorsEmpty && isDirectorsEmpty) {
+            throw new SearchValidationException("Movie must be saved with details available from TMDb API. Missing trailer, actors or directors.");
         }
 
         // Check if movie already exists
