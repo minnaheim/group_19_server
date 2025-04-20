@@ -59,6 +59,7 @@ public class UserMovieServiceIntegrationTest {
         testMovie.setYear(2023);
         testMovie.setGenres(java.util.Collections.singletonList("Action"));
         testMovie.setDescription("A test movie description");
+        testMovie.setTrailerURL("www.youtube.com/watch?v=dQw4w9WgXcQ");
         movieRepository.save(testMovie);
 
         // Create test users
