@@ -71,6 +71,7 @@ class UserPreferencesServiceIntegrationTest {
         testMovie.setMovieId(555L);
         testMovie.setTitle("Test Movie");
         testMovie.setDescription("Test description");
+        testMovie.setTrailerURL("youtube.com/watch?v=testTrailer");
         
         movieRepository.save(testMovie);
         
