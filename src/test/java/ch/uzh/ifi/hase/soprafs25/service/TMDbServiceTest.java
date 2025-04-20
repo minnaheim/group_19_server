@@ -445,4 +445,155 @@ public class TMDbServiceTest {
         assertNotNull(results);
         assertTrue(results.isEmpty());
     }
+
+    @Test
+    public void getMovieDetails_success_returnsMovie() throws Exception {
+        // Arrange
+        long movieId = 123;
+        String movieDetailsJson = "{\n" +
+                "  \"id\": 123,\n" +
+                "  \"title\": \"Test Movie\",\n" +
+                "  \"overview\": \"Test overview\",\n" +
+                "  \"release_date\": \"2023-05-15\",\n" +
+                "  \"genres\": [{\"id\": 28, \"name\": \"Action\"}, {\"id\": 12, \"name\": \"Adventure\"}],\n" +
+                "  \"original_language\": \"en\",\n" +
+                "  \"poster_path\": \"/poster_path.jpg\",\n" +
+                "  \"spoken_languages\": [{\"name\": \"English\"}, {\"name\": \"Spanish\"}],\n" +
+                "  \"credits\": {\n" +
+                "    \"cast\": [{\"name\": \"Actor 1\", \"known_for_department\": \"Acting\", \"id\": \"63\", \"popularity\": \"4.8218\"}, {\"name\": \"Actor 2\", \"known_for_department\": \"Acting\", \"id\": \"21\", \"popularity\": \"4.1\"}],\n" +
+                "    \"crew\": [{\"name\": \"Director 1\", \"known_for_department\": \"Directing\", \"id\": \"444\", \"popularity\": \"3.8218\", \"job\": \"Director\"}]\n" +
+                "  },\n" +
+                "  \"videos\": {\n" +
+                "    \"results\": [{\"key\": \"video_key\", \"site\": \"YouTube\", \"type\": \"Trailer\"}]\n" +
+                "  }\n" +
+                "}";
+
+        ResponseEntity<String> mockResponse = new ResponseEntity<>(movieDetailsJson, HttpStatus.OK);
+
+        when(restTemplate.exchange(
+                contains("/movie/123"),
+                eq(HttpMethod.GET),
+                any(HttpEntity.class),
+                eq(String.class)
+        )).thenReturn(mockResponse);
+
+        // Act
+        Movie result = tmdbService.getMovieDetails(movieId);
+
+        // Add detailed logging for debugging
+        System.out.println("Movie details result:");
+        System.out.println("ID: " + result.getMovieId());
+        System.out.println("Title: " + result.getTitle());
+        System.out.println("Description: " + result.getDescription());
+        System.out.println("Year: " + result.getYear());
+        System.out.println("Genres: " + result.getGenres());
+        System.out.println("Actors: " + result.getActors());
+        System.out.println("Directors: " + result.getDirectors());
+        System.out.println("Spoken Languages: " + result.getSpokenlanguages());
+        System.out.println("Original Language: " + result.getOriginallanguage());
+        System.out.println("Trailer URL: " + result.getTrailerURL());
+        System.out.println("Poster URL: " + result.getPosterURL());
+
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(123L, result.getMovieId());
+        assertEquals("Test Movie", result.getTitle());
+        assertEquals("Test overview", result.getDescription());
+        assertEquals(Integer.valueOf(2023), result.getYear());
+
+        // Assert genres
+        assertEquals(2, result.getGenres().size());
+        assertTrue(result.getGenres().contains("Action"));
+        assertTrue(result.getGenres().contains("Adventure"));
+
+        // Assert spoken languages
+        assertEquals(2, result.getSpokenlanguages().size());
+        assertTrue(result.getSpokenlanguages().contains("English"));
+        assertTrue(result.getSpokenlanguages().contains("Spanish"));
+
+        // Assert actors and directors
+        assertTrue(result.getActors().contains("Actor 1"));
+        assertTrue(result.getActors().contains("Actor 2"));
+        assertTrue(result.getDirectors().contains("Director 1"));
+
+        // Assert trailer URL (possibly in format "https://youtube.com/watch?v=video_key")
+        assertNotNull(result.getTrailerURL());
+        assertTrue(result.getTrailerURL().contains("video_key"));
+
+        // Assert original language
+        assertEquals("English", result.getOriginallanguage());
+
+        // Assert poster URL (Should start with TMDb base image URL)
+        assertNotNull(result.getPosterURL());
+        assertTrue(result.getPosterURL().contains("/poster_path.jpg"));
+
+        // Verify API call was made with correct parameters
+        verify(restTemplate).exchange(
+                contains("/movie/123"),
+                eq(HttpMethod.GET),
+                any(HttpEntity.class),
+                eq(String.class)
+        );
+    }
+
+
+    @Test
+    public void getMovieDetails_emptyApiKey_returnsNull() {
+        // Arrange
+        when(tmdbConfig.getApiKey()).thenReturn("");
+
+        // Act
+        Movie result = tmdbService.getMovieDetails(123);
+
+        // Assert
+        assertNull(result);
+
+        // Verify no API call was made
+        verify(restTemplate, never()).exchange(
+                anyString(),
+                any(HttpMethod.class),
+                any(HttpEntity.class),
+                eq(String.class)
+        );
+    }
+
+    @Test
+    public void getMovieDetails_apiError_returnsNull() {
+        // Arrange
+        long movieId = 123;
+        ResponseEntity<String> mockResponse = new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
+        when(restTemplate.exchange(
+                anyString(),
+                any(HttpMethod.class),
+                any(HttpEntity.class),
+                eq(String.class)
+        )).thenReturn(mockResponse);
+
+        // Act
+        Movie result = tmdbService.getMovieDetails(movieId);
+
+        // Assert
+        assertNull(result);
+    }
+
+    @Test
+    public void getMovieDetails_apiException_returnsNull() {
+        // Arrange
+        long movieId = 123;
+
+        when(restTemplate.exchange(
+                anyString(),
+                any(HttpMethod.class),
+                any(HttpEntity.class),
+                eq(String.class)
+        )).thenThrow(new RestClientException("API connection error"));
+
+        // Act
+        Movie result = tmdbService.getMovieDetails(movieId);
+
+        // Assert
+        assertNull(result);
+    }
 }
