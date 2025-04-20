@@ -23,6 +23,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import java.util.HashSet;
+import java.util.Set;
+
+
 @Service
 public class TMDbService {
 
@@ -295,6 +299,8 @@ public class TMDbService {
 
             try {
                 List<Movie> resultMovies = new ArrayList<>();
+                Set<Long> processedMovieIds = new HashSet<>();
+
                 int page = 1;
                 int maxMovies = 100; // Maximum number of movies to return
                 boolean hasMorePages = true;
@@ -335,7 +341,12 @@ public class TMDbService {
                             for (JsonNode movieNode : results) {
                                 Movie movie = mapTMDbMovieToEntity(movieNode);
                                 if (movie.getPosterURL() != null && movie.getMovieId() != 0 && movie.getTitle() != null) {
-                                    resultMovies.add(movie);
+                                    // Only add movie if it hasn't been processed before
+                                    if (!processedMovieIds.contains(movie.getMovieId())) {
+                                        resultMovies.add(movie);
+                                        processedMovieIds.add(movie.getMovieId());  // Track that we've processed this movie
+                                    }
+
 
                                 }
                             }
@@ -407,8 +418,11 @@ public class TMDbService {
                             for (JsonNode movieNode : results) {
                                 Movie movie = mapTMDbMovieToEntity(movieNode);
                                 if (movie.getPosterURL() != null && movie.getMovieId() != 0 && movie.getTitle() != null) {
-                                    resultMovies.add(movie);
-
+                                    // Only add movie if it hasn't been processed before
+                                    if (!processedMovieIds.contains(movie.getMovieId())) {
+                                        resultMovies.add(movie);
+                                        processedMovieIds.add(movie.getMovieId());  // Track that we've processed this movie
+                                    }
                                 }
                             }
 
