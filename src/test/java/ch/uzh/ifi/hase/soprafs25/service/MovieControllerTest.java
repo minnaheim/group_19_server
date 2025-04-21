@@ -65,6 +65,7 @@ public class MovieControllerTest {
         movie1.setActors(Arrays.asList("Leonardo DiCaprio", "Joseph Gordon-Levitt"));
         movie1.setDescription("A thief who steals corporate secrets through the use of dream-sharing technology.");
         movie1.setPosterURL("image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg");
+        movie1.setTrailerURL("www.youtube.com/watch?v=9gk7adHYeDv");
         movie1.setOriginallanguage("English");
 
         Movie movie2 = new Movie();
@@ -153,6 +154,7 @@ public class MovieControllerTest {
                 .andExpect(jsonPath("$.actors[1]", is("Joseph Gordon-Levitt")))
                 .andExpect(jsonPath("$.description", is("A thief who steals corporate secrets through the use of dream-sharing technology.")))
                 .andExpect(jsonPath("$.posterURL", is("image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg")))
+                .andExpect(jsonPath("$.trailerURL", is("www.youtube.com/watch?v=9gk7adHYeDv")))
                 .andExpect(jsonPath("$.originallanguage", is("English")));
     }
 
