@@ -101,7 +101,7 @@ public class FriendRequestController {
         friendRequestService.removeFriend(userId, friendId);
     }
 
-    @DeleteMapping("/{requestId}")
+    @DeleteMapping("/friendrequest/{requestId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteFriendRequest(@RequestHeader("Authorization") String token, @PathVariable Long requestId) {
         token = AuthorizationUtil.extractToken(token);
