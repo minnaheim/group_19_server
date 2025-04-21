@@ -150,7 +150,7 @@ public class MovieControllerTest {
                 .andExpect(jsonPath("$.directors[0]", is("Christopher Nolan")))
                 .andExpect(jsonPath("$.actors", hasSize(2)))
                 .andExpect(jsonPath("$.actors[0]", is("Leonardo DiCaprio")))
-                .andExpect(jsonPath("$.actors[1]", is("<NAME>")))
+                .andExpect(jsonPath("$.actors[1]", is("Joseph Gordon-Levitt")))
                 .andExpect(jsonPath("$.description", is("A thief who steals corporate secrets through the use of dream-sharing technology.")))
                 .andExpect(jsonPath("$.posterURL", is("image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg")))
                 .andExpect(jsonPath("$.originallanguage", is("English")));
