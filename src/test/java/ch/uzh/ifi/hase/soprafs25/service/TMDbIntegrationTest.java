@@ -87,7 +87,7 @@ public class TMDbIntegrationTest {
      */
     @Test
     public void testRealTMDbServiceInteraction() {
-        // CHANGE: Testing real integration between MovieService and TMDbService
+        // Testing real integration between MovieService and TMDbService
         // Get movie suggestions with the real TMDbService
         List<Movie> suggestions = movieService.getMovieSuggestions(testUser.getUserId(), 10);
 
@@ -120,7 +120,7 @@ public class TMDbIntegrationTest {
      */
     @Test
     public void testHandlingRealTMDbResponses() {
-        // CHANGE: Testing the processing of real TMDb responses
+        // Testing the processing of real TMDb responses
         // Create search parameters based on user preferences
         Movie searchParams = new Movie();
 
@@ -167,7 +167,7 @@ public class TMDbIntegrationTest {
      */
     @Test
     public void testErrorHandlingForAPIFailures() {
-        // CHANGE: Testing error handling of API failures
+        // Testing error handling of API failures
 
         // Create a test case with invalid parameters that should cause an API error
         Movie invalidSearchParams = new Movie();
@@ -212,7 +212,7 @@ public class TMDbIntegrationTest {
      */
     @Test
     public void testPaginationBehavior() {
-        // CHANGE: Testing pagination support for API calls
+        // Testing pagination support for API calls
 
         // Choose broad search parameters that would typically return many results
         Movie searchParams = new Movie();
@@ -252,7 +252,7 @@ public class TMDbIntegrationTest {
      */
     @Test
     public void testRateLimitingHandling() {
-        // CHANGE: Testing proper handling of API rate limiting
+        // Testing proper handling of API rate limiting
 
         // Number of concurrent requests to simulate
         int concurrentRequests = 5;

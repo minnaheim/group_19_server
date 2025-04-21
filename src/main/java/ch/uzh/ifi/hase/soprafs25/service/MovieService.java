@@ -120,7 +120,7 @@ public class MovieService {
 
     /**
      * Get personalized movie suggestions for a user
-     * CHANGE: New method to generate movie suggestions based on user preferences
+     * New method to generate movie suggestions based on user preferences
      *
      * @param userId User ID for which to generate suggestions
      * @param limit Maximum number of suggestions to return
@@ -218,7 +218,7 @@ public class MovieService {
 
     /**
      * Generate search parameter permutations ordered by specificity
-     * CHANGE: New helper method to generate search parameter permutations
+     * helper method to generate search parameter permutations
      *
      * @param genres List of genre names
      * @param actors List of actor IDs
