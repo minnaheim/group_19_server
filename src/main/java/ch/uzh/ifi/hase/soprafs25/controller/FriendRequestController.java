@@ -100,4 +100,12 @@ public class FriendRequestController {
         Long userId = userService.getUserByToken(token).getUserId();
         friendRequestService.removeFriend(userId, friendId);
     }
+
+    @DeleteMapping("/{requestId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteFriendRequest(@RequestHeader("Authorization") String token, @PathVariable Long requestId) {
+        token = AuthorizationUtil.extractToken(token);
+        Long userId = userService.getUserByToken(token).getUserId();
+        friendRequestService.deleteRequest(requestId, userId);
+    }
 }

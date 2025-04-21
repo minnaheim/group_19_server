@@ -20,4 +20,8 @@ public interface GroupInvitationRepository extends JpaRepository<GroupInvitation
     List<GroupInvitation> findByGroup_GroupId(Long groupId);
 
     boolean existsByGroupAndReceiver(Group group, User receiver);
+
+    // for handling "pending" requests
+    List<GroupInvitation> findAllBySender_UserIdAndResponseTimeIsNull(Long senderId);
+    List<GroupInvitation> findAllByReceiver_UserIdAndResponseTimeIsNull(Long receiverId);
 } 

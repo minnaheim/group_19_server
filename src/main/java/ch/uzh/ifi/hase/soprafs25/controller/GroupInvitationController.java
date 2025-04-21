@@ -63,20 +63,21 @@ public class GroupInvitationController {
 
     @GetMapping("/sent")
     @ResponseStatus(HttpStatus.OK)
-    public List<GroupInvitationGetDTO> getSentGroupInvitations(@RequestHeader("Authorization") String token) {
+    public List<GroupInvitationGetDTO> getPendingSentGroupInvitations(@RequestHeader("Authorization") String token) {
         token = AuthorizationUtil.extractToken(token);
         Long userId = userService.getUserByToken(token).getUserId();
-        return groupInvitationService.getSentInvitations(userId).stream()
+        return groupInvitationService.getPendingSentInvitations(userId).stream()
                 .map(DTOMapper.INSTANCE::convertEntityToGroupInvitationGetDTO)
                 .toList();
     }
 
+    // remade to handle "pending"
     @GetMapping("/received")
     @ResponseStatus(HttpStatus.OK)
-    public List<GroupInvitationGetDTO> getReceivedGroupInvitations(@RequestHeader("Authorization") String token) {
+    public List<GroupInvitationGetDTO> getPendingReceivedGroupInvitations(@RequestHeader("Authorization") String token) {
         token = AuthorizationUtil.extractToken(token);
         Long userId = userService.getUserByToken(token).getUserId();
-        return groupInvitationService.getReceivedInvitations(userId).stream()
+        return groupInvitationService.getPendingReceivedInvitations(userId).stream()
                 .map(DTOMapper.INSTANCE::convertEntityToGroupInvitationGetDTO)
                 .toList();
     }

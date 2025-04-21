@@ -125,6 +125,19 @@ public class FriendRequestService {
         return userRepository.save(friend);
     }
 
+    public void deleteRequest(Long requestId, Long userId) {
+        
+        FriendRequest friendRequest = friendRequestRepository.findById(requestId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Request not found"));
+    
+        // Check if the user is authorized to delete the invitation
+        if (!friendRequest.getSender().getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not authorized to delete this request");
+        }
+
+        friendRequestRepository.delete(friendRequest);
+    }
+
     // auxilary function which is used in sendRequest to prevent duplicate requests
     private boolean hasPendingRequest(User sender, User receiver) {
         return receiver.getReceivedFriendRequests().stream()

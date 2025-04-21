@@ -80,6 +80,19 @@ public class GroupInvitationService {
         return groupInvitationRepository.findBySender(user);
     }
 
+    public List<GroupInvitation> getPendingSentInvitations(Long userId) {
+        // only to ensure that user exists
+        userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        return groupInvitationRepository.findAllBySender_UserIdAndResponseTimeIsNull(userId);
+    }
+
+    public List<GroupInvitation> getPendingReceivedInvitations(Long userId) {
+        userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        return groupInvitationRepository.findAllByReceiver_UserIdAndResponseTimeIsNull(userId);
+    }
+
     // instead of reject/accept one fucntion
     public GroupInvitation respondToInvitation(Long invitationId, Long userId, boolean accept) {
 
@@ -112,7 +125,7 @@ public class GroupInvitationService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invitation not found"));
     
         // Check if the user is authorized to delete the invitation
-        if (!invitation.getSender().getUserId().equals(userId) && !invitation.getReceiver().getUserId().equals(userId)) {
+        if (!invitation.getSender().getUserId().equals(userId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not authorized to delete this invitation");
         }
 
