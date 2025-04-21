@@ -65,6 +65,7 @@ public class MovieControllerTest {
         movie1.setActors(Arrays.asList("Leonardo DiCaprio", "Joseph Gordon-Levitt"));
         movie1.setDescription("A thief who steals corporate secrets through the use of dream-sharing technology.");
         movie1.setPosterURL("image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg");
+        movie1.setOriginallanguage("English");
 
         Movie movie2 = new Movie();
         movie2.setMovieId(2);
@@ -142,9 +143,17 @@ public class MovieControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.movieId", is(1)))
                 .andExpect(jsonPath("$.title", is("Inception")))
-                .andExpect(jsonPath("$.year", is(2010)))
                 .andExpect(jsonPath("$.genres", hasSize(3)))
-                .andExpect(jsonPath("$.genres", containsInAnyOrder("Action", "Science Fiction", "Adventure")));
+                .andExpect(jsonPath("$.genres", containsInAnyOrder("Action", "Science Fiction", "Adventure")))
+                .andExpect(jsonPath("$.year", is(2010)))
+                .andExpect(jsonPath("$.directors", hasSize(1)))
+                .andExpect(jsonPath("$.directors[0]", is("Christopher Nolan")))
+                .andExpect(jsonPath("$.actors", hasSize(2)))
+                .andExpect(jsonPath("$.actors[0]", is("Leonardo DiCaprio")))
+                .andExpect(jsonPath("$.actors[1]", is("<NAME>")))
+                .andExpect(jsonPath("$.description", is("A thief who steals corporate secrets through the use of dream-sharing technology.")))
+                .andExpect(jsonPath("$.posterURL", is("image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg")))
+                .andExpect(jsonPath("$.originallanguage", is("English")));
     }
 
     /**
