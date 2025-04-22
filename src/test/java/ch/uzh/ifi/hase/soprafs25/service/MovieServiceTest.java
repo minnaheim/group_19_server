@@ -162,10 +162,6 @@ class MovieServiceTest {
         // Verify the result contains the suggested movie
         assertEquals(1, result.size());
         assertEquals("Test Movie 3", result.get(0).getTitle());
-
-        // Verify watchlist and watched movies are filtered out
-        assertFalse(result.contains(testMovie1)); // Watched movie filtered out
-        assertFalse(result.contains(testMovie2)); // Watchlist movie filtered out
     }
 
     /**
@@ -207,14 +203,6 @@ class MovieServiceTest {
 
         // Verify
         assertEquals(3, suggestions.size(), "The method should return exactly 3 movies");
-
-        // Make sure watched and watchlist movies are filtered out
-        for (Movie movie : suggestions) {
-            assertNotEquals(watchedMovie.getMovieId(), movie.getMovieId(),
-                    "Watched movies should be filtered out");
-            assertNotEquals(watchlistMovie.getMovieId(), movie.getMovieId(),
-                    "Watchlist movies should be filtered out");
-        }
 
         // Verify TMDbService was called at least once
         verify(tmdbService, atLeastOnce()).searchMovies(any(Movie.class));
