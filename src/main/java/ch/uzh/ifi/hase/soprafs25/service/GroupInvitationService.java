@@ -52,8 +52,8 @@ public class GroupInvitationService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "User is already a member of the group");
         }
 
-        // Check if an invitation already exists
-        if (groupInvitationRepository.existsByGroupAndReceiver(group, receiver)) {
+        // Check if a pending invitation already exists
+        if (groupInvitationRepository.existsByGroupAndReceiverAndResponseTimeIsNull(group, receiver)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Invitation already exists");
         }
 

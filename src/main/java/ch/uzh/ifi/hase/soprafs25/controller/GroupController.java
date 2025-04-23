@@ -186,4 +186,14 @@ public class GroupController {
         dto.setRankings(ranks);
         return dto;
     }
+
+    @DeleteMapping("/groups/{groupId}/members/{memberId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeMember(@RequestHeader("Authorization") String token,
+                             @PathVariable Long groupId,
+                             @PathVariable Long memberId) {
+        token = AuthorizationUtil.extractToken(token);
+        Long adminUserId = userService.getUserByToken(token).getUserId();
+        groupService.removeMember(groupId, memberId, adminUserId);
+    }
 }
