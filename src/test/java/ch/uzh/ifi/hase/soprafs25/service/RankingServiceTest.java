@@ -20,6 +20,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 @ExtendWith(MockitoExtension.class)
 class RankingServiceTest {
@@ -138,6 +140,8 @@ class RankingServiceTest {
     void submitRankings_validInput_5Movies_success() {
         // Arrange - uses default setUp with 5 movies in pool
 
+        // Set group phase to VOTING for valid submission
+        testGroup.setPhase(Group.GroupPhase.VOTING);
         // Act
         rankingService.submitRankings(testUserId, testGroupId, validRankings_5);
 
@@ -162,6 +166,8 @@ class RankingServiceTest {
          List<Movie> availableMovies_3 = Arrays.asList(movie1, movie2, movie3);
          testMoviePool.setMovies(new ArrayList<>(availableMovies_3)); // Update pool in testGroup for this test
 
+         // Set group phase to VOTING for valid submission
+         testGroup.setPhase(Group.GroupPhase.VOTING);
          // Act
          rankingService.submitRankings(testUserId, testGroupId, validRankings_3); // Submit 3 rankings
 
@@ -186,6 +192,8 @@ class RankingServiceTest {
         // Ensure findById for this specific ID returns empty
         when(userRepository.findById(nonExistentUserId)).thenReturn(Optional.empty());
 
+        // Set group phase to VOTING for phase check
+        testGroup.setPhase(Group.GroupPhase.VOTING);
         // Act & Assert
         assertThrows(UserNotFoundException.class, () -> {
             rankingService.submitRankings(nonExistentUserId, testGroupId, validRankings_5);
@@ -210,49 +218,52 @@ class RankingServiceTest {
     }
 
      @Test
-     void submitRankings_noMoviePool_throwsInvalidRankingException() {
+     void submitRankings_noMoviePool_throwsConflict() {
          // Arrange
          testGroup.setMoviePool(null); // Explicitly set pool to null for this test
 
          // Act & Assert
-         assertThrows(InvalidRankingException.class, () -> {
-             rankingService.submitRankings(testUserId, testGroupId, validRankings_5);
-         });
+         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> {
+            rankingService.submitRankings(testUserId, testGroupId, validRankings_5);
+        });
+        assertEquals(HttpStatus.CONFLICT, ex.getStatus());
          verify(userMovieRankingRepository, never()).deleteByUserAndGroup(any(), any());
          verify(userMovieRankingRepository, never()).saveAll(anyList());
      }
 
      @Test
-     void submitRankings_noMoviesInPool_throwsInvalidRankingException() {
+     void submitRankings_noMoviesInPool_throwsConflict() {
          // Arrange
          testMoviePool.setMovies(new ArrayList<>()); // Empty movie list
          testGroup.setMoviePool(testMoviePool);
 
          // Act & Assert
-         assertThrows(InvalidRankingException.class, () -> {
-             // Need to submit an empty list as requiredRankings will be 0
-             rankingService.submitRankings(testUserId, testGroupId, new ArrayList<>());
-         });
+         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> {
+            // Need to submit an empty list as requiredRankings will be 0
+            rankingService.submitRankings(testUserId, testGroupId, new ArrayList<>());
+        });
+        assertEquals(HttpStatus.CONFLICT, ex.getStatus());
          verify(userMovieRankingRepository, never()).deleteByUserAndGroup(any(), any());
          verify(userMovieRankingRepository, never()).saveAll(anyList());
      }
 
 
      @Test
-     void submitRankings_invalidNumberOfRankings_throwsInvalidRankingException() {
+     void submitRankings_invalidNumberOfRankings_throwsConflict() {
          // Arrange - Default pool has 5 movies, requires 5 rankings
          List<RankingSubmitDTO> tooFewRankings = Collections.singletonList(createSubmitDTO(movie1.getMovieId(), 1));
 
          // Act & Assert
-         assertThrows(InvalidRankingException.class, () -> {
-             rankingService.submitRankings(testUserId, testGroupId, tooFewRankings);
-         });
+         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> {
+            rankingService.submitRankings(testUserId, testGroupId, tooFewRankings);
+        });
+        assertEquals(HttpStatus.CONFLICT, ex.getStatus());
          verify(userMovieRankingRepository, never()).deleteByUserAndGroup(any(), any());
          verify(userMovieRankingRepository, never()).saveAll(anyList());
      }
 
      @Test
-     void submitRankings_duplicateMovieId_throwsInvalidRankingException() {
+     void submitRankings_duplicateMovieId_throwsConflict() {
          // Arrange - Pool has 5 movies
          List<RankingSubmitDTO> rankingsWithDuplicateMovie = Arrays.asList(
                  createSubmitDTO(movie1.getMovieId(), 1),
@@ -263,15 +274,16 @@ class RankingServiceTest {
          );
 
          // Act & Assert
-         assertThrows(InvalidRankingException.class, () -> {
-             rankingService.submitRankings(testUserId, testGroupId, rankingsWithDuplicateMovie);
-         });
+         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> {
+            rankingService.submitRankings(testUserId, testGroupId, rankingsWithDuplicateMovie);
+        });
+        assertEquals(HttpStatus.CONFLICT, ex.getStatus());
           verify(userMovieRankingRepository, never()).deleteByUserAndGroup(any(), any());
           verify(userMovieRankingRepository, never()).saveAll(anyList());
      }
 
      @Test
-     void submitRankings_movieNotAvailableInPool_throwsInvalidRankingException() {
+     void submitRankings_movieNotAvailableInPool_throwsConflict() {
          // Arrange - Pool has movies 1-5. Movie 6 is not in the pool.
          List<RankingSubmitDTO> rankingsWithUnavailableMovie = Arrays.asList(
                  createSubmitDTO(movie1.getMovieId(), 1),
@@ -282,15 +294,16 @@ class RankingServiceTest {
          );
 
          // Act & Assert
-         assertThrows(InvalidRankingException.class, () -> {
-             rankingService.submitRankings(testUserId, testGroupId, rankingsWithUnavailableMovie);
-         });
+         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> {
+            rankingService.submitRankings(testUserId, testGroupId, rankingsWithUnavailableMovie);
+        });
+        assertEquals(HttpStatus.CONFLICT, ex.getStatus());
           verify(userMovieRankingRepository, never()).deleteByUserAndGroup(any(), any());
           verify(userMovieRankingRepository, never()).saveAll(anyList());
      }
 
      @Test
-     void submitRankings_duplicateRank_throwsInvalidRankingException() {
+     void submitRankings_duplicateRank_throwsConflict() {
           // Arrange - Pool has 5 movies
          List<RankingSubmitDTO> rankingsWithDuplicateRank = Arrays.asList(
                  createSubmitDTO(movie1.getMovieId(), 1),
@@ -301,15 +314,16 @@ class RankingServiceTest {
          );
 
          // Act & Assert
-         assertThrows(InvalidRankingException.class, () -> {
-             rankingService.submitRankings(testUserId, testGroupId, rankingsWithDuplicateRank);
-         });
+         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> {
+            rankingService.submitRankings(testUserId, testGroupId, rankingsWithDuplicateRank);
+        });
+        assertEquals(HttpStatus.CONFLICT, ex.getStatus());
           verify(userMovieRankingRepository, never()).deleteByUserAndGroup(any(), any());
           verify(userMovieRankingRepository, never()).saveAll(anyList());
      }
 
      @Test
-     void submitRankings_rankOutOfRange_throwsInvalidRankingException() {
+     void submitRankings_rankOutOfRange_throwsConflict() {
          // Arrange - Pool has 5 movies, ranks should be 1-5
          List<RankingSubmitDTO> rankingsWithOutOfRangeRank = Arrays.asList(
                  createSubmitDTO(movie1.getMovieId(), 1),
@@ -320,9 +334,10 @@ class RankingServiceTest {
          );
 
          // Act & Assert
-         assertThrows(InvalidRankingException.class, () -> {
-             rankingService.submitRankings(testUserId, testGroupId, rankingsWithOutOfRangeRank);
-         });
+         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> {
+            rankingService.submitRankings(testUserId, testGroupId, rankingsWithOutOfRangeRank);
+        });
+        assertEquals(HttpStatus.CONFLICT, ex.getStatus());
           verify(userMovieRankingRepository, never()).deleteByUserAndGroup(any(), any());
           verify(userMovieRankingRepository, never()).saveAll(anyList());
      }
@@ -429,23 +444,23 @@ class RankingServiceTest {
     }
 
     @Test
-    void getLatestRankingResult_noResultFound_throwsNoResultFoundException() {
-        // Arrange - Default setUp mocks findTopByGroup... to return empty Optional
-        // Ensure the mock is explicitly set for this test, overriding lenient default if necessary
-        when(rankingResultRepository.findTopByGroupOrderByCalculationTimestampDesc(testGroup)).thenReturn(Optional.empty());
+void getLatestRankingResult_noResultFound_throwsNotFoundIfNotResultsPhase() {
+    // Arrange - set group phase to something other than RESULTS
+    testGroup.setPhase(Group.GroupPhase.VOTING);
+    when(groupRepository.findById(testGroupId)).thenReturn(Optional.of(testGroup));
 
-        // Act
-        Optional<RankingResult> resultOpt = rankingService.getLatestRankingResult(testGroupId);
-
-        // Assert that the Optional is empty, don't expect an exception
-        assertTrue(resultOpt.isEmpty(), "Expected Optional.empty() when no result is found.");
-        // assertThrows(javax.persistence.NoResultException.class, () -> { // Old assertion
-        //     rankingService.getLatestRankingResult(testGroupId);
-        // });
-    }
+    // Act & Assert
+    ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> {
+        rankingService.getLatestRankingResult(testGroupId);
+    });
+    assertEquals(HttpStatus.CONFLICT, ex.getStatus());
+    assertTrue(ex.getReason().contains("Ranking results can only be viewed during the RESULTS phase"));
+}
 
     @Test
     void getLatestRankingResult_resultFound_returnsResult() {
+        // Set group phase to RESULTS for result retrieval
+        testGroup.setPhase(Group.GroupPhase.RESULTS);
         // Arrange
         RankingResult latestResult = new RankingResult();
         latestResult.setId(50L); // Set ID directly

@@ -9,6 +9,7 @@ public class GroupGetDTO {
     private Long creatorId;
     private List<Long> memberIds;
     private List<Long> movieIds;
+    private String phase;
 
     public Long getGroupId() {
         return groupId;
@@ -48,5 +49,13 @@ public class GroupGetDTO {
 
     public void setMovieIds(List<Long> movieIds) {
         this.movieIds = movieIds;
+    }
+
+    public String getPhase() {
+        return phase;
+    }
+
+    public void setPhase(String phase) {
+        this.phase = phase;
     }
 } 

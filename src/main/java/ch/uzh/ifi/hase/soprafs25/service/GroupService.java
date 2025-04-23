@@ -13,44 +13,73 @@ import org.springframework.web.server.ResponseStatusException;
 import ch.uzh.ifi.hase.soprafs25.entity.Group;
 import ch.uzh.ifi.hase.soprafs25.entity.MoviePool;
 import ch.uzh.ifi.hase.soprafs25.entity.User;
+import ch.uzh.ifi.hase.soprafs25.entity.UserMovieRanking;
+import ch.uzh.ifi.hase.soprafs25.entity.RankingResult;
 import ch.uzh.ifi.hase.soprafs25.repository.GroupRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.MovieRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
+import ch.uzh.ifi.hase.soprafs25.repository.UserMovieRankingRepository;
+import ch.uzh.ifi.hase.soprafs25.repository.RankingResultRepository;
 
-
+/**
+ * Service class for handling group-related operations.
+ */
 @Service
 @Transactional
 public class GroupService {
 
+    public void startVotingPhase(Long groupId, Long userId) {
+        Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
+        if (!group.getCreator().getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the group creator can start the voting phase");
+        }
+        if (group.getPhase() != Group.GroupPhase.POOL) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Voting phase can only be started from POOL phase");
+        }
+        group.setPhase(Group.GroupPhase.VOTING);
+        groupRepository.save(group);
+    }
+
+    public void showResultsPhase(Long groupId, Long userId) {
+        Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
+        if (!group.getCreator().getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the group creator can show results phase");
+        }
+        if (group.getPhase() != Group.GroupPhase.VOTING) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Results phase can only be started from VOTING phase");
+        }
+        group.setPhase(Group.GroupPhase.RESULTS);
+        groupRepository.save(group);
+    }
+
     private final GroupRepository groupRepository;
     private final UserRepository userRepository;
-    
     private final MovieRepository movieRepository;
     private final MoviePoolService moviePoolService;
+    private final UserMovieRankingRepository userMovieRankingRepository;
+    private final RankingResultRepository rankingResultRepository;
 
     @Autowired
     public GroupService(GroupRepository groupRepository, UserRepository userRepository,
-                            MovieRepository movieRepository, MoviePoolService moviePoolService){
+                            MovieRepository movieRepository, MoviePoolService moviePoolService,
+                            UserMovieRankingRepository userMovieRankingRepository,
+                            RankingResultRepository rankingResultRepository){
         this.groupRepository = groupRepository;
         this.userRepository = userRepository;
         this.movieRepository = movieRepository;
         this.moviePoolService = moviePoolService;
+        this.userMovieRankingRepository = userMovieRankingRepository;
+        this.rankingResultRepository = rankingResultRepository;
     }
 
     public Group createGroup(String groupName, Long creatorId){
         User creator = userRepository.findById(creatorId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Creator not found"));
 
-        // System.out.println(groupName);
         validateGroupName(groupName);
-        // for creating similar/unique name
-        // if (groupName == null || groupName.trim().isEmpty()){
-        //     groupName = generateUniqueName();
-        // }
 
-        // else if (groupRepository.findByGroupName(groupName) != null){
-        //     groupName = generateSimilarName(groupName);
-        // }
         Group newGroup = new Group();
         newGroup.setGroupName(groupName);
         newGroup.setCreator(creator);
@@ -64,8 +93,6 @@ public class GroupService {
         return groupRepository.save(newGroup);
     }
 
-
-    
     private void validateGroupName(String groupName) {
         if (groupName == null || groupName.trim().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Group name cannot be empty");
@@ -106,9 +133,18 @@ public class GroupService {
     public void deleteGroup(Long groupId, Long userId) {
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
-        // Check if the user is the creator of the group
         if (!group.getCreator().getUserId().equals(userId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the group creator can delete the group");
+        }
+        // Remove user movie rankings associated with this group
+        List<UserMovieRanking> groupRankings = userMovieRankingRepository.findByGroup(group);
+        if (!groupRankings.isEmpty()) {
+            userMovieRankingRepository.deleteAll(groupRankings);
+        }
+        // Remove ranking results associated with this group
+        List<RankingResult> results = rankingResultRepository.findByGroup(group);
+        if (!results.isEmpty()) {
+            rankingResultRepository.deleteAll(results);
         }
         groupRepository.delete(group);
     }
@@ -148,5 +184,21 @@ public class GroupService {
 
     public List<Group> getGroupsByUserId(Long userId) {
         return groupRepository.findAllByMembers_UserId(userId);
+    }
+
+    public Group updateGroupName(Long groupId, Long userId, String newName) {
+        Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
+        if (!group.getCreator().getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the group creator can update the group");
+        }
+        if (newName == null || newName.trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Group name cannot be empty");
+        }
+        if (!group.getGroupName().equals(newName) && groupRepository.findByGroupName(newName) != null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This group name is already taken");
+        }
+        group.setGroupName(newName);
+        return groupRepository.save(group);
     }
 }
