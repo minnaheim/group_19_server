@@ -48,7 +48,14 @@ public class FriendRequestService {
         FriendRequest request = new FriendRequest();
         request.setSender(sender);
         request.setReceiver(receiver);
-        return friendRequestRepository.save(request);
+        request = friendRequestRepository.save(request); 
+        
+        sender.getSentFriendRequests().add(request);
+        receiver.getReceivedFriendRequests().add(request);
+        userRepository.save(sender);
+        userRepository.save(receiver);
+
+        return request;
     }
 
     public FriendRequest acceptFriendRequest(Long requestId, Long userId) {
@@ -134,6 +141,13 @@ public class FriendRequestService {
         if (!friendRequest.getSender().getUserId().equals(userId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not authorized to delete this request");
         }
+        // also it's needed to delete request from users lists
+        User sender = friendRequest.getSender();
+        User receiver = friendRequest.getReceiver();
+        sender.getSentFriendRequests().remove(friendRequest);
+        receiver.getReceivedFriendRequests().remove(friendRequest);
+        userRepository.save(sender);
+        userRepository.save(receiver);
 
         friendRequestRepository.delete(friendRequest);
     }
