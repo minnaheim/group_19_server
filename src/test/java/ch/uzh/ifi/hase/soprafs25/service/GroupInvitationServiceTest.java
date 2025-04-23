@@ -136,7 +136,7 @@ class GroupInvitationServiceTest {
         when(groupRepository.findById(1L)).thenReturn(Optional.of(group));
         when(userRepository.findById(1L)).thenReturn(Optional.of(sender));
         when(userRepository.findById(2L)).thenReturn(Optional.of(receiver));
-        when(groupInvitationRepository.existsByGroupAndReceiver(group, receiver)).thenReturn(true);
+        when(groupInvitationRepository.existsByGroupAndReceiverAndResponseTimeIsNull(group, receiver)).thenReturn(true);
 
         // call
         ResponseStatusException exception = assertThrows(ResponseStatusException.class,

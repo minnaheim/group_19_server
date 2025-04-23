@@ -22,7 +22,10 @@ import org.springframework.web.server.ResponseStatusException;
 import ch.uzh.ifi.hase.soprafs25.entity.Group;
 import ch.uzh.ifi.hase.soprafs25.entity.MoviePool;
 import ch.uzh.ifi.hase.soprafs25.entity.User;
+import ch.uzh.ifi.hase.soprafs25.repository.GroupInvitationRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.GroupRepository;
+import ch.uzh.ifi.hase.soprafs25.repository.RankingResultRepository;
+import ch.uzh.ifi.hase.soprafs25.repository.UserMovieRankingRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
 
 class GroupServiceTest {
@@ -30,10 +33,14 @@ class GroupServiceTest {
     private GroupRepository groupRepository;
     @Mock
     private UserRepository userRepository;
-
-
     @Mock
     private MoviePoolService moviePoolService;
+    @Mock
+    private UserMovieRankingRepository userMovieRankingRepository;
+    @Mock
+    private RankingResultRepository rankingResultRepository;
+    @Mock
+    private GroupInvitationRepository groupInvitationRepository;
 
     @InjectMocks
     private GroupService groupService;
@@ -117,9 +124,17 @@ class GroupServiceTest {
     void deleteGroup_Success() {
         // when
         when(groupRepository.findById(1L)).thenReturn(Optional.of(testGroup));
+        when(userMovieRankingRepository.findByGroup(testGroup)).thenReturn(new ArrayList<>());
+        when(rankingResultRepository.findByGroup(testGroup)).thenReturn(new ArrayList<>());
+        when(groupInvitationRepository.findByGroup_GroupId(1L)).thenReturn(new ArrayList<>());
+        
         // call
         groupService.deleteGroup(1L, 1L);
+        
         // then
+        verify(userMovieRankingRepository).findByGroup(testGroup);
+        verify(rankingResultRepository).findByGroup(testGroup);
+        verify(groupInvitationRepository).findByGroup_GroupId(1L);
         verify(groupRepository).delete(testGroup);
     }
 
@@ -202,17 +217,19 @@ class GroupServiceTest {
     // test for leaving a group - successful
     @Test
     void leaveGroup_Success() {
-
-
         // when
         when(groupRepository.findById(1L)).thenReturn(Optional.of(testGroup));
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(groupRepository.save(any(Group.class))).thenReturn(testGroup);
+        when(groupInvitationRepository.findAllByGroupAndReceiverAndResponseTimeIsNull(testGroup, testUser))
+            .thenReturn(new ArrayList<>());
+        
         // call
         groupService.leaveGroup(1L, 1L);
 
         // then
         verify(groupRepository).save(any(Group.class));
+        verify(groupInvitationRepository).findAllByGroupAndReceiverAndResponseTimeIsNull(testGroup, testUser);
     }
 
     // leaving a group fails, because user is not member of this group
