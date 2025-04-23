@@ -18,6 +18,16 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "USER_GROUP")
 public class Group implements Serializable {
+
+    public enum GroupPhase {
+        POOL,
+        VOTING,
+        RESULTS
+    }
+
+    @Column(nullable = false)
+    private GroupPhase phase = GroupPhase.POOL; // default phase
+
     
     @Id
     @GeneratedValue
@@ -79,5 +89,13 @@ public class Group implements Serializable {
     }
     public void setMoviePool(MoviePool moviePool) {
         this.moviePool = moviePool;
+    }
+
+    public GroupPhase getPhase() {
+        return phase;
+    }
+
+    public void setPhase(GroupPhase phase) {
+        this.phase = phase;
     }
 }

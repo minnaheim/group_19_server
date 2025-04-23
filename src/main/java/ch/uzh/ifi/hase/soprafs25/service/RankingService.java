@@ -31,6 +31,8 @@ import java.util.stream.Collectors;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Optional;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 @Service
 @Transactional
@@ -74,14 +76,16 @@ public class RankingService {
      * @throws InvalidRankingException If the rankings are invalid or the movie pool is empty/null.
      */
     public void submitRankings(Long userId, Long groupId, List<RankingSubmitDTO> rankings) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User with ID " + userId + " not found."));
+    Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new GroupNotFoundException("Group with ID " + groupId + " not found."));
+    if (group.getPhase() != Group.GroupPhase.VOTING) {
+        throw new ResponseStatusException(HttpStatus.CONFLICT, "Rankings can only be submitted during the VOTING phase");
+    }
+    User user = userRepository.findById(userId)
+            .orElseThrow(() -> new UserNotFoundException("User with ID " + userId + " not found."));
 
-        Group group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new GroupNotFoundException("Group with ID " + groupId + " not found."));
-
-        // Use the group's specific movie pool
-        MoviePool moviePool = group.getMoviePool();
+    // Use the group's specific movie pool
+    MoviePool moviePool = group.getMoviePool();
         if (moviePool == null || moviePool.getMovies().isEmpty()) {
             throw new InvalidRankingException("No movies available for ranking in group " + groupId + ".");
         }
@@ -187,9 +191,12 @@ public class RankingService {
      * @throws GroupNotFoundException If the group does not exist.
      */
     public Optional<RankingResult> getLatestRankingResult(Long groupId) {
-        Group group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new GroupNotFoundException("Group with ID " + groupId + " not found."));
-        return rankingResultRepository.findTopByGroupOrderByCalculationTimestampDesc(group);
+    Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new GroupNotFoundException("Group with ID " + groupId + " not found."));
+    if (group.getPhase() != Group.GroupPhase.RESULTS) {
+        throw new ResponseStatusException(HttpStatus.CONFLICT, "Ranking results can only be viewed during the RESULTS phase");
+    }
+    return rankingResultRepository.findTopByGroupOrderByCalculationTimestampDesc(group);
     }
 
     /**
@@ -211,6 +218,27 @@ public class RankingService {
     }
 
     /**
+     * Retrieves a user's submitted rankings for a given group.
+     * Returns empty list if none exist.
+     */
+    public List<RankingSubmitDTO> getUserRankings(Long userId, Long groupId) {
+        // Ensure user and group exist
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new UserNotFoundException("User not found"));
+        Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new GroupNotFoundException("Group not found"));
+        // Fetch and map
+        return userMovieRankingRepository.findByUserAndGroup(user, group).stream()
+            .map(umr -> {
+                RankingSubmitDTO dto = new RankingSubmitDTO();
+                dto.setMovieId(umr.getMovie().getMovieId());
+                dto.setRank(umr.getRank());
+                return dto;
+            })
+            .collect(Collectors.toList());
+    }
+
+    /**
      * Retrieves the detailed ranking results for all movies in a specific group's movie pool.
      * Calculates the average rank for each movie based on all submitted user rankings for that group.
      *
@@ -220,8 +248,11 @@ public class RankingService {
      * @throws GroupNotFoundException If the group does not exist.
      */
     public List<MovieAverageRankDTO> getCompleteRankingResult(Long groupId) {
-        Group group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new GroupNotFoundException("Group with ID " + groupId + " not found."));
+    Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new GroupNotFoundException("Group with ID " + groupId + " not found."));
+    if (group.getPhase() != Group.GroupPhase.RESULTS) {
+        throw new ResponseStatusException(HttpStatus.CONFLICT, "Ranking details can only be viewed during the RESULTS phase");
+    }
 
         // Get all movies available for ranking in this group
         List<Movie> moviesInPool = getRankableMoviesForGroup(groupId); // Reuses existing method

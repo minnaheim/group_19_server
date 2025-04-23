@@ -104,6 +104,7 @@ public interface DTOMapper {
     @Mapping(source = "creator.userId", target = "creatorId")
     @Mapping(source = "members", target = "memberIds")
     @Mapping(source = "moviePool.movies", target = "movieIds")
+    @Mapping(expression = "java(group.getPhase().name())", target = "phase")
     GroupGetDTO convertEntityToGroupGetDTO(Group group);
 
     List<GroupGetDTO> convertEntityListToGroupGetDTOList(List<Group> groups);

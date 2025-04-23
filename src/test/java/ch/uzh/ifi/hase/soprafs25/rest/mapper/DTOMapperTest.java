@@ -7,6 +7,8 @@ import ch.uzh.ifi.hase.soprafs25.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs25.entity.User;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.UserGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.UserPostDTO;
+import ch.uzh.ifi.hase.soprafs25.entity.Group;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.GroupGetDTO;
 
 /**
  * DTOMapperTest
@@ -46,5 +48,20 @@ public class DTOMapperTest {
     // assertEquals(user.getName(), userGetDTO.getName());
     assertEquals(user.getUsername(), userGetDTO.getUsername());
     assertEquals(user.getStatus(), userGetDTO.getStatus());
+  }
+
+  @Test
+  public void testGetGroup_fromGroup_toGroupGetDTO_includesPhase() {
+    // create Group
+    Group group = new Group();
+    group.setGroupId(42L);
+    group.setGroupName("Test Group");
+    group.setPhase(Group.GroupPhase.VOTING);
+    // MAP -> Create GroupGetDTO
+    GroupGetDTO groupGetDTO = DTOMapper.INSTANCE.convertEntityToGroupGetDTO(group);
+    // check content
+    assertEquals(group.getGroupId(), groupGetDTO.getGroupId());
+    assertEquals(group.getGroupName(), groupGetDTO.getGroupName());
+    assertEquals(group.getPhase().name(), groupGetDTO.getPhase());
   }
 }

@@ -139,6 +139,9 @@ class RankingControllerTest {
 
     @Test
     void submitRankings_validInput_returnsNoContentAndSavesData() throws Exception {
+        // Set group phase to VOTING
+        testGroup.setPhase(Group.GroupPhase.VOTING);
+        groupRepository.saveAndFlush(testGroup);
         List<RankingSubmitDTO> rankings = List.of(
                 createSubmitDTO(movie1.getMovieId(), 1),
                 createSubmitDTO(movie2.getMovieId(), 2),
@@ -162,6 +165,9 @@ class RankingControllerTest {
 
     @Test
     void submitRankings_userNotFound_returnsNotFound() throws Exception {
+        // Set group phase to VOTING
+        testGroup.setPhase(Group.GroupPhase.VOTING);
+        groupRepository.saveAndFlush(testGroup);
         long nonExistentUserId = 999L;
         List<RankingSubmitDTO> rankings = List.of(createSubmitDTO(movie1.getMovieId(), 1)); // Dummy payload
 
@@ -174,6 +180,9 @@ class RankingControllerTest {
 
     @Test
     void submitRankings_invalidRankingData_returnsBadRequest() throws Exception {
+        // Set group phase to VOTING
+        testGroup.setPhase(Group.GroupPhase.VOTING);
+        groupRepository.saveAndFlush(testGroup);
          // Invalid: Correct size (5), but duplicate rank 3
          List<RankingSubmitDTO> rankings = List.of(
                  createSubmitDTO(movie1.getMovieId(), 1),
@@ -194,6 +203,9 @@ class RankingControllerTest {
 
     @Test
     void getLatestRankingResult_resultExists_returnsOk() throws Exception {
+        // Set group phase to RESULTS
+        testGroup.setPhase(Group.GroupPhase.RESULTS);
+        groupRepository.saveAndFlush(testGroup);
         // Arrange: Create and save a dummy RankingResult associated with the group
         RankingResult dummyResult = new RankingResult();
         dummyResult.setGroup(testGroup); // Associate with the test group
@@ -213,6 +225,9 @@ class RankingControllerTest {
 
     @Test
     void getLatestRankingResult_noResult_returnsNotFound() throws Exception {
+        // Set group phase to RESULTS
+        testGroup.setPhase(Group.GroupPhase.RESULTS);
+        groupRepository.saveAndFlush(testGroup);
         // Arrange: Ensure no results exist for this group (done by @Transactional and setup)
 
         // Act & Assert
@@ -224,6 +239,9 @@ class RankingControllerTest {
     // --- NEW TEST FOR COMPLETE RANKING RESULT ---
     @Test
     void getGroupCompleteRankingResult_validInput_returnsSortedListWithAverages() throws Exception {
+        // Set group phase to RESULTS
+        testGroup.setPhase(Group.GroupPhase.RESULTS);
+        groupRepository.saveAndFlush(testGroup);
         // Setup: Submit rankings from two users
         // User 1: A(1), B(2), C(3), D(4), E(5)
         userMovieRankingRepository.saveAll(asList(
@@ -270,6 +288,9 @@ class RankingControllerTest {
 
     @Test
     void getGroupCompleteRankingResult_noRankingsSubmitted_returnsOkAndListWithNullAverages() throws Exception {
+        // Set group phase to RESULTS
+        testGroup.setPhase(Group.GroupPhase.RESULTS);
+        groupRepository.saveAndFlush(testGroup);
         // Setup: No rankings submitted, just the group and movie pool exist
 
         // Action & Assert

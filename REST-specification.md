@@ -298,38 +298,68 @@ A `Review object` is a JSON object with the following structure:
 | `/groups/{groupId}/leave` | DELETE | groupId\<long\>, Authorization\<string\> | Path, Header | 401 Unauthorized | Error: reason\<string\> | Invalid or missing token |
 | `/groups/{groupId}/leave` | DELETE | groupId\<long\>, Authorization\<string\> | Path, Header | 403 Forbidden | Error: reason\<string\> | User is not a member of this group |
 
-### Voting System
+### Voting System & Group Phases
 
+#### Group Phase Attribute
+Each group has a `phase` attribute:
+- `POOL`: Movie pool is open for additions.
+- `VOTING`: Pool is locked; voting is open.
+- `RESULTS`: Voting is closed; results can be viewed.
+
+#### Phase Transition Endpoints
 | Endpoint | Method | Parameters | Parameter Type | Status Code | Response | Description |
 |----------|--------|------------|---------------|-------------|----------|-------------|
-| `/groups/{groupId}/vote` | POST | groupId\<integer\>, userId\<integer\>, vote\<List\<Movie\>\> | Body | 200 OK | Success message\<string\> | Submit a vote |
-| `/groups/{groupId}/vote` | POST | groupId\<integer\>, userId\<integer\>, vote\<List\<Movie\>\> | Body | 400 Bad Request | Error: reason\<string\> | Submit a vote failed due to invalid vote request |
-| `/groups/{groupId}/vote` | POST | groupId\<integer\>, userId\<integer\>, vote\<List\<Movie\>\> | Body | 404 Not Found | Error: reason\<string\> | Group not found |
-| `/groups/{groupId}/results` | GET | groupId\<integer\> | Path | 200 OK | List\<Movie\> | Retrieve voting results - list of movies with maximum number of votes |
-| `/groups/{groupId}/results` | GET | groupId\<integer\> | Path | 400 Bad Request | Error: reason\<string\> | Retrieve voting results failed due to invalid group ID |
+| `/groups/{groupId}/start-voting` | POST | groupId\<integer\>, userId\<integer\> | Path, Body | 200 OK | Success message\<string\> | Trigger transition from POOL to VOTING phase (only by group creator or auto when all have submitted) |
+| `/groups/{groupId}/show-results` | POST | groupId\<integer\>, userId\<integer\> | Path, Body | 200 OK | Success message\<string\> | Trigger transition from VOTING to RESULTS phase (only by group creator or auto when all have voted) |
+
+#### Voting Endpoints (Phase Restricted)
+| Endpoint | Method | Parameters | Parameter Type | Status Code | Response | Description | Allowed Phase |
+|----------|--------|------------|---------------|-------------|----------|-------------|---------------|
+| `/groups/{groupId}/vote` | POST | groupId\<integer\>, userId\<integer\>, vote\<List\<Movie\>\> | Body | 200 OK | Success message\<string\> | Submit a vote | VOTING |
+| `/groups/{groupId}/vote` | POST | groupId\<integer\>, userId\<integer\>, vote\<List\<Movie\>\> | Body | 400 Bad Request | Error: reason\<string\> | Submit a vote failed due to invalid vote request | VOTING |
+| `/groups/{groupId}/vote` | POST | groupId\<integer\>, userId\<integer\>, vote\<List\<Movie\>\> | Body | 404 Not Found | Error: reason\<string\> | Group not found | VOTING |
+| `/groups/{groupId}/results` | GET | groupId\<integer\> | Path | 200 OK | List\<Movie\> | Retrieve voting results - list of movies with maximum number of votes | RESULTS |
+| `/groups/{groupId}/results` | GET | groupId\<integer\> | Path | 400 Bad Request | Error: reason\<string\> | Retrieve voting results failed due to invalid group ID | RESULTS |
+
+**Note:**
+- Adding movies to pool is only allowed in the POOL phase.
+- Voting is only allowed in the VOTING phase.
+- Results are only viewable in the RESULTS phase.
+- Endpoints must return `409 Conflict` if the operation is not allowed in the current phase.
+- The group resource and responses should always include the current `phase`.
 
 ### Reviews
 
 | Endpoint | Method | Parameters | Parameter Type | Status Code | Response | Description |
 |----------|--------|------------|---------------|-------------|----------|-------------|
-| `/reviews` | GET | movieId \<integer\> (optional), userId \<integer\> (optional) | Path | 200 OK | List \<Review\> | Retrieve movie reviews |
-| `/reviews` | GET | movieId \<integer\> (optional), userId \<integer\> (optional) | Path | 400 Bad Request | Error: reason \<string\> | Retrieve movie reviews failed due to invalid Path parameters |
-| `/reviews` | POST | Review \<object\> | Body | 201 Created | Review object | Submit a review |
+{{ ... }}
 | `/reviews` | POST | Review \<object\> | Body | 400 Bad Request | Error: reason \<string\> | Submit a review failed due to invalid or missing parameters |
 | `/reviews` | POST | Review \<object\> | Body | 409 Conflict | Error: reason \<string\> | Submit a review failed because review already exists |
 | `/movies/{movieId}/reviews` | PUT | Review \<object\> | Body | 204 No Content | Success message \<string\> | Update a review |
 | `/movies/{movieId}/reviews` | DELETE | reviewId \<integer\> | Path | 204 No Content | Success message \<string\> | Delete a review |
 
-### Ranking System
+### Ranking System (Phase-Aware)
 
-| Endpoint | Method | Parameters | Parameter Type | Status Code | Response | Description |
-|----------|--------|--------------------------------------------------------------|---------------|-------------|----------------------|-------------|
-| `/groups/{groupId}/users/{userId}/rankings` | POST | groupId\<long\>, userId\<long\>, rankingSubmitDTOs\<List\<RankingSubmitDTO\>\> | Path, Body | 204 No Content | - | Submit a user's movie rankings for a group |
-| `/groups/{groupId}/rankings/result` | GET | groupId\<long\> | Path | 200 OK | RankingResultGetDTO | Retrieve the latest calculated ranking result for the group (the winning movie and its average rank) |
-| `/groups/{groupId}/movies/rankable` | GET | groupId\<long\> | Path | 200 OK | List\<MovieGetDTO\> | Retrieve the list of movies available for ranking in the group's pool |
-| `/groups/{groupId}/rankings/details` | GET | groupId\<long\> | Path | 200 OK | List\<MovieAverageRankDTO\> | Retrieve the detailed average ranking results for all movies in the group (each movie with its average rank, sorted by best rank) |
-| `/groups/{groupId}/users/{userId}/rankings` | POST | rankingSubmitDTOs\<List\<RankingSubmitDTO\>\> | Body | 400 Bad Request | Error | Invalid ranking data (e.g., invalid rank, duplicate movies, wrong number of movies ranked) |
-| `/groups/{groupId}/users/{userId}/rankings` | POST | groupId\<long\>, userId\<long\> | Path | 404 Not Found | Error | User or Group with the given ID not found |
-| `/groups/{groupId}/rankings/result` | GET | groupId\<long\> | Path | 404 Not Found | Error | Group not found or no ranking result exists for the group yet |
-| `/groups/{groupId}/movies/rankable` | GET | groupId\<long\> | Path | 404 Not Found | Error | Group not found or group has no movie pool |
-| `/groups/{groupId}/rankings/details` | GET | groupId\<long\> | Path | 404 Not Found | Error | Group not found |
+| Endpoint | Method | Parameters | Parameter Type | Status Code | Response | Description | Allowed Phase |
+|----------|--------|--------------------------------------------------------------|---------------|-------------|----------------------|-------------|---------------|
+| `/groups/{groupId}/users/{userId}/rankings` | POST | groupId\<long\>, userId\<long\>, rankingSubmitDTOs\<List\<RankingSubmitDTO\>\> | Path, Body | 204 No Content | - | Submit a user's movie rankings for a group | VOTING |
+| `/groups/{groupId}/rankings/result` | GET | groupId\<long\> | Path | 200 OK | RankingResultGetDTO | Retrieve the latest calculated ranking result for the group (the winning movie and its average rank) | RESULTS |
+| `/groups/{groupId}/movies/rankable` | GET | groupId\<long\> | Path | 200 OK | List\<MovieGetDTO\> | Retrieve the list of movies available for ranking in the group's pool | VOTING |
+| `/groups/{groupId}/rankings/details` | GET | groupId\<long\> | Path | 200 OK | List\<MovieAverageRankDTO\> | Retrieve the detailed average ranking results for all movies in the group (each movie with its average rank, sorted by best rank) | RESULTS |
+| `/groups/{groupId}/users/{userId}/rankings` | POST | rankingSubmitDTOs\<List\<RankingSubmitDTO\>\> | Body | 400 Bad Request | Error | Invalid ranking data (e.g., invalid rank, duplicate movies, wrong number of movies ranked) | VOTING |
+| `/groups/{groupId}/users/{userId}/rankings` | POST | groupId\<long\>, userId\<long\> | Path | 404 Not Found | Error | User or Group with the given ID not found | VOTING |
+| `/groups/{groupId}/rankings/result` | GET | groupId\<long\> | Path | 404 Not Found | Error | Group not found or no ranking result exists for the group yet | RESULTS |
+| `/groups/{groupId}/movies/rankable` | GET | groupId\<long\> | Path | 404 Not Found | Error | Group not found or group has no movie pool | VOTING |
+| `/groups/{groupId}/rankings/details` | GET | groupId\<long\> | Path | 404 Not Found | Error | Group not found | RESULTS |
+
+**Note:** All ranking endpoints must check the group phase and return `409 Conflict` if called in the wrong phase.
+
+#### Group Entity Update
+Add a `phase` attribute to the group object:
+```json
+{
+  ...
+  "phase": "POOL" | "VOTING" | "RESULTS"
+}
+```
+This field must be included in all relevant group-related responses.

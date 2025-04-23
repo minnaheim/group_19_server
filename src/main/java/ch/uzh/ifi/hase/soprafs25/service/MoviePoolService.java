@@ -66,8 +66,11 @@ public class MoviePoolService {
 
 
     public MoviePool addMovie(Long groupId, Long movieId, Long userId) {
-        Group group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
+    Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
+    if (group.getPhase() != Group.GroupPhase.POOL) {
+        throw new ResponseStatusException(HttpStatus.CONFLICT, "Can only add movies in POOL phase");
+    }
 
         boolean isMember = isMemberOfGroup(group, userId);
 
@@ -145,8 +148,11 @@ public class MoviePoolService {
     // }
 
     public MoviePool removeMovie(Long groupId, Long movieId, Long userId) {
-        Group group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
+    Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
+    if (group.getPhase() != Group.GroupPhase.POOL) {
+        throw new ResponseStatusException(HttpStatus.CONFLICT, "Can only remove movies in POOL phase");
+    }
 
         boolean isMember = isMemberOfGroup(group, userId);
         
