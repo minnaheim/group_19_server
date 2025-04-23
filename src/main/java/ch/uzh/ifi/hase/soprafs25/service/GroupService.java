@@ -15,11 +15,13 @@ import ch.uzh.ifi.hase.soprafs25.entity.MoviePool;
 import ch.uzh.ifi.hase.soprafs25.entity.User;
 import ch.uzh.ifi.hase.soprafs25.entity.UserMovieRanking;
 import ch.uzh.ifi.hase.soprafs25.entity.RankingResult;
+import ch.uzh.ifi.hase.soprafs25.entity.GroupInvitation;
 import ch.uzh.ifi.hase.soprafs25.repository.GroupRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.MovieRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.UserMovieRankingRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.RankingResultRepository;
+import ch.uzh.ifi.hase.soprafs25.repository.GroupInvitationRepository;
 
 /**
  * Service class for handling group-related operations.
@@ -60,18 +62,21 @@ public class GroupService {
     private final MoviePoolService moviePoolService;
     private final UserMovieRankingRepository userMovieRankingRepository;
     private final RankingResultRepository rankingResultRepository;
+    private final GroupInvitationRepository groupInvitationRepository;
 
     @Autowired
     public GroupService(GroupRepository groupRepository, UserRepository userRepository,
                             MovieRepository movieRepository, MoviePoolService moviePoolService,
                             UserMovieRankingRepository userMovieRankingRepository,
-                            RankingResultRepository rankingResultRepository){
+                            RankingResultRepository rankingResultRepository,
+                            GroupInvitationRepository groupInvitationRepository){
         this.groupRepository = groupRepository;
         this.userRepository = userRepository;
         this.movieRepository = movieRepository;
         this.moviePoolService = moviePoolService;
         this.userMovieRankingRepository = userMovieRankingRepository;
         this.rankingResultRepository = rankingResultRepository;
+        this.groupInvitationRepository = groupInvitationRepository;
     }
 
     public Group createGroup(String groupName, Long creatorId){
@@ -146,6 +151,11 @@ public class GroupService {
         if (!results.isEmpty()) {
             rankingResultRepository.deleteAll(results);
         }
+        // Remove all group invitations tied to this group to avoid FK constraint
+        List<GroupInvitation> invites = groupInvitationRepository.findByGroup_GroupId(groupId);
+        if (!invites.isEmpty()) {
+            groupInvitationRepository.deleteAll(invites);
+        }
         groupRepository.delete(group);
     }
 
@@ -180,6 +190,12 @@ public class GroupService {
 
         group.getMembers().remove(user);
         groupRepository.save(group);
+
+        // Clean up any pending invitations for this user in this group
+        List<GroupInvitation> pendingInvites = groupInvitationRepository.findAllByGroupAndReceiverAndResponseTimeIsNull(group, user);
+        if (!pendingInvites.isEmpty()) {
+            groupInvitationRepository.deleteAll(pendingInvites);
+        }
     }
 
     public List<Group> getGroupsByUserId(Long userId) {
@@ -200,5 +216,26 @@ public class GroupService {
         }
         group.setGroupName(newName);
         return groupRepository.save(group);
+    }
+
+    public void removeMember(Long groupId, Long memberId, Long adminUserId) {
+        Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
+        if (!group.getCreator().getUserId().equals(adminUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the group creator can remove members");
+        }
+        User member = userRepository.findById(memberId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        if (!group.getMembers().contains(member)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User is not a member of this group");
+        }
+        group.getMembers().remove(member);
+        groupRepository.save(group);
+
+        // Clean up any pending invitations for this user in this group
+        List<GroupInvitation> pendingInvitesRm = groupInvitationRepository.findAllByGroupAndReceiverAndResponseTimeIsNull(group, member);
+        if (!pendingInvitesRm.isEmpty()) {
+            groupInvitationRepository.deleteAll(pendingInvitesRm);
+        }
     }
 }
