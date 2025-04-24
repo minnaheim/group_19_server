@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import ch.uzh.ifi.hase.soprafs25.entity.Group;
 import ch.uzh.ifi.hase.soprafs25.entity.MoviePool;
+import ch.uzh.ifi.hase.soprafs25.exceptions.GroupNotFoundException;
+import ch.uzh.ifi.hase.soprafs25.exceptions.UserNotFoundException;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.GroupGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.GroupPostDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.MovieGetDTO;
@@ -33,13 +35,13 @@ import ch.uzh.ifi.hase.soprafs25.utils.AuthorizationUtil;
 @RestController
 public class GroupController {
 
-    @PostMapping("/groups/{groupId}/start-voting")
+    @PostMapping(value = "/groups/{groupId}/start-voting", produces = "application/json")
     @ResponseStatus(HttpStatus.OK)
-    public String startVotingPhase(@RequestHeader("Authorization") String token, @PathVariable Long groupId) {
+    public Map<String, String> startVotingPhase(@RequestHeader("Authorization") String token, @PathVariable Long groupId) {
         token = AuthorizationUtil.extractToken(token);
         Long userId = userService.getUserByToken(token).getUserId();
         groupService.startVotingPhase(groupId, userId);
-        return "Voting phase started.";
+        return Collections.singletonMap("message", "Voting phase started.");
     }
 
     @PostMapping(value = "/groups/{groupId}/show-results", produces = "application/json")
