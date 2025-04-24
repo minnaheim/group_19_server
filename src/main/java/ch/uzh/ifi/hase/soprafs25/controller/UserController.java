@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import ch.uzh.ifi.hase.soprafs25.entity.User;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.UserGetDTO;
@@ -105,8 +106,13 @@ public class UserController {
   @GetMapping("/users/{userId}/profile")
   @ResponseStatus(HttpStatus.OK)
   @Transactional(readOnly = true)
-  public UserGetDTO getUserProfile(@PathVariable("userId") Long userId) {
-    User user = userService.getUserById(userId);
+  public UserGetDTO getUserProfile(@PathVariable("userId") Long userId, @RequestHeader("Authorization") String token) {
+    token = AuthorizationUtil.extractToken(token);
+    User user = userService.getUserByToken(token);
+
+    if (!user.getUserId().equals(userId)) {
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not authorized to view this profile");
+    }
     return DTOMapper.INSTANCE.convertEntityToUserGetDTO(user);
   }
   

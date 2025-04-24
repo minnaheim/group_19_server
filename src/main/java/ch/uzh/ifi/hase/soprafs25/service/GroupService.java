@@ -11,17 +11,17 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import ch.uzh.ifi.hase.soprafs25.entity.Group;
+import ch.uzh.ifi.hase.soprafs25.entity.GroupInvitation;
 import ch.uzh.ifi.hase.soprafs25.entity.MoviePool;
+import ch.uzh.ifi.hase.soprafs25.entity.RankingResult;
 import ch.uzh.ifi.hase.soprafs25.entity.User;
 import ch.uzh.ifi.hase.soprafs25.entity.UserMovieRanking;
-import ch.uzh.ifi.hase.soprafs25.entity.RankingResult;
-import ch.uzh.ifi.hase.soprafs25.entity.GroupInvitation;
+import ch.uzh.ifi.hase.soprafs25.repository.GroupInvitationRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.GroupRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.MovieRepository;
-import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
-import ch.uzh.ifi.hase.soprafs25.repository.UserMovieRankingRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.RankingResultRepository;
-import ch.uzh.ifi.hase.soprafs25.repository.GroupInvitationRepository;
+import ch.uzh.ifi.hase.soprafs25.repository.UserMovieRankingRepository;
+import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
 
 /**
  * Service class for handling group-related operations.
