@@ -3,6 +3,7 @@ package ch.uzh.ifi.hase.soprafs25.controller;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -103,6 +104,7 @@ public class UserController {
    */
   @GetMapping("/users/{userId}/profile")
   @ResponseStatus(HttpStatus.OK)
+  @Transactional(readOnly = true)
   public UserGetDTO getUserProfile(@PathVariable("userId") Long userId) {
     User user = userService.getUserById(userId);
     return DTOMapper.INSTANCE.convertEntityToUserGetDTO(user);
@@ -113,6 +115,7 @@ public class UserController {
    */
   @PutMapping("/users/{userId}/profile")
   @ResponseStatus(HttpStatus.OK)
+  @Transactional
   public UserGetDTO updateUserProfile(
         @PathVariable("userId") Long userId,
         @RequestBody UserPostDTO userPostDTO,

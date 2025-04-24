@@ -15,10 +15,11 @@ import org.springframework.web.server.ResponseStatusException;
 
 import ch.uzh.ifi.hase.soprafs25.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs25.entity.User;
+import ch.uzh.ifi.hase.soprafs25.entity.Movie;
 import ch.uzh.ifi.hase.soprafs25.repository.FriendRequestRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.MovieRepository;
-import ch.uzh.ifi.hase.soprafs25.entity.Movie;
+import ch.uzh.ifi.hase.soprafs25.service.MoviePersistenceService;
 
 /**
  * User Service
@@ -37,11 +38,15 @@ public class UserService {
 
   private final MovieRepository movieRepository;
 
+  private final MoviePersistenceService moviePersistenceService;
+
   @Autowired
   public UserService(@Qualifier("userRepository") UserRepository userRepository,
-                     @Qualifier("movieRepository") MovieRepository movieRepository) {
+                     @Qualifier("movieRepository") MovieRepository movieRepository,
+                     MoviePersistenceService moviePersistenceService) {
     this.userRepository = userRepository;
     this.movieRepository = movieRepository;
+    this.moviePersistenceService = moviePersistenceService;
   }
 
   // for friends functionality
@@ -194,20 +199,28 @@ public class UserService {
     }
 
     if (updatedUser.getFavoriteMovie() != null) {
-      Movie updatedFavorite = updatedUser.getFavoriteMovie();
-      if (updatedFavorite.getMovieId() != 0) {
-        Movie managedMovie = movieRepository.findByMovieId(updatedFavorite.getMovieId());
-        if (managedMovie == null) {
-          throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Favorite movie not found");
+      long newMovieId = updatedUser.getFavoriteMovie().getMovieId();
+      long oldMovieId = (existingUser.getFavoriteMovie() != null)
+          ? existingUser.getFavoriteMovie().getMovieId() : 0L;
+      if (newMovieId != oldMovieId) {
+        if (newMovieId != 0) {
+          // Persist or retrieve the new favorite movie
+          Movie managedMovie = moviePersistenceService.saveOrGet(updatedUser.getFavoriteMovie());
+          existingUser.setFavoriteMovie(managedMovie);
+        } else {
+          // Clear favorite movie
+          existingUser.setFavoriteMovie(null);
         }
-        existingUser.setFavoriteMovie(managedMovie);
-      } else {
-        existingUser.setFavoriteMovie(null);
       }
     }
     
-    // Save and return the updated user
-    return userRepository.save(existingUser);
+    // Save and return the updated user, initializing lazy collections
+    User savedUser = userRepository.save(existingUser);
+    if (savedUser.getFavoriteMovie() != null) {
+        // initialize genres to avoid LazyInitializationException
+        savedUser.getFavoriteMovie().getGenres().size();
+    }
+    return savedUser;
   }
 
   public List<User> searchUsersByUsername(String username) {
