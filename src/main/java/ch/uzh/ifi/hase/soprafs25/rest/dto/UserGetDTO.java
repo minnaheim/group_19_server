@@ -5,9 +5,8 @@ import java.util.Map;
 import java.util.HashMap;
 import javax.persistence.MapKeyColumn;
 
-
 import ch.uzh.ifi.hase.soprafs25.constant.UserStatus;
-import ch.uzh.ifi.hase.soprafs25.entity.Movie;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.MovieGetDTO;
 
 public class UserGetDTO {
 
@@ -21,9 +20,9 @@ public class UserGetDTO {
   private List<String> favoriteGenres;
   private Map<String, String> favoriteActors;
   private Map<String, String> favoriteDirectors;
-  private Movie favoriteMovie;
-  private List<Movie> watchlist;
-  private List<Movie> watchedMovies;
+  private MovieGetDTO favoriteMovie;
+  private List<MovieGetDTO> watchlist;
+  private List<MovieGetDTO> watchedMovies;
 
   public Long getUserId() {
     return userId;
@@ -65,19 +64,19 @@ public class UserGetDTO {
     this.bio = bio;
   }
 
-  public List<Movie> getWatchlist() {
+  public List<MovieGetDTO> getWatchlist() {
     return watchlist;
   }
 
-  public void setWatchlist(List<Movie> watchlist) {
+  public void setWatchlist(List<MovieGetDTO> watchlist) {
     this.watchlist = watchlist;
   }
 
-  public List<Movie> getWatchedMovies() {
+  public List<MovieGetDTO> getWatchedMovies() {
     return watchedMovies;
   }
 
-  public void setWatchedMovies(List<Movie> watchedMovies) {
+  public void setWatchedMovies(List<MovieGetDTO> watchedMovies) {
     this.watchedMovies = watchedMovies;
   }
 
@@ -105,7 +104,6 @@ public class UserGetDTO {
         this.favoriteDirectors = favoriteDirectors;
     }
   
-  
     public String getEmail() {
         return email;
     }
@@ -122,11 +120,11 @@ public class UserGetDTO {
         this.password = password;
     }
   
-    public Movie getFavoriteMovie() {
+    public MovieGetDTO getFavoriteMovie() {
         return favoriteMovie;
     }
 
-    public void setFavoriteMovie(Movie favoriteMovie) {
+    public void setFavoriteMovie(MovieGetDTO favoriteMovie) {
         this.favoriteMovie = favoriteMovie;
     }
 }
