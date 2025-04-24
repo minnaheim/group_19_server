@@ -25,7 +25,7 @@ import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
 @WebAppConfiguration
 @SpringBootTest
 @Transactional
-public class FriendRequestIntegrationTest {
+public class FriendRequestServiceIntegrationTest {
 
     @Autowired
     private FriendRequestService friendRequestService;
