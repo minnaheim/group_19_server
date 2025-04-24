@@ -37,6 +37,10 @@ import ch.uzh.ifi.hase.soprafs25.repository.RankingSubmissionLogRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.UserMovieRankingRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.RankingSubmitDTO;
+import ch.uzh.ifi.hase.soprafs25.service.RankingService;
+
+import org.springframework.boot.test.mock.mockito.SpyBean;
+import static org.mockito.Mockito.doReturn;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -69,6 +73,9 @@ class RankingControllerTest {
 
     @Autowired
     private RankingSubmissionLogRepository rankingSubmissionLogRepository; // For verification
+
+    @SpyBean
+    private RankingService rankingService;
 
     private User testUser;
     private User testUser2;
@@ -242,6 +249,8 @@ class RankingControllerTest {
         // Set group phase to RESULTS
         testGroup.setPhase(Group.GroupPhase.RESULTS);
         groupRepository.saveAndFlush(testGroup);
+        // Stub service to return pool movies in VOTING phase
+        doReturn(availableMovies).when(rankingService).getRankableMoviesForGroup(testGroup.getGroupId());
         // Setup: Submit rankings from two users
         // User 1: A(1), B(2), C(3), D(4), E(5)
         userMovieRankingRepository.saveAll(asList(
@@ -291,6 +300,8 @@ class RankingControllerTest {
         // Set group phase to RESULTS
         testGroup.setPhase(Group.GroupPhase.RESULTS);
         groupRepository.saveAndFlush(testGroup);
+        // Stub service to return pool movies
+        doReturn(availableMovies).when(rankingService).getRankableMoviesForGroup(testGroup.getGroupId());
         // Setup: No rankings submitted, just the group and movie pool exist
 
         // Action & Assert
