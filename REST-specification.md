@@ -1,4 +1,170 @@
 # REST API Specification
+
+## Authentication
+All authenticated API requests must include the Authorization header with a Bearer token:
+```
+Authorization: Bearer <token>
+```
+The token is obtained during login and is returned in the response headers.
+
+## Error Responses
+When an error occurs (e.g., invalid input, resource not found, server error), the API returns a standardized JSON response body with the appropriate HTTP status code.
+
+**Format:**
+```json
+{
+  "timestamp": 1678886400000, // Unix timestamp in milliseconds
+  "status": 400,             // HTTP status code
+  "error": "Bad Request",    // HTTP status phrase
+  "message": "Specific error message detailing the issue.", // Developer-friendly error description
+  "path": "/users/123/rankings" // The request path that caused the error
+}
+```
+
+**Common Status Codes:**
+- **400 Bad Request:** Invalid input, missing parameters, validation errors (e.g., invalid ranking data).
+- **401 Unauthorized:** Missing or invalid authentication token.
+- **403 Forbidden:** Authenticated user lacks permission to access the resource.
+- **404 Not Found:** Resource not found (e.g., user ID, movie ID, group ID).
+- **409 Conflict:** Action cannot be completed due to a conflict with the current state of the resource (e.g., username already exists).
+- **500 Internal Server Error:** An unexpected server-side error occurred.
+
+
+
+## Entities
+
+### Movie Object
+
+A `Movie object` is a JSON object with the following structure:
+
+```json
+{
+  "movieId": integer,           // (e.g., 27205)
+  "title": string,              // (e.g., "Inception")
+  "genres": [string],           // (e.g., ["Action", "Science Fiction", "Adventure"])
+  "year": integer,              // (e.g., 2010)
+  "actors": [string],           // (e.g., ["Leonardo DiCaprio", "Joseph Gordon-Levitt", "Ken Watanabe", "Tom Hardy", "Elliot Page"])
+  "directors": [string],        // (e.g., ["Christopher Nolan", "Emma Thomas"])
+  "originallanguage": string,   // (e.g., "English")
+  "trailerURL": string,         // (e.g., "https://www.youtube.com/watch?v=mpj9dL7swwk")
+  "posterURL": string,          // (e.g., "https://image.tmdb.org/t/p/w500/ljsZTbVsrQSqZgWeep2B1QiDKuh.jpg")
+  "description": string         // (e.g., "Cobb, a skilled thief who commits corporate espionage by infiltrating the subconscious of his targets is offered a chance to regain his old life as payment for a task considered to be impossible: 'inception', the implantation of another person's idea into a target's subconscious.")
+}
+```
+**Notes:**
+- Lists can be empty (genres, actors, directors) if information is not available in TMDb.
+- Description strings may have "weird" format (i.e. escaped quotes like \"inception\")
+
+### Actor Object
+
+An `Actor object` is a JSON object with the following structure:
+
+```json
+{
+  "actorId": integer,    // (e.g., 6193)
+  "name": string         // (e.g., "Leonardo DiCaprio")
+}
+```
+
+### Director Object
+
+A `Director object` is a JSON object with the following structure:
+
+```json
+{
+  "directorId": integer, // (e.g., 525)
+  "name": string         // (e.g., "Christopher Nolan")
+}
+```
+
+### Genres Object
+
+A `Genres object` is a JSON object with the following structure:
+
+```json
+{
+  "id": integer,         // (e.g., 28)
+  "name": string         // (e.g., "Action")
+}
+```
+
+### User Object
+
+A `User object` is a JSON object with the following structure:
+
+```json
+{
+  "userId": integer,
+  "username": string,
+  "email": string,
+  "password": string,
+  "bio": string,
+  "favoriteGenres": [string],
+  "favoriteMovie": Movie object,
+  "watchlist": [Movie object],
+  "watchedMovies": [Movie object]
+}
+```
+
+### RankingSubmitDTO Object
+
+A `RankingSubmitDTO object` is a JSON object with the following structure:
+
+```json
+{
+  "movieId": integer,
+  "rank": integer
+}
+```
+
+### RankingResultGetDTO Object
+
+A `RankingResultGetDTO object` is a JSON object with the following structure:
+
+```json
+{
+  "calculationTimestamp": string, // ISO 8601 format
+  "winningMovie": Movie object
+}
+```
+
+### UserPreferencesGenresDTO Object
+
+A `UserPreferencesGenresDTO object` is a JSON object with the following structure:
+
+```json
+{
+  "genreIds": [string]
+}
+```
+
+### UserPreferencesFavoriteMovieDTO Object
+
+A `UserPreferencesFavoriteMovieDTO object` is a JSON object with the following structure:
+
+```json
+{
+  "movieId": integer
+}
+```
+
+#### Review Object
+
+A `Review object` is a JSON object with the following structure:
+
+```json
+{
+  "reviewId": integer,
+  "movieId": integer,
+  "userId": integer,
+  "rating": integer,      // e.g., 1-5
+  "comment": string,
+  "timestamp": string     // ISO 8601 date-time
+}
+```
+
+
+
 ## API Endpoints
 ### User Management
 
@@ -58,6 +224,9 @@
 | `/friends/friendrequest/{requestId}` | DELETE | Authorization\<string\>, requestId\<long\> | Header, Path | 404 Not Found | Error: reason\<string\> | Friend request not found |
 | `/friends/friendrequest/{requestId}` | DELETE | Authorization\<string\>, requestId\<long\> | Header, Path | 401 Unauthorized | Error: reason\<string\> | Invalid or missing token |
 | `/friends/friendrequest/{requestId}` | DELETE | Authorization\<string\>, requestId\<long\> | Header, Path | 403 Forbidden | Error: reason\<string\> | User not authorized to delete this friend request |
+| `/users/{userId}/friends` | GET | userId\<long\>, Authorization\<string\> | Path, Header | 200 OK | List\<User\> | Get friends for specific user |
+| `/users/{userId}/friends` | GET | userId\<long\>, Authorization\<string\> | Path, Header | 401 Unauthorized | Error: reason\<string\> | Invalid or missing token |
+| `/users/{userId}/friends` | GET | userId\<long\>, Authorization\<string\> | Path, Header | 404 Not Found | Error: reason\<string\> | User not found |
 
 ### User Watchlist & Watched-Movies Management
 
@@ -138,6 +307,10 @@
 | `/groups/{groupId}` | PUT | Authorization\<string\>, groupId\<long\>, groupPostDTO\<object\> | Header, Path, Body | 403 Forbidden | Error: reason\<string\> | Only the group creator can update the group |
 | `/groups/{groupId}` | PUT | Authorization\<string\>, groupId\<long\>, groupPostDTO\<object\> | Header, Path, Body | 404 Not Found | Error: reason\<string\> | Group not found |
 | `/groups/{groupId}/members` | GET | groupId\<long\>, Authorization\<string\> | Path, Header | 200 OK | List\<User\> | Get group members |
+| `/groups/{groupId}/members/{memberId}` | DELETE | groupId\<long\>, memberId\<long\>, Authorization\<string\> | Path, Header | 204 No Content | - | Remove member from group |
+| `/groups/{groupId}/members/{memberId}` | DELETE | groupId\<long\>, memberId\<long\>, Authorization\<string\> | Path, Header | 404 Not Found | Error: reason\<string\> | Group or user not found |
+| `/groups/{groupId}/members/{memberId}` | DELETE | groupId\<long\>, memberId\<long\>, Authorization\<string\> | Path, Header | 401 Unauthorized | Error: reason\<string\> | Invalid or missing token |
+| `/groups/{groupId}/members/{memberId}` | DELETE | groupId\<long\>, memberId\<long\>, Authorization\<string\> | Path, Header | 403 Forbidden | Error: reason\<string\> | Only the group creator can remove members |
 | `/groups/{groupId}/pool` | GET | groupId\<long\>, Authorization\<string\> | Path, Header | 200 OK | List\<Movie\> | Get movie pool for group |
 | `/groups/{groupId}/pool/{movieId}` | POST | groupId\<long\>, movieId\<long\>, Authorization\<string\> | Path, Header | 200 OK | List\<Movie\> | Add movie to group pool |
 | `/groups/{groupId}/pool/{movieId}` | DELETE | groupId\<long\>, movieId\<long\>, Authorization\<string\> | Path, Header | 204 No Content | - | Remove movie from group pool |
@@ -186,7 +359,7 @@ Each group has a `phase` attribute:
 
 #### Voting Endpoints (Phase Restricted)
 | Endpoint | Method | Parameters | Parameter Type | Status Code | Response | Description | Allowed Phase |
-|----------|--------|------------|---------------|-------------|----------|-------------|---------------|
+|----------|--------|--------------------------------------------------------------|---------------|-------------|----------------------|-------------|---------------|
 | `/groups/{groupId}/vote` | POST | groupId\<integer\>, userId\<integer\>, vote\<List\<Movie\>\> | Body | 200 OK | Success message\<string\> | Submit a vote | VOTING |
 | `/groups/{groupId}/vote` | POST | groupId\<integer\>, userId\<integer\>, vote\<List\<Movie\>\> | Body | 400 Bad Request | Error: reason\<string\> | Submit a vote failed due to invalid vote request | VOTING |
 | `/groups/{groupId}/vote` | POST | groupId\<integer\>, userId\<integer\>, vote\<List\<Movie\>\> | Body | 404 Not Found | Error: reason\<string\> | Group not found | VOTING |
@@ -246,3 +419,5 @@ Add a `phase` attribute to the group object:
 }
 ```
 This field must be included in all relevant group-related responses.
+
+```
