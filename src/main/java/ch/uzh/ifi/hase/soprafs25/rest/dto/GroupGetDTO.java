@@ -7,6 +7,7 @@ public class GroupGetDTO {
     private Long groupId;
     private String groupName;
     private Long creatorId;
+    private UserGetDTO creator;
     private List<Long> memberIds;
     private List<Long> movieIds;
     private String phase;
@@ -57,5 +58,13 @@ public class GroupGetDTO {
 
     public void setPhase(String phase) {
         this.phase = phase;
+    }
+
+    public UserGetDTO getCreator() {
+        return creator;
+    }
+
+    public void setCreator(UserGetDTO creator) {
+        this.creator = creator;
     }
 } 

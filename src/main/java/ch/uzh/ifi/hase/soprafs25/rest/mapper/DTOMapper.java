@@ -103,6 +103,7 @@ public interface DTOMapper {
 
     @Mapping(source = "groupId", target = "groupId")
     @Mapping(source = "groupName", target = "groupName")
+    @Mapping(source = "creator", target = "creator")
     @Mapping(source = "creator.userId", target = "creatorId")
     @Mapping(source = "members", target = "memberIds")
     @Mapping(source = "moviePool.movies", target = "movieIds")
