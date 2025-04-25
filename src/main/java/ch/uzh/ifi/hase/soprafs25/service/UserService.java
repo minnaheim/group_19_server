@@ -1,6 +1,7 @@
 package ch.uzh.ifi.hase.soprafs25.service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -224,10 +225,17 @@ public class UserService {
   }
 
   public List<User> searchUsersByUsername(String username) {
-    // in case nothing is there
-    if (username == null || username.trim().isEmpty()) {
+    String q = (username == null) ? "" : username.trim();
+    if (q.isEmpty()) {
       return new ArrayList<>();
     }
-    return userRepository.findByUsernameContainingIgnoreCase(username);
+    // exact match first
+    User exact = userRepository.findByUsername(q);
+    if (exact != null) {
+      return Collections.singletonList(exact);
+    }
+    // fallback to substring search (temporarily disabled)
+    // return userRepository.findByUsernameContainingIgnoreCase(q);
+    return new ArrayList<>();
   }
 }
