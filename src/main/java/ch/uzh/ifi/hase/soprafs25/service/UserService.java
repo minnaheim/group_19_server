@@ -1,5 +1,6 @@
 package ch.uzh.ifi.hase.soprafs25.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -13,11 +14,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import ch.uzh.ifi.hase.soprafs25.constant.UserStatus;
-import ch.uzh.ifi.hase.soprafs25.entity.Movie;
 import ch.uzh.ifi.hase.soprafs25.entity.User;
+import ch.uzh.ifi.hase.soprafs25.entity.Movie;
 import ch.uzh.ifi.hase.soprafs25.repository.FriendRequestRepository;
-import ch.uzh.ifi.hase.soprafs25.repository.MovieRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
+import ch.uzh.ifi.hase.soprafs25.repository.MovieRepository;
+import ch.uzh.ifi.hase.soprafs25.service.MoviePersistenceService;
 
 /**
  * User Service
@@ -221,15 +223,11 @@ public class UserService {
     return savedUser;
   }
 
-  public User searchUserByUsername(String username) {
+  public List<User> searchUsersByUsername(String username) {
     // in case nothing is there
     if (username == null || username.trim().isEmpty()) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+      return new ArrayList<>();
     }
-    User user = userRepository.findByUsername(username);
-    if (user == null) {
-        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
-    }
-    return user;
+    return userRepository.findByUsernameContainingIgnoreCase(username);
   }
 }
