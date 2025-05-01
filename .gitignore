@@ -44,3 +44,7 @@ local.properties
 .xcode*
 
 /bin
+
+
+# ignore the data, this is created new each time
+/data
