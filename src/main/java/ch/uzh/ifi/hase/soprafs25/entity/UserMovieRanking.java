@@ -1,7 +1,6 @@
 package ch.uzh.ifi.hase.soprafs25.entity;
 
 import javax.persistence.*;
-import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;

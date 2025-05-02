@@ -120,7 +120,7 @@ public class MovieService {
 
     /**
      * Get personalized movie suggestions for a user
-     * New method to generate movie suggestions based on user preferences
+     * New method to generate movie suggestions based on user favorites
      *
      * @param userId User ID for which to generate suggestions
      * @param limit Maximum number of suggestions to return
@@ -141,18 +141,18 @@ public class MovieService {
             user.getWatchlist().forEach(movie -> excludedMovieIds.add(movie.getMovieId()));
         }
 
-        // Collect all user preferences
+        // Collect all user favorites
         List<String> favoriteGenres = user.getFavoriteGenres();
         List<String> favoriteActorIds = new ArrayList<>();
         List<String> favoriteDirectorIds = new ArrayList<>();
 
         // Extract actor and director IDs
         if (user.getFavoriteActors() != null) {
-            favoriteActorIds.addAll(user.getFavoriteActors().keySet());
+            favoriteActorIds.addAll(user.getFavoriteActors());
         }
 
         if (user.getFavoriteDirectors() != null) {
-            favoriteDirectorIds.addAll(user.getFavoriteDirectors().keySet());
+            favoriteDirectorIds.addAll(user.getFavoriteDirectors());
         }
 
         // Maximum number of API calls to prevent excessive requests

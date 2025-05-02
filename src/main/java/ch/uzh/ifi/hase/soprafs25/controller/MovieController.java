@@ -178,7 +178,7 @@ public class MovieController {
 
     /**
      * Get personalized movie suggestions for a user
-     * New endpoint to retrieve personalized movie suggestions based on user preferences
+     * New endpoint to retrieve personalized movie suggestions based on user favorites
      *
      * @param userId The user ID for which to generate suggestions
      * @return List of suggested movies

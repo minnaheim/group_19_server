@@ -29,10 +29,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 @WebAppConfiguration
 @SpringBootTest
 @Transactional
-class UserPreferencesServiceIntegrationTest {
+class UserFavoritesServiceIntegrationTest {
 
     @Autowired
-    private UserPreferencesService userPreferencesService;
+    private UserFavoritesService UserFavoritesService;
 
     @Autowired
     private UserRepository userRepository;
@@ -98,13 +98,13 @@ class UserPreferencesServiceIntegrationTest {
     }
 
     @Test
-    void saveGenrePreferences_WithValidToken_SavesPreferences() {
+    void saveGenreFavorites_WithValidToken_SavesFavorites() {
         // Arrange
         // Use exact genre names defined in the mock setup
         List<String> genreNames = new ArrayList<>(List.of("Action", "Drama"));
 
         // Act
-        List<String> result = userPreferencesService.saveGenrePreferences(
+        List<String> result = UserFavoritesService.saveGenreFavorites(
                 testUser.getUserId(), genreNames, testUser.getToken());
 
         // Assert
@@ -119,26 +119,26 @@ class UserPreferencesServiceIntegrationTest {
     }
 
     @Test
-    void saveGenrePreferences_WithInvalidToken_ThrowsException() {
+    void saveGenreFavorites_WithInvalidToken_ThrowsException() {
         // Arrange
         List<String> genreNames = List.of("Action", "Drama");
 
         // Act & Assert
         assertThrows(ResponseStatusException.class, () -> {
-            userPreferencesService.saveGenrePreferences(
+            UserFavoritesService.saveGenreFavorites(
                     testUser.getUserId(), genreNames, "invalidToken");
         });
     }
 
     @Test
-    void getGenrePreferences_ReturnsCorrectPreferences() {
+    void getGenreFavorites_ReturnsCorrectFavorites() {
         // Arrange
         List<String> genreNames = new ArrayList<>(List.of("Action", "Comedy"));
         testUser.setFavoriteGenres(genreNames);
         userRepository.save(testUser);
 
         // Act
-        List<String> result = userPreferencesService.getGenrePreferences(testUser.getUserId());
+        List<String> result = UserFavoritesService.getGenreFavorites(testUser.getUserId());
 
         // Assert
         assertEquals(genreNames, result);
@@ -147,7 +147,7 @@ class UserPreferencesServiceIntegrationTest {
     @Test
     void saveFavoriteMovie_WithValidToken_SavesMovie() {
         // Act
-        Movie result = userPreferencesService.saveFavoriteMovie(
+        Movie result = UserFavoritesService.saveFavoriteMovie(
                 testUser.getUserId(), testMovie.getMovieId(), testUser.getToken());
 
         // Assert
@@ -163,7 +163,7 @@ class UserPreferencesServiceIntegrationTest {
     void saveFavoriteMovie_WithInvalidToken_ThrowsException() {
         // Act & Assert
         assertThrows(ResponseStatusException.class, () -> {
-            userPreferencesService.saveFavoriteMovie(
+            UserFavoritesService.saveFavoriteMovie(
                     testUser.getUserId(), testMovie.getMovieId(), "invalidToken");
         });
     }
@@ -175,7 +175,7 @@ class UserPreferencesServiceIntegrationTest {
         userRepository.save(testUser);
 
         // Act
-        Movie result = userPreferencesService.getFavoriteMovie(testUser.getUserId());
+        Movie result = UserFavoritesService.getFavoriteMovie(testUser.getUserId());
 
         // Assert
         assertNotNull(result);

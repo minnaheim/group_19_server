@@ -1,6 +1,6 @@
 package ch.uzh.ifi.hase.soprafs25.rest.dto;
 
-public class UserPreferencesFavoriteMovieDTO {
+public class UserFavoritesMovieDTO {
     private Long movieId;
 
     public Long getMovieId() {

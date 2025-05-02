@@ -1,12 +1,7 @@
 package ch.uzh.ifi.hase.soprafs25.rest.dto;
 
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-import javax.persistence.MapKeyColumn;
-
 import ch.uzh.ifi.hase.soprafs25.constant.UserStatus;
-import ch.uzh.ifi.hase.soprafs25.rest.dto.MovieGetDTO;
 
 public class UserGetDTO {
 
@@ -18,8 +13,8 @@ public class UserGetDTO {
   private String token;
   private String bio;
   private List<String> favoriteGenres;
-  private Map<String, String> favoriteActors;
-  private Map<String, String> favoriteDirectors;
+  private List<String> favoriteActors;
+  private List<String> favoriteDirectors;
   private MovieGetDTO favoriteMovie;
   private List<MovieGetDTO> watchlist;
   private List<MovieGetDTO> watchedMovies;
@@ -88,19 +83,19 @@ public class UserGetDTO {
         this.favoriteGenres = favoriteGenres;
     }
 
-    public Map<String, String> getFavoriteActors() {
+    public List<String> getFavoriteActors() {
         return favoriteActors;
     }
 
-    public void setFavoriteActors(Map<String, String> favoriteActors) {
+    public void setFavoriteActors(List<String> favoriteActors) {
         this.favoriteActors = favoriteActors;
     }
 
-    public Map<String, String> getFavoriteDirectors() {
+    public List<String> getFavoriteDirectors() {
         return favoriteDirectors;
     }
 
-    public void setFavoriteDirectors(Map<String, String> favoriteDirectors) {
+    public void setFavoriteDirectors(List<String> favoriteDirectors) {
         this.favoriteDirectors = favoriteDirectors;
     }
   

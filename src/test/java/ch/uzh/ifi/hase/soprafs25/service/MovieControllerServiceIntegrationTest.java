@@ -70,7 +70,7 @@ public class MovieControllerServiceIntegrationTest {
 
     @BeforeEach
     public void setup() {
-        // Set up test data - create a user with preferences and some test movies
+        // Set up test data - create a user with favorites and some test movies
         objectMapper = new ObjectMapper();
 
         // Clean up from previous tests
@@ -85,7 +85,7 @@ public class MovieControllerServiceIntegrationTest {
             movieRepository.save(movie);
         }
 
-        // Create test user with preferences
+        // Create test user with favorites
         testUser = createTestUser();
         userRepository.save(testUser);
 
@@ -193,7 +193,7 @@ public class MovieControllerServiceIntegrationTest {
     }
 
     /**
-     * Helper method to create a test user with preferences
+     * Helper method to create a test user with favorites
      */
     private User createTestUser() {
         User user = new User();

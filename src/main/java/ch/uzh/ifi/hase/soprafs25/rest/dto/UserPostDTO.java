@@ -10,7 +10,7 @@ public class UserPostDTO {
   private String password;
   private String bio;
   private Movie favoriteMovie;
-  // private List<String> preferences;
+  // private List<String> favorites;
   // private List<Movie> watchlist;
   // private List<Movie> watchedMovies;
 
