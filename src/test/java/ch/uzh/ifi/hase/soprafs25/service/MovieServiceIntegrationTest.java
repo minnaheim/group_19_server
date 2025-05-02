@@ -57,11 +57,11 @@ public class MovieServiceIntegrationTest {
 
     /**
      * Test 4.1 Test that getMovieSuggestions fetches real user data from database
-     * and correctly processes user preferences
+     * and correctly processes user favorites
      */
     @Test
     public void testGetMovieSuggestions_WithRealUserFromDatabase() {
-        // Create a user with well-defined preferences
+        // Create a user with well-defined favorites
         User user = new User();
         user.setUsername("testUser" + new Random().nextInt(10000));
         user.setPassword("password123");
@@ -153,11 +153,11 @@ public class MovieServiceIntegrationTest {
     }
 
     /**
-    * Test 4.2 - Verify TMDbService is called with correct parameters based on user preferences
+    * Test 4.2 - Verify TMDbService is called with correct parameters based on user favorites
     */
     @Test
     public void testGetMovieSuggestions_TMDbServiceIntegration() {
-        // 1. Create and save a user with preferences
+        // 1. Create and save a user with favorites
         User user = new User();
         user.setUsername("testuser" + new Random().nextInt(10000));
         user.setPassword("password");
@@ -165,7 +165,7 @@ public class MovieServiceIntegrationTest {
         user.setEmail("permutation" + new Random().nextInt(10000) + "@example.com");
         user.setStatus(UserStatus.ONLINE);
 
-        // Set user preferences
+        // Set user favorites
         List<String> favoriteGenres = Arrays.asList("Action", "Comedy");
         Map<String, String> actorsMap = new HashMap<>();
         actorsMap.put("123", "Tom Hanks");
@@ -181,7 +181,7 @@ public class MovieServiceIntegrationTest {
         userRepository.save(user);
         userRepository.flush();
 
-        // 2. Create mock TMDb response based on user preferences
+        // 2. Create mock TMDb response based on user favorites
         List<Movie> mockTMDbMovies = new ArrayList<>();
         Movie movie1 = new Movie();
         movie1.setMovieId(101);
@@ -219,11 +219,11 @@ public class MovieServiceIntegrationTest {
     }
 
     /**
-     * Test 4.3 -Test for edge case: user with no preferences
+     * Test 4.3 -Test for edge case: user with no favorites
      */
     @Test
-    public void testGetMovieSuggestions_UserWithNoPreferences() {
-        // 1. Create and save a user without preferences
+    public void testGetMovieSuggestions_UserWithNoFavorites() {
+        // 1. Create and save a user without favorites
         User user = new User();
         user.setUsername("noprefuser" + new Random().nextInt(10000));
         user.setPassword("password");
@@ -232,7 +232,7 @@ public class MovieServiceIntegrationTest {
         user.setStatus(UserStatus.ONLINE);
 
 
-        // Set user preferences
+        // Set user favorites
         List<String> favoriteGenres = Arrays.asList("Action", "Comedy");
         Map<String, String> actorsMap = new HashMap<>();
         actorsMap.put("123", "Tom Hanks");

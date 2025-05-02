@@ -2,7 +2,7 @@ package ch.uzh.ifi.hase.soprafs25.rest.dto;
 
 import java.util.List;
 
-public class UserPreferencesGenresDTO {
+public class UserFavoritesGenresDTO {
     private List<String> genreIds;
 
     public List<String> getGenreIds() {

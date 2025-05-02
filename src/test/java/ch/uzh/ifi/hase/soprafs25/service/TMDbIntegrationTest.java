@@ -73,7 +73,7 @@ public class TMDbIntegrationTest {
         testWatchlistMovies = createTestWatchlistMovies();
         testWatchedMovies = createTestWatchedMovies();
 
-        // Create test user with preferences
+        // Create test user with favorites
         testUser = createTestUser();
 
         // Save movies and user to repository
@@ -86,7 +86,7 @@ public class TMDbIntegrationTest {
      * Test 7.1 - Test the interaction between MovieService and real TMDbService
      * This test verifies that the MovieService can successfully interact with the
      * real TMDbService
-     * to retrieve movie suggestions based on user preferences.
+     * to retrieve movie suggestions based on user favorites.
      */
     // @Test
     // public void testRealTMDbServiceInteraction() {
@@ -129,22 +129,22 @@ public class TMDbIntegrationTest {
     @Test
     public void testHandlingRealTMDbResponses() {
         // Testing the processing of real TMDb responses
-        // Create search parameters based on user preferences
+        // Create search parameters based on user favorites
         Movie searchParams = new Movie();
 
-        // Set some specific parameters from user preferences
+        // Set some specific parameters from user favorites
         if (!testUser.getFavoriteGenres().isEmpty()) {
             searchParams.setGenres(testUser.getFavoriteGenres());
         }
 
         // Get a list of actor IDs from the user's favorite actors map
         if (testUser.getFavoriteActors() != null && !testUser.getFavoriteActors().isEmpty()) {
-            searchParams.setActors(new ArrayList<>(testUser.getFavoriteActors().keySet()));
+            searchParams.setActors(testUser.getFavoriteActors());
         }
 
         // Get a list of director IDs from the user's favorite directors map
         if (testUser.getFavoriteDirectors() != null && !testUser.getFavoriteDirectors().isEmpty()) {
-            searchParams.setDirectors(new ArrayList<>(testUser.getFavoriteDirectors().keySet()));
+            searchParams.setDirectors(testUser.getFavoriteDirectors());
         }
 
         // Get movies directly from TMDbService
@@ -234,7 +234,7 @@ public class TMDbIntegrationTest {
     // 20 per page)
     // int requestedCount = 45; // Should require at least 3 pages
 
-    // // Get a specific user's preferences to simulate the movie suggestion flow
+    // Get a specific user's favorites to simulate the movie suggestion flow
     // List<Movie> results = movieService.getMovieSuggestions(testUser.getUserId(),
     // requestedCount);
 
@@ -328,7 +328,7 @@ public class TMDbIntegrationTest {
     }
 
     /**
-     * Helper method to create a test user with preferences
+     * Helper method to create a test user with favorites
      */
     private User createTestUser() {
         User user = new User();

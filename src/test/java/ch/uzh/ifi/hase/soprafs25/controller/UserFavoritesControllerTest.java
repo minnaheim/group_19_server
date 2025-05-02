@@ -1,10 +1,12 @@
 package ch.uzh.ifi.hase.soprafs25.controller;
 
 import ch.uzh.ifi.hase.soprafs25.entity.Movie;
-import ch.uzh.ifi.hase.soprafs25.rest.dto.UserPreferencesGenresDTO;
-import ch.uzh.ifi.hase.soprafs25.rest.dto.UserPreferencesFavoriteMovieDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.UserFavoritesActorsDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.UserFavoritesDirectorsDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.UserFavoritesGenresDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.UserFavoritesMovieDTO;
 
-import ch.uzh.ifi.hase.soprafs25.service.UserPreferencesService;
+import ch.uzh.ifi.hase.soprafs25.service.UserFavoritesService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -16,10 +18,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
-
-
 import java.util.List;
-
 
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.*;
@@ -29,27 +28,27 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(UserPreferencesController.class)
-class UserPreferencesControllerTest {
+@WebMvcTest(UserFavoritesController.class)
+class UserFavoritesControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockBean
-    private UserPreferencesService userPreferencesService;
+    private UserFavoritesService UserFavoritesService;
 
     @Test
-    void saveGenrePreferences_WithValidData_ReturnsSuccess() throws Exception {
+    void saveGenreFavorites_WithValidData_ReturnsSuccess() throws Exception {
         // Arrange
         List<String> genreNames = List.of("Action", "Adventure");
-        given(userPreferencesService.saveGenrePreferences(anyLong(), anyList(), anyString()))
+        given(UserFavoritesService.saveGenreFavorites(anyLong(), anyList(), anyString()))
                 .willReturn(genreNames);
 
-        UserPreferencesGenresDTO requestBody = new UserPreferencesGenresDTO();
+        UserFavoritesGenresDTO requestBody = new UserFavoritesGenresDTO();
         requestBody.setGenreIds(genreNames);
 
         // Act & Assert
-        MockHttpServletRequestBuilder postRequest = post("/users/1/preferences/genres")
+        MockHttpServletRequestBuilder postRequest = post("/users/1/favorites/genres")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer validToken")
                 .content(asJsonString(requestBody));
@@ -61,13 +60,13 @@ class UserPreferencesControllerTest {
     }
 
     @Test
-    void getGenrePreferences_ReturnsGenres() throws Exception {
+    void getGenreFavorites_ReturnsGenres() throws Exception {
         // Arrange
         List<String> genreNames = List.of("Action", "Adventure");
-        given(userPreferencesService.getGenrePreferences(anyLong())).willReturn(genreNames);
+        given(UserFavoritesService.getGenreFavorites(anyLong())).willReturn(genreNames);
 
         // Act & Assert
-        MockHttpServletRequestBuilder getRequest = get("/users/1/preferences/genres")
+        MockHttpServletRequestBuilder getRequest = get("/users/1/favorites/genres")
                 .contentType(MediaType.APPLICATION_JSON);
 
         mockMvc.perform(getRequest)
@@ -82,14 +81,14 @@ class UserPreferencesControllerTest {
         Movie movie = new Movie();
         movie.setMovieId(123L);
         movie.setTitle("Test Movie");
-        given(userPreferencesService.saveFavoriteMovie(anyLong(), anyLong(), anyString()))
+        given(UserFavoritesService.saveFavoriteMovie(anyLong(), anyLong(), anyString()))
                 .willReturn(movie);
 
-        UserPreferencesFavoriteMovieDTO requestBody = new UserPreferencesFavoriteMovieDTO();
+        UserFavoritesMovieDTO requestBody = new UserFavoritesMovieDTO();
         requestBody.setMovieId(123L);
 
         // Act & Assert
-        MockHttpServletRequestBuilder postRequest = post("/users/1/preferences/favorite-movie")
+        MockHttpServletRequestBuilder postRequest = post("/users/1/favorites/movie")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer validToken")
                 .content(asJsonString(requestBody));
@@ -105,10 +104,10 @@ class UserPreferencesControllerTest {
         Movie movie = new Movie();
         movie.setMovieId(123L);
         movie.setTitle("Test Movie");
-        given(userPreferencesService.getFavoriteMovie(anyLong())).willReturn(movie);
+        given(UserFavoritesService.getFavoriteMovie(anyLong())).willReturn(movie);
 
         // Act & Assert
-        MockHttpServletRequestBuilder getRequest = get("/users/1/preferences/favorite-movie")
+        MockHttpServletRequestBuilder getRequest = get("/users/1/favorites/movie")
                 .contentType(MediaType.APPLICATION_JSON);
 
         mockMvc.perform(getRequest)
@@ -119,10 +118,10 @@ class UserPreferencesControllerTest {
     @Test
     void getFavoriteMovie_WithNoMovie_ReturnsNull() throws Exception {
         // Arrange
-        given(userPreferencesService.getFavoriteMovie(anyLong())).willReturn(null);
+        given(UserFavoritesService.getFavoriteMovie(anyLong())).willReturn(null);
 
         // Act & Assert
-        MockHttpServletRequestBuilder getRequest = get("/users/1/preferences/favorite-movie")
+        MockHttpServletRequestBuilder getRequest = get("/users/1/favorites/movie")
                 .contentType(MediaType.APPLICATION_JSON);
 
         mockMvc.perform(getRequest)
@@ -131,17 +130,17 @@ class UserPreferencesControllerTest {
     }
 
     @Test
-    void getAllPreferences_ReturnsGenresAndMovie() throws Exception {
+    void getAllFavorites_ReturnsGenresAndMovie() throws Exception {
         // Arrange
         List<String> genreNames = List.of("Action", "Adventure");
         Movie movie = new Movie();
         movie.setMovieId(123L);
         movie.setTitle("Test Movie");
-        given(userPreferencesService.getGenrePreferences(anyLong())).willReturn(genreNames);
-        given(userPreferencesService.getFavoriteMovie(anyLong())).willReturn(movie);
+        given(UserFavoritesService.getGenreFavorites(anyLong())).willReturn(genreNames);
+        given(UserFavoritesService.getFavoriteMovie(anyLong())).willReturn(movie);
 
         // Act & Assert
-        MockHttpServletRequestBuilder getRequest = get("/users/1/preferences")
+        MockHttpServletRequestBuilder getRequest = get("/users/1/favorites")
                 .contentType(MediaType.APPLICATION_JSON);
 
         mockMvc.perform(getRequest)
@@ -150,6 +149,58 @@ class UserPreferencesControllerTest {
                 .andExpect(jsonPath("$.favoriteGenres[1]", is("Adventure")))
                 .andExpect(jsonPath("$.favoriteMovie.movieId", is(123)))
                 .andExpect(jsonPath("$.favoriteMovie.title", is("Test Movie")));
+    }
+
+    @Test
+    void saveFavoriteActors_WithValidData_ReturnsActors() throws Exception {
+        List<String> actors = List.of("A1", "B2");
+        given(UserFavoritesService.saveFavoriteActors(anyLong(), anyList(), anyString()))
+                .willReturn(actors);
+        UserFavoritesActorsDTO request = new UserFavoritesActorsDTO();
+        request.setFavoriteActors(actors);
+        mockMvc.perform(post("/users/1/favorites/actors")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(asJsonString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.favoriteActors[0]", is("A1")))
+                .andExpect(jsonPath("$.favoriteActors[1]", is("B2")));
+    }
+
+    @Test
+    void getFavoriteActors_ReturnsActors() throws Exception {
+        List<String> actors = List.of("A1", "B2");
+        given(UserFavoritesService.getFavoriteActors(anyLong())).willReturn(actors);
+        mockMvc.perform(get("/users/1/favorites/actors").contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.favoriteActors[0]", is("A1")))
+                .andExpect(jsonPath("$.favoriteActors[1]", is("B2")));
+    }
+
+    @Test
+    void saveFavoriteDirectors_WithValidData_ReturnsDirectors() throws Exception {
+        List<String> dirs = List.of("D1", "D2");
+        given(UserFavoritesService.saveFavoriteDirectors(anyLong(), anyList(), anyString()))
+                .willReturn(dirs);
+        UserFavoritesDirectorsDTO request = new UserFavoritesDirectorsDTO();
+        request.setFavoriteDirectors(dirs);
+        mockMvc.perform(post("/users/1/favorites/directors")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(asJsonString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.favoriteDirectors[0]", is("D1")))
+                .andExpect(jsonPath("$.favoriteDirectors[1]", is("D2")));
+    }
+
+    @Test
+    void getFavoriteDirectors_ReturnsDirectors() throws Exception {
+        List<String> dirs = List.of("D1", "D2");
+        given(UserFavoritesService.getFavoriteDirectors(anyLong())).willReturn(dirs);
+        mockMvc.perform(get("/users/1/favorites/directors").contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.favoriteDirectors[0]", is("D1")))
+                .andExpect(jsonPath("$.favoriteDirectors[1]", is("D2")));
     }
 
     /**

@@ -80,7 +80,7 @@ class MovieServiceTest {
         watchlistMovie.setGenres(Arrays.asList("Comedy"));
 
 
-        // Setup test user with known preferences
+        // Setup test user with known favorites
         testUser = new User();
         testUser.setUserId(2341L);
         testUser.setUsername("testUser");
@@ -136,18 +136,18 @@ class MovieServiceTest {
     }
 
     /**
-     * Test 1.1 - Mock UserRepository to return a predefined user with known preferences
+     * Test 1.1 - Mock UserRepository to return a predefined user with known favorites
      * This test verifies that the getMovieSuggestions method correctly retrieves a user from the repository
-     * and uses their preferences to generate movie suggestions
+     * and uses their favorites to generate movie suggestions
      */
     @Test
-    void testGetMovieSuggestions_withUserPreferences() {
+    void testGetMovieSuggestions_withUserFavorites() {
         // Prepare movie suggestions to be returned by TMDbService
         List<Movie> suggestedMovies = new ArrayList<>();
         suggestedMovies.add(testMovie3); // Suggested movie that is not in watchlist or watched
 
         // Mock TMDbService to return our predefined movies when called with any search parameters
-        // This simulates the TMDbService returning results based on user preferences
+        // This simulates the TMDbService returning results based on user favorites
         when(tmdbService.searchMovies(any(Movie.class))).thenReturn(suggestedMovies);
 
         // Call the method under test
@@ -345,14 +345,14 @@ class MovieServiceTest {
     }
 
     /**
-     * Test 1.6 - Testing when user has no preferences
-     * This test verifies that the method handles users with no preferences correctly
+     * Test 1.6 - Testing when user has no favorites
+     * This test verifies that the method handles users with no favorites correctly
      */
     @Test
-    void testGetMovieSuggestions_noUserPreferences() {
-        // test for users with no preferences
+    void testGetMovieSuggestions_noUserFavorites() {
+        // test for users with no favorites
 
-        // Create user with no preferences
+        // Create user with no favorites
         User userNoPrefs = new User();
         userNoPrefs.setUserId(9999L);
         userNoPrefs.setUsername("userNoPrefs");
