@@ -73,7 +73,7 @@ public class MovieApiIntegrationTest {
         testMovies = createTestMovies();
         testMovies.forEach(movie -> movieRepository.save(movie));
 
-        // Create test user with preferences
+        // Create test user with favorites
         testUser = createTestUser();
         testUser = userRepository.save(testUser);
 
@@ -214,7 +214,7 @@ public class MovieApiIntegrationTest {
     }
 
     /**
-     * Helper method to create a test user with preferences
+     * Helper method to create a test user with favorites
      */
     private User createTestUser() {
         User user = new User();

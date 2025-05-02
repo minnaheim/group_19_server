@@ -101,6 +101,8 @@ A `User object` is a JSON object with the following structure:
   "bio": string,
   "favoriteGenres": [string],
   "favoriteMovie": Movie object,
+  "favoriteActors": [string],
+  "favoriteDirectors": [string],
   "watchlist": [Movie object],
   "watchedMovies": [Movie object]
 }
@@ -128,9 +130,9 @@ A `RankingResultGetDTO object` is a JSON object with the following structure:
 }
 ```
 
-### UserPreferencesGenresDTO Object
+### UserFavoritesGenresDTO Object
 
-A `UserPreferencesGenresDTO object` is a JSON object with the following structure:
+A `UserFavoritesGenresDTO object` is a JSON object with the following structure:
 
 ```json
 {
@@ -138,13 +140,33 @@ A `UserPreferencesGenresDTO object` is a JSON object with the following structur
 }
 ```
 
-### UserPreferencesFavoriteMovieDTO Object
+### UserFavoritesMovieDTO Object
 
-A `UserPreferencesFavoriteMovieDTO object` is a JSON object with the following structure:
+A `UserFavoritesMovieDTO object` is a JSON object with the following structure:
 
 ```json
 {
   "movieId": integer
+}
+```
+
+### UserFavoritesActorsDTO Object
+
+A `UserFavoritesActorsDTO object` is a JSON object with the following structure:
+
+```json
+{
+  "actorIds": [string]
+}
+```
+
+### UserFavoritesDirectorsDTO Object
+
+A `UserFavoritesDirectorsDTO object` is a JSON object with the following structure:
+
+```json
+{
+  "directorIds": [string]
 }
 ```
 
@@ -253,28 +275,42 @@ A `Review object` is a JSON object with the following structure:
 | `/users/{userId}/watched/{movieId}` | DELETE | userId\<long\>, movieId\<long\>, token\<string\> or Authorization\<string\> | Path, Query/Header | 401 Unauthorized | Error: reason\<string\> | Invalid or missing token |
 | `/users/{userId}/watched/{movieId}` | DELETE | userId\<long\>, movieId\<long\>, token\<string\> or Authorization\<string\> | Path, Query/Header | 403 Forbidden | Error: reason\<string\> | User is not authorized to modify this watched list |
 
-### User Preferences Management
+### User Favorites Management
 
 | Endpoint | Method | Parameters | Parameter Location | Status Code | Response | Description |
 |----------|--------|------------|-------------------|-------------|----------|-------------|
-| `/users/{userId}/preferences/genres` | POST | userId\<long\>, UserPreferencesGenresDTO\<object\>, Authorization\<string\> | Path, Body, Header | 200 OK | UserPreferencesGenresDTO | Save genre preferences for a user |
-| `/users/{userId}/preferences/genres` | POST | userId\<long\>, UserPreferencesGenresDTO\<object\>, Authorization\<string\> | Path, Body, Header | 400 Bad Request | Error: reason\<string\> | Invalid genre (not in TMDb list) |
-| `/users/{userId}/preferences/genres` | POST | userId\<long\>, UserPreferencesGenresDTO\<object\>, Authorization\<string\> | Path, Body, Header | 404 Not Found | Error: reason\<string\> | User not found |
-| `/users/{userId}/preferences/genres` | POST | userId\<long\>, UserPreferencesGenresDTO\<object\>, Authorization\<string\> | Path, Body, Header | 401 Unauthorized | Error: reason\<string\> | Invalid or missing token |
-| `/users/{userId}/preferences/genres` | POST | userId\<long\>, UserPreferencesGenresDTO\<object\>, Authorization\<string\> | Path, Body, Header | 403 Forbidden | Error: reason\<string\> | User is not authorized to modify these preferences |
-| `/users/{userId}/preferences/genres` | GET | userId\<long\> | Path | 200 OK | { "genreIds": ["Action", "Adventure"] } | Get genre preferences for a user |
-| `/users/{userId}/preferences/genres` | GET | userId\<long\> | Path | 401 Unauthorized | Error: reason\<string\> | Invalid or missing token |
-| `/users/{userId}/preferences/genres` | GET | userId\<long\> | Path | 404 Not Found | Error: reason\<string\> | User not found |
-| `/users/{userId}/preferences/favorite-movie` | POST | userId\<long\>, UserPreferencesFavoriteMovieDTO\<object\>, Authorization\<string\> | Path, Body, Header | 200 OK | UserPreferencesFavoriteMovieDTO | Save favorite movie for a user |
-| `/users/{userId}/preferences/favorite-movie` | POST | userId\<long\>, UserPreferencesFavoriteMovieDTO\<object\>, Authorization\<string\> | Path, Body, Header | 404 Not Found | Error: reason\<string\> | User not found |
-| `/users/{userId}/preferences/favorite-movie` | POST | userId\<long\>, UserPreferencesFavoriteMovieDTO\<object\>, Authorization\<string\> | Path, Body, Header | 401 Unauthorized | Error: reason\<string\> | Invalid or missing token |
-| `/users/{userId}/preferences/favorite-movie` | POST | userId\<long\>, UserPreferencesFavoriteMovieDTO\<object\>, Authorization\<string\> | Path, Body, Header | 403 Forbidden | Error: reason\<string\> | User is not authorized to modify these preferences |
-| `/users/{userId}/preferences/favorite-movie` | GET | userId\<long\> | Path | 200 OK | { "movie": { ...Movie fields... } } | Get favorite movie for a user |
-| `/users/{userId}/preferences/favorite-movie` | GET | userId\<long\> | Path | 401 Unauthorized | Error: reason\<string\> | Invalid or missing token |
-| `/users/{userId}/preferences/favorite-movie` | GET | userId\<long\> | Path | 404 Not Found | Error: reason\<string\> | User not found |
-| `/users/{userId}/preferences` | GET | userId\<long\> | Path | 200 OK | { "favoriteGenres": ["Action", "Adventure"], "favoriteMovie": { ...Movie fields... } } | Get all preferences for a user |
-| `/users/{userId}/preferences` | GET | userId\<long\> | Path | 401 Unauthorized | Error: reason\<string\> | Invalid or missing token |
-| `/users/{userId}/preferences` | GET | userId\<long\> | Path | 404 Not Found | Error: reason\<string\> | User not found |
+| `/users/{userId}/favorites/genres` | POST | UserFavoritesGenresDTO\<object\>, Authorization\<string\> | Body, Header | 200 OK | UserFavoritesGenresDTO | Save genre favorites for a user |
+| `/users/{userId}/favorites/genres` | POST | UserFavoritesGenresDTO\<object\>, Authorization\<string\> | Body, Header | 400 Bad Request | Error: reason\<string\> | Invalid genre (not in TMDb list) |
+| `/users/{userId}/favorites/genres` | POST | UserFavoritesGenresDTO\<object\>, Authorization\<string\> | Body, Header | 404 Not Found | Error: reason\<string\> | User not found |
+| `/users/{userId}/favorites/genres` | POST | UserFavoritesGenresDTO\<object\>, Authorization\<string\> | Body, Header | 401 Unauthorized | Error: reason\<string\> | Invalid or missing token |
+| `/users/{userId}/favorites/genres` | POST | UserFavoritesGenresDTO\<object\>, Authorization\<string\> | Body, Header | 403 Forbidden | Error: reason\<string\> | User is not authorized to modify these favorites |
+| `/users/{userId}/favorites/genres` | GET | - | - | 200 OK | { "genreIds": ["Action", "Adventure"] } | Get genre favorites for a user |
+| `/users/{userId}/favorites/genres` | GET | - | - | 401 Unauthorized | Error: reason\<string\> | Invalid or missing token |
+| `/users/{userId}/favorites/genres` | GET | - | - | 404 Not Found | Error: reason\<string\> | User not found |
+| `/users/{userId}/favorites/movie` | POST | UserFavoritesMovieDTO\<object\>, Authorization\<string\> | Body, Header | 200 OK | UserFavoritesMovieDTO | Save favorite movie for a user |
+| `/users/{userId}/favorites/movie` | POST | UserFavoritesMovieDTO\<object\>, Authorization\<string\> | Body, Header | 404 Not Found | Error: reason\<string\> | User not found |
+| `/users/{userId}/favorites/movie` | POST | UserFavoritesMovieDTO\<object\>, Authorization\<string\> | Body, Header | 401 Unauthorized | Error: reason\<string\> | Invalid or missing token |
+| `/users/{userId}/favorites/movie` | POST | UserFavoritesMovieDTO\<object\>, Authorization\<string\> | Body, Header | 403 Forbidden | Error: reason\<string\> | User is not authorized to modify these favorites |
+| `/users/{userId}/favorites/movie` | GET | - | - | 200 OK | { "movie": { ...Movie fields... } } | Get favorite movie for a user |
+| `/users/{userId}/favorites/movie` | GET | - | - | 401 Unauthorized | Error: reason\<string\> | Invalid or missing token |
+| `/users/{userId}/favorites/movie` | GET | - | - | 404 Not Found | Error: reason\<string\> | User not found |
+| `/users/{userId}/favorites/actors` | POST | UserFavoritesActorsDTO\<object\>, Authorization\<string\> | Body, Header | 200 OK | UserFavoritesActorsDTO | Save favorite actors for a user |
+| `/users/{userId}/favorites/actors` | POST | UserFavoritesActorsDTO\<object\>, Authorization\<string\> | Body, Header | 404 Not Found | Error: reason\<string\> | User not found |
+| `/users/{userId}/favorites/actors` | POST | UserFavoritesActorsDTO\<object\>, Authorization\<string\> | Body, Header | 401 Unauthorized | Error: reason\<string\> | Invalid or missing token |
+| `/users/{userId}/favorites/actors` | POST | UserFavoritesActorsDTO\<object\>, Authorization\<string\> | Body, Header | 403 Forbidden | Error: reason\<string\> | User is not authorized to modify these favorites |
+| `/users/{userId}/favorites/actors` | GET | - | - | 200 OK | { "actorIds": ["Leonardo DiCaprio", "Tom Hanks"] } | Get favorite actors for a user |
+| `/users/{userId}/favorites/actors` | GET | - | - | 401 Unauthorized | Error: reason\<string\> | Invalid or missing token |
+| `/users/{userId}/favorites/actors` | GET | - | - | 404 Not Found | Error: reason\<string\> | User not found |
+| `/users/{userId}/favorites/directors` | POST | UserFavoritesDirectorsDTO\<object\>, Authorization\<string\> | Body, Header | 200 OK | UserFavoritesDirectorsDTO | Save favorite directors for a user |
+| `/users/{userId}/favorites/directors` | POST | UserFavoritesDirectorsDTO\<object\>, Authorization\<string\> | Body, Header | 404 Not Found | Error: reason\<string\> | User not found |
+| `/users/{userId}/favorites/directors` | POST | UserFavoritesDirectorsDTO\<object\>, Authorization\<string\> | Body, Header | 401 Unauthorized | Error: reason\<string\> | Invalid or missing token |
+| `/users/{userId}/favorites/directors` | POST | UserFavoritesDirectorsDTO\<object\>, Authorization\<string\> | Body, Header | 403 Forbidden | Error: reason\<string\> | User is not authorized to modify these favorites |
+| `/users/{userId}/favorites/directors` | GET | - | - | 200 OK | { "directorIds": ["Christopher Nolan", "Steven Spielberg"] } | Get favorite directors for a user |
+| `/users/{userId}/favorites/directors` | GET | - | - | 401 Unauthorized | Error: reason\<string\> | Invalid or missing token |
+| `/users/{userId}/favorites/directors` | GET | - | - | 404 Not Found | Error: reason\<string\> | User not found |
+| `/users/{userId}/favorites` | GET | - | - | 200 OK | { "favoriteGenres": ["Action", "Adventure"], "favoriteMovie": { ...Movie fields... }, "favoriteActors": ["Leonardo DiCaprio", "Tom Hanks"], "favoriteDirectors": ["Christopher Nolan", "Steven Spielberg"] } | Get all favorites for a user |
+| `/users/{userId}/favorites` | GET | - | - | 401 Unauthorized | Error: reason\<string\> | Invalid or missing token |
+| `/users/{userId}/favorites` | GET | - | - | 404 Not Found | Error: reason\<string\> | User not found |
 
 ### Movie Management
 

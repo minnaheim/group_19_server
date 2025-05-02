@@ -2,10 +2,6 @@ package ch.uzh.ifi.hase.soprafs25.entity;
 
 import java.io.Serializable;
 import java.util.*;
-import java.util.Map;
-import java.util.HashMap;
-import javax.persistence.MapKeyColumn;
-
 import javax.persistence.*;
 
 import ch.uzh.ifi.hase.soprafs25.constant.UserStatus;
@@ -61,14 +57,12 @@ public class User implements Serializable {
   @ElementCollection
   @CollectionTable(name = "user_favorite_actors", joinColumns = @JoinColumn(name = "user_id"))
   @Column(name = "actor")
-  private Map<String, String> favoriteActors = new HashMap<>();
+  private List<String> favoriteActors;
 
   @ElementCollection
   @CollectionTable(name = "user_favorite_directors", joinColumns = @JoinColumn(name = "user_id"))
-  @MapKeyColumn(name = "directorId")
   @Column(name = "director_name")
-  private Map<String, String> favoriteDirectors = new HashMap<>();
-
+  private List<String> favoriteDirectors;
 
   @ManyToMany
   @JoinTable(
@@ -194,20 +188,34 @@ public class User implements Serializable {
         this.favoriteMovie = favoriteMovie;
     }
 
-    public Map<String, String> getFavoriteActors() {
+    public List<String> getFavoriteActors() {
         return favoriteActors;
     }
 
-    public void setFavoriteActors(Map<String, String> favoriteActors) {
+    public void setFavoriteActors(List<String> favoriteActors) {
         this.favoriteActors = favoriteActors;
     }
+    
+    /**
+     * Overloaded setter to accept Map for backward compatibility (keys are actor IDs)
+     */
+    public void setFavoriteActors(Map<String, String> favoriteActorsMap) {
+        this.favoriteActors = new ArrayList<>(favoriteActorsMap.keySet());
+    }
 
-    public Map<String, String> getFavoriteDirectors() {
+    public List<String> getFavoriteDirectors() {
         return favoriteDirectors;
     }
 
-    public void setFavoriteDirectors(Map<String, String> favoriteDirectors) {
+    public void setFavoriteDirectors(List<String> favoriteDirectors) {
         this.favoriteDirectors = favoriteDirectors;
+    }
+    
+    /**
+     * Overloaded setter to accept Map for backward compatibility (keys are director IDs)
+     */
+    public void setFavoriteDirectors(Map<String, String> favoriteDirectorsMap) {
+        this.favoriteDirectors = new ArrayList<>(favoriteDirectorsMap.keySet());
     }
 
     public Set<User> getFriends() {

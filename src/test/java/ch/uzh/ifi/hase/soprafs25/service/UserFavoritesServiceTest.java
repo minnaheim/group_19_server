@@ -24,7 +24,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
-class UserPreferencesServiceTest {
+class UserFavoritesServiceTest {
 
     @Mock
     private UserRepository userRepository;
@@ -36,7 +36,7 @@ class UserPreferencesServiceTest {
     private TMDbService tmdbService;
 
     @InjectMocks
-    private UserPreferencesService userPreferencesService;
+    private UserFavoritesService UserFavoritesService;
 
     private User testUser;
     private Movie testMovie;
@@ -76,7 +76,7 @@ class UserPreferencesServiceTest {
     @Test
     void getAllGenres_ReturnsListOfGenres() {
         // Act
-        List<Map<String, Object>> genres = userPreferencesService.getAllGenres();
+        List<Map<String, Object>> genres = UserFavoritesService.getAllGenres();
 
         // Assert
         assertEquals(3, genres.size());
@@ -85,12 +85,12 @@ class UserPreferencesServiceTest {
     }
 
     @Test
-    void saveGenrePreferences_SavesGenres() {
+    void saveGenreFavorites_SavesGenres() {
         // Arrange
         List<String> genreNames = List.of("Action", "Adventure");
 
         // Act
-        List<String> result = userPreferencesService.saveGenrePreferences(1L, genreNames, "validToken");
+        List<String> result = UserFavoritesService.saveGenreFavorites(1L, genreNames, "validToken");
 
         // Assert
         assertEquals(genreNames, result);
@@ -98,23 +98,23 @@ class UserPreferencesServiceTest {
     }
 
     @Test
-    void saveGenrePreferences_ThrowsForInvalidToken() {
+    void saveGenreFavorites_ThrowsForInvalidToken() {
         // Arrange
         List<String> genreNames = List.of("Action", "Adventure");
 
         // Act & Assert
         assertThrows(ResponseStatusException.class, () -> {
-            userPreferencesService.saveGenrePreferences(1L, genreNames, "invalidToken");
+            UserFavoritesService.saveGenreFavorites(1L, genreNames, "invalidToken");
         });
     }
 
     @Test
-    void getGenrePreferences_ReturnsEmptyListIfNotSet() {
+    void getGenreFavorites_ReturnsEmptyListIfNotSet() {
         // Arrange
         testUser.setFavoriteGenres(null);
 
         // Act
-        List<String> result = userPreferencesService.getGenrePreferences(1L);
+        List<String> result = UserFavoritesService.getGenreFavorites(1L);
 
         // Assert
         assertNotNull(result);
@@ -122,13 +122,13 @@ class UserPreferencesServiceTest {
     }
 
     @Test
-    void getGenrePreferences_ReturnsSavedGenres() {
+    void getGenreFavorites_ReturnsSavedGenres() {
         // Arrange
         List<String> genreNames = List.of("Action", "Adventure");
         testUser.setFavoriteGenres(genreNames);
 
         // Act
-        List<String> result = userPreferencesService.getGenrePreferences(1L);
+        List<String> result = UserFavoritesService.getGenreFavorites(1L);
 
         // Assert
         assertEquals(genreNames, result);
@@ -137,7 +137,7 @@ class UserPreferencesServiceTest {
     @Test
     void saveFavoriteMovie_SavesMovie() {
         // Act
-        Movie result = userPreferencesService.saveFavoriteMovie(1L, 123L, "validToken");
+        Movie result = UserFavoritesService.saveFavoriteMovie(1L, 123L, "validToken");
 
         // Assert
         assertEquals(testMovie.getMovieId(), result.getMovieId());
@@ -148,7 +148,7 @@ class UserPreferencesServiceTest {
     void saveFavoriteMovie_ThrowsForInvalidToken() {
         // Act & Assert
         assertThrows(ResponseStatusException.class, () -> {
-            userPreferencesService.saveFavoriteMovie(1L, 123L, "invalidToken");
+            UserFavoritesService.saveFavoriteMovie(1L, 123L, "invalidToken");
         });
     }
 
@@ -158,7 +158,7 @@ class UserPreferencesServiceTest {
         testUser.setFavoriteMovie(null);
 
         // Act
-        Movie result = userPreferencesService.getFavoriteMovie(1L);
+        Movie result = UserFavoritesService.getFavoriteMovie(1L);
 
         // Assert
         assertNull(result);
@@ -170,7 +170,7 @@ class UserPreferencesServiceTest {
         testUser.setFavoriteMovie(testMovie);
 
         // Act
-        Movie result = userPreferencesService.getFavoriteMovie(1L);
+        Movie result = UserFavoritesService.getFavoriteMovie(1L);
 
         // Assert
         assertEquals(testMovie, result);

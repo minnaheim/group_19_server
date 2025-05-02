@@ -19,22 +19,22 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * UserPreferencesService
- * This class is responsible for handling operations related to user preferences
- * such as genre preferences and favorite movie.
+ * UserFavoritesService
+ * This class is responsible for handling operations related to user favorites
+ * such as genre favorites and favorite movie.
  */
 @Service
 @Transactional
-public class UserPreferencesService {
+public class UserFavoritesService {
 
-    private final Logger log = LoggerFactory.getLogger(UserPreferencesService.class);
+    private final Logger log = LoggerFactory.getLogger(UserFavoritesService.class);
     private final UserRepository userRepository;
     private final MovieService movieService;
     private final TMDbService tmdbService;
     private final ObjectMapper objectMapper;
 
     @Autowired
-    public UserPreferencesService(UserRepository userRepository, 
+    public UserFavoritesService(UserRepository userRepository, 
                                  MovieService movieService,
                                  TMDbService tmdbService) {
         this.userRepository = userRepository;
@@ -65,15 +65,15 @@ public class UserPreferencesService {
     }
 
     /**
-     * Save genre preferences for a user
+     * Save genre favorites for a user
      * 
      * @param userId the ID of the user
      * @param genreNames list of genre names
      * @param requesterToken the token of the user making the request (for authorization)
-     * @return the updated list of genre preferences
+     * @return the updated list of genre favorites
      */
-    public List<String> saveGenrePreferences(Long userId, List<String> genreNames, String requesterToken) {
-        log.info("saveGenrePreferences called with userId={}, genres={}", userId, genreNames);
+    public List<String> saveGenreFavorites(Long userId, List<String> genreNames, String requesterToken) {
+        log.info("saveGenreFavorites called with userId={}, genres={}", userId, genreNames);
         User user = getUserById(userId);
         log.info("User found: {}", user != null ? user.getUsername() : "null");
 
@@ -85,7 +85,7 @@ public class UserPreferencesService {
         validateGenres(genreNames);
         log.info("Genres validated: {}", genreNames);
 
-        // Save genre preferences
+        // Save genre favorites
         user.setFavoriteGenres(genreNames);
         userRepository.save(user);
         log.info("Favorite genres saved for user {}: {}", user.getUsername(), genreNames);
@@ -94,12 +94,12 @@ public class UserPreferencesService {
     }
 
     /**
-     * Get genre preferences for a user
+     * Get genre favorites for a user
      * 
      * @param userId the ID of the user
-     * @return list of genre preferences
+     * @return list of genre favorites
      */
-    public List<String> getGenrePreferences(Long userId) {
+    public List<String> getGenreFavorites(Long userId) {
         User user = getUserById(userId);
         if (user.getFavoriteGenres() == null) {
             user.setFavoriteGenres(new ArrayList<>());
@@ -139,6 +139,68 @@ public class UserPreferencesService {
     }
 
     /**
+     * Save favorite actors for a user (list clears all if empty)
+     */
+    public List<String> saveFavoriteActors(Long userId, List<String> actorList, String requesterToken) {
+        log.info("saveFavoriteActors called with userId={}, actors={}", userId, actorList);
+        User user = getUserById(userId);
+        authorizeUserAction(user, requesterToken);
+        if (actorList == null) {
+            user.setFavoriteActors(new ArrayList<>());
+        } else {
+            user.setFavoriteActors(actorList);
+        }
+        userRepository.save(user);
+        return user.getFavoriteActors();
+    }
+
+    /**
+     * Get favorite actors for a user
+     *
+     * @param userId the ID of the user
+     * @return list of favorite actors, empty if none set
+     */
+    public List<String> getFavoriteActors(Long userId) {
+        User user = getUserById(userId);
+        if (user.getFavoriteActors() == null) {
+            user.setFavoriteActors(new ArrayList<>());
+            userRepository.save(user);
+        }
+        return user.getFavoriteActors();
+    }
+
+    /**
+     * Save favorite directors for a user (list clears all if empty)
+     */
+    public List<String> saveFavoriteDirectors(Long userId, List<String> directorList, String requesterToken) {
+        log.info("saveFavoriteDirectors called with userId={}, directors={}", userId, directorList);
+        User user = getUserById(userId);
+        authorizeUserAction(user, requesterToken);
+        if (directorList == null) {
+            user.setFavoriteDirectors(new ArrayList<>());
+        } else {
+            user.setFavoriteDirectors(directorList);
+        }
+        userRepository.save(user);
+        return user.getFavoriteDirectors();
+    }
+
+    /**
+     * Get favorite directors for a user
+     *
+     * @param userId the ID of the user
+     * @return list of favorite directors, empty if none set
+     */
+    public List<String> getFavoriteDirectors(Long userId) {
+        User user = getUserById(userId);
+        if (user.getFavoriteDirectors() == null) {
+            user.setFavoriteDirectors(new ArrayList<>());
+            userRepository.save(user);
+        }
+        return user.getFavoriteDirectors();
+    }
+
+    /**
      * Helper method to validate genres against TMDb list
      */
     private void validateGenres(List<String> genreNames) {
@@ -172,7 +234,7 @@ public class UserPreferencesService {
 
     /**
      * Helper method to authorize a user action
-     * Ensures that only the owner of the account can modify their preferences
+     * Ensures that only the owner of the account can modify their favorites
      */
     private void authorizeUserAction(User user, String requesterToken) {
         // Get the user making the request
@@ -187,7 +249,7 @@ public class UserPreferencesService {
         // Check if requester is the owner of the account
         if (!requester.getUserId().equals(user.getUserId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, 
-                "You are not authorized to modify this user's preferences");
+                "You are not authorized to modify this user's favorites");
         }
     }
 }
