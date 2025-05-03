@@ -43,6 +43,10 @@ jobs:
         run: |
           yq -i '.env_variables.TMDB_API_TOKEN = "${{ secrets.TMDB_API_TOKEN }}"' app.yaml
 
+      - name: Add DB password to existing env variables to app.yaml
+        run: |
+          yq -i '.env_variables.DB_PASSWORD = "${{ secrets.DB_PASSWORD }}"' app.yaml
+
       - name: Deploy to App Engine
         id: deploy
         uses: google-github-actions/deploy-appengine@v0.2.0
