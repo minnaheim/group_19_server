@@ -14,6 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.test.context.ActiveProfiles;
 
 import ch.uzh.ifi.hase.soprafs25.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs25.entity.FriendRequest;
@@ -21,10 +22,10 @@ import ch.uzh.ifi.hase.soprafs25.entity.User;
 import ch.uzh.ifi.hase.soprafs25.repository.FriendRequestRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
 
-
 @WebAppConfiguration
 @SpringBootTest
 @Transactional
+@ActiveProfiles("test")
 public class FriendRequestServiceIntegrationTest {
 
     @Autowired
@@ -41,7 +42,7 @@ public class FriendRequestServiceIntegrationTest {
 
     @BeforeEach
     public void setup() {
-        // clean up 
+        // clean up
         friendRequestRepository.deleteAll();
         userRepository.deleteAll();
         // create test users
@@ -84,7 +85,8 @@ public class FriendRequestServiceIntegrationTest {
         assertEquals(request.getRequestId(), pendingSent.get(0).getRequestId());
 
         // Accept friend request
-        FriendRequest acceptedRequest = friendRequestService.acceptFriendRequest(request.getRequestId(), receiver.getUserId());
+        FriendRequest acceptedRequest = friendRequestService.acceptFriendRequest(request.getRequestId(),
+                receiver.getUserId());
         assertTrue(acceptedRequest.isAccepted());
         assertNotNull(acceptedRequest.getResponseTime());
 
@@ -99,14 +101,15 @@ public class FriendRequestServiceIntegrationTest {
         assertTrue(friendRequestService.getPendingSentRequests(sender.getUserId()).isEmpty());
     }
 
-    // friend request rejection workflow test 
+    // friend request rejection workflow test
     @Test
     void friendRequestRejection_Success() {
         // send friend request
         FriendRequest request = friendRequestService.sendFriendRequest(sender.getUserId(), receiver.getUserId());
 
         // reject friend request
-        FriendRequest rejectedRequest = friendRequestService.rejectFriendRequest(request.getRequestId(), receiver.getUserId());
+        FriendRequest rejectedRequest = friendRequestService.rejectFriendRequest(request.getRequestId(),
+                receiver.getUserId());
         assertFalse(rejectedRequest.isAccepted());
         assertNotNull(rejectedRequest.getResponseTime());
 
@@ -123,20 +126,18 @@ public class FriendRequestServiceIntegrationTest {
         // send first friend request
         friendRequestService.sendFriendRequest(sender.getUserId(), receiver.getUserId());
         // Attempt to send duplicate request should result in an exception
-        assertThrows(ResponseStatusException.class, () -> 
-            friendRequestService.sendFriendRequest(sender.getUserId(), receiver.getUserId())
-        );
+        assertThrows(ResponseStatusException.class,
+                () -> friendRequestService.sendFriendRequest(sender.getUserId(), receiver.getUserId()));
     }
 
     // test for checking validation of "self-sent" request
     @Test
     void selfFriendRequest_ThrowsException() {
-        assertThrows(ResponseStatusException.class, () ->
-            friendRequestService.sendFriendRequest(sender.getUserId(), sender.getUserId())
-        );
+        assertThrows(ResponseStatusException.class,
+                () -> friendRequestService.sendFriendRequest(sender.getUserId(), sender.getUserId()));
     }
 
-    // test for deleting (cancelling) a request  - should success
+    // test for deleting (cancelling) a request - should success
     @Test
     void deleteRequest_Success() {
         // send friend request
@@ -156,22 +157,19 @@ public class FriendRequestServiceIntegrationTest {
         FriendRequest request = friendRequestService.sendFriendRequest(sender.getUserId(), receiver.getUserId());
 
         // attempt to delete request as non-sender
-        assertThrows(ResponseStatusException.class, () ->
-            friendRequestService.deleteRequest(request.getRequestId(), receiver.getUserId())
-        );
+        assertThrows(ResponseStatusException.class,
+                () -> friendRequestService.deleteRequest(request.getRequestId(), receiver.getUserId()));
     }
-
 
     // same logic for accepting/rejection as non-receiver
     @Test
     void acceptRequest_NotAuthorized() {
-        //send friend request
+        // send friend request
         FriendRequest request = friendRequestService.sendFriendRequest(sender.getUserId(), receiver.getUserId());
 
         // attempt to accept request as non-receiver
-        assertThrows(ResponseStatusException.class, () ->
-            friendRequestService.acceptFriendRequest(request.getRequestId(), sender.getUserId())
-        );
+        assertThrows(ResponseStatusException.class,
+                () -> friendRequestService.acceptFriendRequest(request.getRequestId(), sender.getUserId()));
     }
 
     @Test
@@ -180,8 +178,7 @@ public class FriendRequestServiceIntegrationTest {
         FriendRequest request = friendRequestService.sendFriendRequest(sender.getUserId(), receiver.getUserId());
 
         // attempt to reject request as non-receiver
-        assertThrows(ResponseStatusException.class, () ->
-            friendRequestService.rejectFriendRequest(request.getRequestId(), sender.getUserId())
-        );
+        assertThrows(ResponseStatusException.class,
+                () -> friendRequestService.rejectFriendRequest(request.getRequestId(), sender.getUserId()));
     }
-} 
+}

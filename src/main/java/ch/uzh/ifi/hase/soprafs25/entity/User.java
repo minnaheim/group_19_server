@@ -17,160 +17,146 @@ import ch.uzh.ifi.hase.soprafs25.constant.UserStatus;
  * the primary key
  */
 @Entity
-@Table(name = "USER")
+@Table(name = "APP_USER")
 public class User implements Serializable {
 
-  // private static final long serialVersionUID = 1L;
+    // private static final long serialVersionUID = 1L;
 
-  // user attributes
-  @Id
-  @GeneratedValue
-  private Long userId;
+    // user attributes
+    @Id
+    @GeneratedValue
+    private Long userId;
 
-  @Column(nullable = false, unique = true)
-  private String username;
+    @Column(nullable = false, unique = true)
+    private String username;
 
-  @Column(nullable = false, unique = true)
-  private String email;
+    @Column(nullable = false, unique = true)
+    private String email;
 
-  @Column(nullable = false)
-  private String password;
-  
-  @Column(unique = true)
-  private String token;
+    @Column(nullable = false)
+    private String password;
 
-  @Column(nullable = false)
-  private UserStatus status;
+    @Column(unique = true)
+    private String token;
 
-  @Column
-  private String bio;
+    @Column(nullable = false)
+    private UserStatus status;
 
-  @ManyToOne
-  @JoinColumn(name = "favorite_movie_id")
-  private Movie favoriteMovie;
+    @Column
+    private String bio;
 
-  @ElementCollection
-  @CollectionTable(name = "user_favorite_genres", joinColumns = @JoinColumn(name = "user_id"))
-  @Column(name = "genre")
-  private List<String> favoriteGenres;
+    @ManyToOne
+    @JoinColumn(name = "favorite_movie_id")
+    private Movie favoriteMovie;
 
-  @ElementCollection
-  @CollectionTable(name = "user_favorite_actors", joinColumns = @JoinColumn(name = "user_id"))
-  @Column(name = "actor")
-  private List<String> favoriteActors;
+    @ElementCollection
+    @CollectionTable(name = "user_favorite_genres", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "genre")
+    private List<String> favoriteGenres;
 
-  @ElementCollection
-  @CollectionTable(name = "user_favorite_directors", joinColumns = @JoinColumn(name = "user_id"))
-  @Column(name = "director_name")
-  private List<String> favoriteDirectors;
+    @ElementCollection
+    @CollectionTable(name = "user_favorite_actors", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "actor")
+    private List<String> favoriteActors;
 
-  @ManyToMany
-  @JoinTable(
-          name = "user_watchlist",
-          joinColumns = @JoinColumn(name = "user_id"),
-          inverseJoinColumns = @JoinColumn(name = "movie_id")
-  )
-  private List<Movie> watchlist;
+    @ElementCollection
+    @CollectionTable(name = "user_favorite_directors", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "director_name")
+    private List<String> favoriteDirectors;
 
-  @ManyToMany
-  @JoinTable(
-          name = "user_watched_movies",
-          joinColumns = @JoinColumn(name = "user_id"),
-          inverseJoinColumns = @JoinColumn(name = "movie_id")
-  )
-  private List<Movie> watchedMovies;
-  ;
+    @ManyToMany
+    @JoinTable(name = "user_watchlist", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "movie_id"))
+    private List<Movie> watchlist;
 
-//  dealing with friends
-//  special separate table with users and their friends
+    @ManyToMany
+    @JoinTable(name = "user_watched_movies", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "movie_id"))
+    private List<Movie> watchedMovies;;
 
-  @ManyToMany
-  @JoinTable(
-    name = "USER_FRIENDS",
-    joinColumns = @JoinColumn(name = "user_id"),
-    inverseJoinColumns = @JoinColumn(name = "friend_id")
-  )
-  private Set<User> friends = new HashSet<>();
-  
-//   for sent requests
-  @OneToMany(mappedBy = "sender")
-  private Set<FriendRequest> sentFriendRequests = new HashSet<>();
-// for received
-  @OneToMany(mappedBy = "receiver")
-  private Set<FriendRequest> receivedFriendRequests = new HashSet<>();
+    // dealing with friends
+    // special separate table with users and their friends
 
-  
-  public Long getUserId() {
-      return userId;
-  }
+    @ManyToMany
+    @JoinTable(name = "USER_FRIENDS", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "friend_id"))
+    private Set<User> friends = new HashSet<>();
 
-  public void setUserId(Long userId) {
-      this.userId = userId;
-  }
+    // for sent requests
+    @OneToMany(mappedBy = "sender")
+    private Set<FriendRequest> sentFriendRequests = new HashSet<>();
+    // for received
+    @OneToMany(mappedBy = "receiver")
+    private Set<FriendRequest> receivedFriendRequests = new HashSet<>();
 
-  public String getUsername() {
-      return username;
-  }
+    public Long getUserId() {
+        return userId;
+    }
 
-  public void setUsername(String username) {
-      this.username = username;
-  }
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
 
-  public String getEmail() {
-      return email;
-  }
+    public String getUsername() {
+        return username;
+    }
 
-  public void setEmail(String email) {
-      this.email = email;
-  }
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
-  public String getPassword() {
-      return password;
-  }
+    public String getEmail() {
+        return email;
+    }
 
-  public void setPassword(String password) {
-      this.password = password;
-  }
+    public void setEmail(String email) {
+        this.email = email;
+    }
 
-  public String getBio() {
-      return bio;
-  }
+    public String getPassword() {
+        return password;
+    }
 
-  public void setBio(String bio) {
-      this.bio = bio;
-  }
+    public void setPassword(String password) {
+        this.password = password;
+    }
 
-  public List<Movie> getWatchlist() {
-      return watchlist;
-  }
+    public String getBio() {
+        return bio;
+    }
 
-  public void setWatchlist(List<Movie> watchlist) {
-      this.watchlist = watchlist;
-  }
+    public void setBio(String bio) {
+        this.bio = bio;
+    }
 
-  public List<Movie> getWatchedMovies() {
-      return watchedMovies;
-  }
+    public List<Movie> getWatchlist() {
+        return watchlist;
+    }
 
-  public void setWatchedMovies(List<Movie> watchedMovies) {
-      this.watchedMovies = watchedMovies;
-  }
+    public void setWatchlist(List<Movie> watchlist) {
+        this.watchlist = watchlist;
+    }
 
-  public String getToken() {
-      return token;
-  }
+    public List<Movie> getWatchedMovies() {
+        return watchedMovies;
+    }
 
-  public void setToken(String token) {
-      this.token = token;
-  }
+    public void setWatchedMovies(List<Movie> watchedMovies) {
+        this.watchedMovies = watchedMovies;
+    }
 
-  public UserStatus getStatus() {
-      return status;
-  }
+    public String getToken() {
+        return token;
+    }
 
-  public void setStatus(UserStatus status) {
-      this.status = status;
-  }
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    public UserStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(UserStatus status) {
+        this.status = status;
+    }
 
     public List<String> getFavoriteGenres() {
         return favoriteGenres;
@@ -195,9 +181,10 @@ public class User implements Serializable {
     public void setFavoriteActors(List<String> favoriteActors) {
         this.favoriteActors = favoriteActors;
     }
-    
+
     /**
-     * Overloaded setter to accept Map for backward compatibility (keys are actor IDs)
+     * Overloaded setter to accept Map for backward compatibility (keys are actor
+     * IDs)
      */
     public void setFavoriteActors(Map<String, String> favoriteActorsMap) {
         this.favoriteActors = new ArrayList<>(favoriteActorsMap.keySet());
@@ -210,9 +197,10 @@ public class User implements Serializable {
     public void setFavoriteDirectors(List<String> favoriteDirectors) {
         this.favoriteDirectors = favoriteDirectors;
     }
-    
+
     /**
-     * Overloaded setter to accept Map for backward compatibility (keys are director IDs)
+     * Overloaded setter to accept Map for backward compatibility (keys are director
+     * IDs)
      */
     public void setFavoriteDirectors(Map<String, String> favoriteDirectorsMap) {
         this.favoriteDirectors = new ArrayList<>(favoriteDirectorsMap.keySet());
@@ -221,7 +209,7 @@ public class User implements Serializable {
     public Set<User> getFriends() {
         return friends;
     }
-  
+
     public void setFriends(Set<User> friends) {
         this.friends = friends;
     }

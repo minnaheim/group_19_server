@@ -15,6 +15,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.transaction.annotation.Transactional;
 import ch.uzh.ifi.hase.soprafs25.constant.UserStatus;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -34,6 +35,7 @@ import static org.mockito.Mockito.when;
 @WebAppConfiguration
 @SpringBootTest
 @Transactional
+@ActiveProfiles("test")
 public class MovieServiceIntegrationTest {
 
     @Qualifier("userRepository")
@@ -153,8 +155,9 @@ public class MovieServiceIntegrationTest {
     }
 
     /**
-    * Test 4.2 - Verify TMDbService is called with correct parameters based on user favorites
-    */
+     * Test 4.2 - Verify TMDbService is called with correct parameters based on user
+     * favorites
+     */
     @Test
     public void testGetMovieSuggestions_TMDbServiceIntegration() {
         // 1. Create and save a user with favorites
@@ -231,7 +234,6 @@ public class MovieServiceIntegrationTest {
         user.setEmail("permutation" + new Random().nextInt(10000) + "@example.com");
         user.setStatus(UserStatus.ONLINE);
 
-
         // Set user favorites
         List<String> favoriteGenres = Arrays.asList("Action", "Comedy");
         Map<String, String> actorsMap = new HashMap<>();
@@ -252,13 +254,12 @@ public class MovieServiceIntegrationTest {
         List<Movie> popularMovies = Arrays.asList(
                 createTestMovie(301, "Popular Movie 1"),
                 createTestMovie(302, "Popular Movie 2"),
-                createTestMovie(303, "Popular Movie 3")
-        );
+                createTestMovie(303, "Popular Movie 3"));
 
-        Mockito.when(tmdbService.searchMovies(Mockito.argThat(params ->
-                        (params.getGenres() == null || params.getGenres().isEmpty()) &&
-                                (params.getActors() == null || params.getActors().isEmpty()) &&
-                                (params.getDirectors() == null || params.getDirectors().isEmpty()))))
+        Mockito.when(tmdbService
+                .searchMovies(Mockito.argThat(params -> (params.getGenres() == null || params.getGenres().isEmpty()) &&
+                        (params.getActors() == null || params.getActors().isEmpty()) &&
+                        (params.getDirectors() == null || params.getDirectors().isEmpty()))))
                 .thenReturn(popularMovies);
 
         // 3. Call the service method

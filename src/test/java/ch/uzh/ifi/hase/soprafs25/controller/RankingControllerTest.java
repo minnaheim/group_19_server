@@ -41,10 +41,12 @@ import ch.uzh.ifi.hase.soprafs25.service.RankingService;
 
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import static org.mockito.Mockito.doReturn;
+import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@ActiveProfiles("test")
 class RankingControllerTest {
 
     @Autowired
@@ -85,7 +87,8 @@ class RankingControllerTest {
 
     @BeforeEach
     void setupDatabase() {
-        // Clean up before test - @Transactional handles rollback, but explicit delete can be safer
+        // Clean up before test - @Transactional handles rollback, but explicit delete
+        // can be safer
         userMovieRankingRepository.deleteAll();
         rankingResultRepository.deleteAll();
         rankingSubmissionLogRepository.deleteAll();
@@ -101,7 +104,7 @@ class RankingControllerTest {
         testUser.setPassword("password"); // Assuming password is required
         testUser.setEmail("rankcontroller@example.com");
         testUser.setStatus(UserStatus.ONLINE);
-        testUser.setToken("rankToken");   // Assuming token is required
+        testUser.setToken("rankToken"); // Assuming token is required
         testUser = userRepository.saveAndFlush(testUser);
 
         testUser2 = new User();
@@ -109,7 +112,7 @@ class RankingControllerTest {
         testUser2.setPassword("password"); // Assuming password is required
         testUser2.setEmail("rankcontroller2@example.com");
         testUser2.setStatus(UserStatus.ONLINE);
-        testUser2.setToken("rankToken2");   // Assuming token is required
+        testUser2.setToken("rankToken2"); // Assuming token is required
         testUser2 = userRepository.saveAndFlush(testUser2);
 
         // Create test group
@@ -154,20 +157,20 @@ class RankingControllerTest {
                 createSubmitDTO(movie2.getMovieId(), 2),
                 createSubmitDTO(movie3.getMovieId(), 3),
                 createSubmitDTO(movie4.getMovieId(), 4),
-                createSubmitDTO(movie5.getMovieId(), 5)
-        );
+                createSubmitDTO(movie5.getMovieId(), 5));
 
         // Perform POST request
         mockMvc.perform(post("/groups/{groupId}/users/{userId}/rankings", testGroup.getGroupId(), testUser.getUserId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(rankings)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(rankings)))
                 .andExpect(status().isNoContent()); // 204 No Content on success
 
         // Verify data was saved (check UserMovieRanking and RankingSubmissionLog)
         List<UserMovieRanking> savedRankings = userMovieRankingRepository.findByUserAndGroup(testUser, testGroup);
         assertEquals(5, savedRankings.size(), "Expected 5 rankings to be saved for the user in the group");
         // Check submission log for the user only, as it doesn't store group directly
-        assertFalse(rankingSubmissionLogRepository.findByUser(testUser).isEmpty(), "Submission log should exist for the user");
+        assertFalse(rankingSubmissionLogRepository.findByUser(testUser).isEmpty(),
+                "Submission log should exist for the user");
     }
 
     @Test
@@ -179,8 +182,8 @@ class RankingControllerTest {
         List<RankingSubmitDTO> rankings = List.of(createSubmitDTO(movie1.getMovieId(), 1)); // Dummy payload
 
         mockMvc.perform(post("/groups/{groupId}/users/{userId}/rankings", testGroup.getGroupId(), nonExistentUserId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(rankings))) // Use correct path
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(rankings))) // Use correct path
                 .andExpect(status().isNotFound()) // Expect 404 Not Found
                 .andExpect(jsonPath("$.message", containsString("User with ID " + nonExistentUserId + " not found")));
     }
@@ -190,20 +193,21 @@ class RankingControllerTest {
         // Set group phase to VOTING
         testGroup.setPhase(Group.GroupPhase.VOTING);
         groupRepository.saveAndFlush(testGroup);
-         // Invalid: Correct size (5), but duplicate rank 3
-         List<RankingSubmitDTO> rankings = List.of(
-                 createSubmitDTO(movie1.getMovieId(), 1),
-                 createSubmitDTO(movie2.getMovieId(), 2),
-                 createSubmitDTO(movie3.getMovieId(), 3),
-                 createSubmitDTO(movie4.getMovieId(), 3), // Duplicate rank
-                 createSubmitDTO(movie5.getMovieId(), 4)
-         );
+        // Invalid: Correct size (5), but duplicate rank 3
+        List<RankingSubmitDTO> rankings = List.of(
+                createSubmitDTO(movie1.getMovieId(), 1),
+                createSubmitDTO(movie2.getMovieId(), 2),
+                createSubmitDTO(movie3.getMovieId(), 3),
+                createSubmitDTO(movie4.getMovieId(), 3), // Duplicate rank
+                createSubmitDTO(movie5.getMovieId(), 4));
 
         mockMvc.perform(post("/groups/{groupId}/users/{userId}/rankings", testGroup.getGroupId(), testUser.getUserId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(rankings))) // Use correct path
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(rankings))) // Use correct path
                 .andExpect(status().isBadRequest()) // Expect 400 Bad Request
-                .andExpect(jsonPath("$.message", containsString("Invalid ranking: Duplicate rank"))); // Check actual error message if known
+                .andExpect(jsonPath("$.message", containsString("Invalid ranking: Duplicate rank"))); // Check actual
+                                                                                                      // error message
+                                                                                                      // if known
     }
 
     // --- Tests for GET /groups/{groupId}/rankings/result ---
@@ -217,17 +221,17 @@ class RankingControllerTest {
         RankingResult dummyResult = new RankingResult();
         dummyResult.setGroup(testGroup); // Associate with the test group
         dummyResult.setWinningMovie(movie1); // Correct setter
-        dummyResult.setAverageRank(1.0);     // Set required non-null field
+        dummyResult.setAverageRank(1.0); // Set required non-null field
         dummyResult.setCalculationTimestamp(LocalDateTime.now()); // Correct setter
         rankingResultRepository.saveAndFlush(dummyResult);
 
         // Act & Assert
         mockMvc.perform(get("/groups/{groupId}/rankings/result", testGroup.getGroupId())
-                        .contentType(MediaType.APPLICATION_JSON))
+                .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk()) // Expect 200 OK
-                .andExpect(jsonPath("$.winningMovie.movieId").value(movie1.getMovieId())) 
-                .andExpect(jsonPath("$.winningMovie.title").value(movie1.getTitle()));  
-                // Add more assertions as needed (e.g., calculationTime)
+                .andExpect(jsonPath("$.winningMovie.movieId").value(movie1.getMovieId()))
+                .andExpect(jsonPath("$.winningMovie.title").value(movie1.getTitle()));
+        // Add more assertions as needed (e.g., calculationTime)
     }
 
     @Test
@@ -235,11 +239,12 @@ class RankingControllerTest {
         // Set group phase to RESULTS
         testGroup.setPhase(Group.GroupPhase.RESULTS);
         groupRepository.saveAndFlush(testGroup);
-        // Arrange: Ensure no results exist for this group (done by @Transactional and setup)
+        // Arrange: Ensure no results exist for this group (done by @Transactional and
+        // setup)
 
         // Act & Assert
         mockMvc.perform(get("/groups/{groupId}/rankings/result", testGroup.getGroupId())
-                        .contentType(MediaType.APPLICATION_JSON))
+                .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound()); // Expect 404 Not Found
     }
 
@@ -254,25 +259,25 @@ class RankingControllerTest {
         // Setup: Submit rankings from two users
         // User 1: A(1), B(2), C(3), D(4), E(5)
         userMovieRankingRepository.saveAll(asList(
-            createRanking(testUser, testGroup, movie1, 1),
-            createRanking(testUser, testGroup, movie2, 2),
-            createRanking(testUser, testGroup, movie3, 3),
-            createRanking(testUser, testGroup, movie4, 4),
-            createRanking(testUser, testGroup, movie5, 5)
-        ));
+                createRanking(testUser, testGroup, movie1, 1),
+                createRanking(testUser, testGroup, movie2, 2),
+                createRanking(testUser, testGroup, movie3, 3),
+                createRanking(testUser, testGroup, movie4, 4),
+                createRanking(testUser, testGroup, movie5, 5)));
         userMovieRankingRepository.flush();
         // User 2: A(2), B(1), C(3), D(4), E(5)
         userMovieRankingRepository.saveAll(asList(
-            createRanking(testUser2, testGroup, movie1, 2),
-            createRanking(testUser2, testGroup, movie2, 1),
-            createRanking(testUser2, testGroup, movie3, 3),
-            createRanking(testUser2, testGroup, movie4, 4),
-            createRanking(testUser2, testGroup, movie5, 5)
-        ));
+                createRanking(testUser2, testGroup, movie1, 2),
+                createRanking(testUser2, testGroup, movie2, 1),
+                createRanking(testUser2, testGroup, movie3, 3),
+                createRanking(testUser2, testGroup, movie4, 4),
+                createRanking(testUser2, testGroup, movie5, 5)));
         userMovieRankingRepository.flush();
 
-        // Expected Averages: A=(1+2)/2=1.5, B=(2+1)/2=1.5, C=(3+3)/2=3.0, D=(4+4)/2=4.0, E=(5+5)/2=5.0
-        // Expected Order: A (1.5), B (1.5), C (3.0), D (4.0), E (5.0) - Tie-breaking not specified, so order of A/B might vary
+        // Expected Averages: A=(1+2)/2=1.5, B=(2+1)/2=1.5, C=(3+3)/2=3.0,
+        // D=(4+4)/2=4.0, E=(5+5)/2=5.0
+        // Expected Order: A (1.5), B (1.5), C (3.0), D (4.0), E (5.0) - Tie-breaking
+        // not specified, so order of A/B might vary
         // Let's assume stable sort or check possibilities
 
         // Action & Assert
@@ -280,15 +285,15 @@ class RankingControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(5))) // Expecting 5 movies
                 // Check first element (either Movie A or B with avg 1.5)
-                .andExpect(jsonPath("$[0].movie.movieId", equalTo((int)movie1.getMovieId())))
+                .andExpect(jsonPath("$[0].movie.movieId", equalTo((int) movie1.getMovieId())))
                 .andExpect(jsonPath("$[0].averageRank", equalTo(1.5)))
-                .andExpect(jsonPath("$[1].movie.movieId", equalTo((int)movie2.getMovieId())))
+                .andExpect(jsonPath("$[1].movie.movieId", equalTo((int) movie2.getMovieId())))
                 .andExpect(jsonPath("$[1].averageRank", equalTo(1.5)))
-                .andExpect(jsonPath("$[2].movie.movieId", equalTo((int)movie3.getMovieId())))
+                .andExpect(jsonPath("$[2].movie.movieId", equalTo((int) movie3.getMovieId())))
                 .andExpect(jsonPath("$[2].averageRank", equalTo(3.0)))
-                .andExpect(jsonPath("$[3].movie.movieId", equalTo((int)movie4.getMovieId())))
+                .andExpect(jsonPath("$[3].movie.movieId", equalTo((int) movie4.getMovieId())))
                 .andExpect(jsonPath("$[3].averageRank", equalTo(4.0)))
-                .andExpect(jsonPath("$[4].movie.movieId", equalTo((int)movie5.getMovieId())))
+                .andExpect(jsonPath("$[4].movie.movieId", equalTo((int) movie5.getMovieId())))
                 .andExpect(jsonPath("$[4].averageRank", equalTo(5.0)));
 
         // Ensure A and B are distinct in the first two positions
@@ -308,12 +313,13 @@ class RankingControllerTest {
         mockMvc.perform(get("/groups/{groupId}/rankings/details", testGroup.getGroupId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(5))) // Expecting 5 movies
-                // Check that averageRanks are null and movies are present (order might be alphabetical)
-                .andExpect(jsonPath("$[0].movie.movieId", equalTo((int)movie1.getMovieId())))
+                // Check that averageRanks are null and movies are present (order might be
+                // alphabetical)
+                .andExpect(jsonPath("$[0].movie.movieId", equalTo((int) movie1.getMovieId())))
                 .andExpect(jsonPath("$[0].averageRank").doesNotExist()) // Average rank should be null or absent
-                .andExpect(jsonPath("$[1].movie.movieId", equalTo((int)movie2.getMovieId())))
+                .andExpect(jsonPath("$[1].movie.movieId", equalTo((int) movie2.getMovieId())))
                 .andExpect(jsonPath("$[1].averageRank").doesNotExist()); // Average rank should be null or absent
-                // Optional: Check alphabetical sort order if needed
+        // Optional: Check alphabetical sort order if needed
     }
 
     @Test

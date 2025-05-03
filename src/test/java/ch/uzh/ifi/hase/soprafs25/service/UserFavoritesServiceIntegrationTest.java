@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.web.WebAppConfiguration;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.transaction.Transactional;
@@ -29,6 +30,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 @WebAppConfiguration
 @SpringBootTest
 @Transactional
+@ActiveProfiles("test")
 class UserFavoritesServiceIntegrationTest {
 
     @Autowired
@@ -42,10 +44,10 @@ class UserFavoritesServiceIntegrationTest {
 
     @Autowired
     private MovieService movieService;
-    
+
     @MockBean
     private TMDbService tmdbService;
-    
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private User testUser;
@@ -55,7 +57,7 @@ class UserFavoritesServiceIntegrationTest {
     void setup() {
         userRepository.deleteAll();
         movieRepository.deleteAll();
-        
+
         // Create test user
         testUser = new User();
         testUser.setUsername("testUser");
@@ -63,18 +65,18 @@ class UserFavoritesServiceIntegrationTest {
         testUser.setPassword("password");
         testUser.setStatus(UserStatus.ONLINE);
         testUser.setToken("token123");
-        
+
         userRepository.save(testUser);
-        
+
         // Create test movie
         testMovie = new Movie();
         testMovie.setMovieId(555L);
         testMovie.setTitle("Test Movie");
         testMovie.setDescription("Test description");
         testMovie.setTrailerURL("youtube.com/watch?v=testTrailer");
-        
+
         movieRepository.save(testMovie);
-        
+
         // Configure Mock TMDbService
         ArrayNode genresArray = objectMapper.createArrayNode();
 
@@ -87,9 +89,9 @@ class UserFavoritesServiceIntegrationTest {
         dramaNode.put("id", 18);
         dramaNode.put("name", "Drama");
         genresArray.add(dramaNode);
-        
+
         ObjectNode comedyNode = objectMapper.createObjectNode();
-        comedyNode.put("id", 35); 
+        comedyNode.put("id", 35);
         comedyNode.put("name", "Comedy");
         genresArray.add(comedyNode);
 
@@ -109,7 +111,7 @@ class UserFavoritesServiceIntegrationTest {
 
         // Assert
         assertEquals(genreNames, result);
-        
+
         // Verify through repository
         User updatedUser = userRepository.findById(testUser.getUserId()).get();
         assertNotNull(updatedUser.getFavoriteGenres());
@@ -152,7 +154,7 @@ class UserFavoritesServiceIntegrationTest {
 
         // Assert
         assertEquals(testMovie.getMovieId(), result.getMovieId());
-        
+
         // Verify through repository
         User updatedUser = userRepository.findById(testUser.getUserId()).get();
         assertNotNull(updatedUser.getFavoriteMovie());

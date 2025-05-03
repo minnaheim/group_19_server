@@ -13,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.test.context.ActiveProfiles;
 
 import ch.uzh.ifi.hase.soprafs25.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs25.entity.Group;
@@ -23,6 +24,7 @@ import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
 @WebAppConfiguration
 @SpringBootTest
 @Transactional
+@ActiveProfiles("test")
 public class GroupIntegrationTest {
     @Autowired
     private GroupService groupService;
@@ -74,13 +76,12 @@ public class GroupIntegrationTest {
         assertEquals(testUser1, createdGroup.getCreator());
     }
 
-
     // group creation failes because group name is empty
     @Test
     public void groupCreation_InvalidName() {
         // call
         ResponseStatusException exception = assertThrows(ResponseStatusException.class,
-            () -> groupService.createGroup("", testUser1.getUserId()));
+                () -> groupService.createGroup("", testUser1.getUserId()));
         // then
         assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
     }
@@ -97,7 +98,9 @@ public class GroupIntegrationTest {
         assertTrue(!groupInvitationService.getPendingReceivedInvitations(testUser2.getUserId()).isEmpty());
 
         // simulate acceptance of the invitation by the second user
-        groupInvitationService.respondToInvitation(groupInvitationService.getPendingReceivedInvitations(testUser2.getUserId()).get(0).getInvitationId(), testUser2.getUserId(),true);
+        groupInvitationService.respondToInvitation(
+                groupInvitationService.getPendingReceivedInvitations(testUser2.getUserId()).get(0).getInvitationId(),
+                testUser2.getUserId(), true);
 
         // check membership of the second user in the group
         Group updatedGroup = groupService.getGroup(group.getGroupId(), testUser2.getUserId());
@@ -112,12 +115,14 @@ public class GroupIntegrationTest {
         groupInvitationService.sendInvitation(group.getGroupId(), testUser1.getUserId(), testUser2.getUserId());
 
         // rejection of invitation
-        groupInvitationService.respondToInvitation(groupInvitationService.getPendingReceivedInvitations(testUser2.getUserId()).get(0).getInvitationId(),testUser2.getUserId(),false);
+        groupInvitationService.respondToInvitation(
+                groupInvitationService.getPendingReceivedInvitations(testUser2.getUserId()).get(0).getInvitationId(),
+                testUser2.getUserId(), false);
 
         // verify sevond user is not a member of the group
         // if user is not a member - getGorup should throw an exception
         ResponseStatusException exception = assertThrows(ResponseStatusException.class,
-            () -> groupService.getGroup(group.getGroupId(), testUser2.getUserId()));
+                () -> groupService.getGroup(group.getGroupId(), testUser2.getUserId()));
         assertEquals(HttpStatus.FORBIDDEN, exception.getStatus());
         assertEquals("User is not a member of this group", exception.getReason());
     }
@@ -129,9 +134,10 @@ public class GroupIntegrationTest {
         // delete the group
         groupService.deleteGroup(group.getGroupId(), testUser1.getUserId());
         // group is deleted
-        // getGroup contains check for group existence in groupRepository - thus a NOT_FOUND exception should be thrown
+        // getGroup contains check for group existence in groupRepository - thus a
+        // NOT_FOUND exception should be thrown
         ResponseStatusException exception = assertThrows(ResponseStatusException.class,
-            () -> groupService.getGroup(group.getGroupId(), testUser1.getUserId()));
+                () -> groupService.getGroup(group.getGroupId(), testUser1.getUserId()));
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
     }
 
@@ -143,7 +149,7 @@ public class GroupIntegrationTest {
 
         // a non-cretor (second user) tries to delete
         ResponseStatusException exception = assertThrows(ResponseStatusException.class,
-            () -> groupService.deleteGroup(group.getGroupId(), testUser2.getUserId()));
+                () -> groupService.deleteGroup(group.getGroupId(), testUser2.getUserId()));
         assertEquals(HttpStatus.FORBIDDEN, exception.getStatus());
         assertEquals("Only the group creator can delete the group", exception.getReason());
     }
@@ -157,15 +163,17 @@ public class GroupIntegrationTest {
         // send invitation to the second user, because creator can't leave the group
         groupInvitationService.sendInvitation(group.getGroupId(), testUser1.getUserId(), testUser2.getUserId());
         // accept it by second user
-        groupInvitationService.respondToInvitation(groupInvitationService.getPendingReceivedInvitations(testUser2.getUserId()).get(0).getInvitationId(), testUser2.getUserId(),true);
+        groupInvitationService.respondToInvitation(
+                groupInvitationService.getPendingReceivedInvitations(testUser2.getUserId()).get(0).getInvitationId(),
+                testUser2.getUserId(), true);
         // seccond user leaves the group
         groupService.leaveGroup(group.getGroupId(), testUser2.getUserId());
 
         // verify second user is no longer a member of the group
         ResponseStatusException exception = assertThrows(ResponseStatusException.class,
-            () -> groupService.getGroup(group.getGroupId(), testUser2.getUserId()));
+                () -> groupService.getGroup(group.getGroupId(), testUser2.getUserId()));
         assertEquals(HttpStatus.FORBIDDEN, exception.getStatus());
         assertEquals("User is not a member of this group", exception.getReason());
 
     }
-} 
+}

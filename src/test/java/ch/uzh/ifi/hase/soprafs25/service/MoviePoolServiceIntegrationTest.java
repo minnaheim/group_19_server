@@ -13,11 +13,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.test.context.ActiveProfiles;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
+@ActiveProfiles("test")
 class MoviePoolServiceIntegrationTest {
     @Autowired
     private MoviePoolService moviePoolService;
@@ -75,8 +77,8 @@ class MoviePoolServiceIntegrationTest {
     void addMovie_wrongPhase_conflict() {
         group.setPhase(Group.GroupPhase.VOTING);
         groupRepository.saveAndFlush(group);
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                moviePoolService.addMovie(group.getGroupId(), movie.getMovieId(), user.getUserId()));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> moviePoolService.addMovie(group.getGroupId(), movie.getMovieId(), user.getUserId()));
         assertEquals(org.springframework.http.HttpStatus.CONFLICT, ex.getStatus());
     }
 
@@ -95,8 +97,8 @@ class MoviePoolServiceIntegrationTest {
         // Change phase
         group.setPhase(Group.GroupPhase.RESULTS);
         groupRepository.saveAndFlush(group);
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                moviePoolService.removeMovie(group.getGroupId(), movie.getMovieId(), user.getUserId()));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> moviePoolService.removeMovie(group.getGroupId(), movie.getMovieId(), user.getUserId()));
         assertEquals(org.springframework.http.HttpStatus.CONFLICT, ex.getStatus());
     }
 }

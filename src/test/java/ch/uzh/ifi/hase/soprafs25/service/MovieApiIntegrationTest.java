@@ -36,7 +36,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * It tests the full API integration, verifying correct response formats,
  * status codes, pagination, filtering, and edge cases.
  *
- * These tests use a real database but stub the TMDb service to avoid external API calls.
+ * These tests use a real database but stub the TMDb service to avoid external
+ * API calls.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -113,7 +114,8 @@ public class MovieApiIntegrationTest {
 
         // Parse the response to verify it contains the expected data
         String content = result.getResponse().getContentAsString();
-        List<MovieGetDTO> responseMovies = objectMapper.readValue(content, new TypeReference<List<MovieGetDTO>>() {});
+        List<MovieGetDTO> responseMovies = objectMapper.readValue(content, new TypeReference<List<MovieGetDTO>>() {
+        });
         assertFalse(responseMovies.isEmpty());
 
         // Test non-existent user (404 Not Found)
@@ -145,7 +147,8 @@ public class MovieApiIntegrationTest {
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
-        List<MovieGetDTO> responseMovies = objectMapper.readValue(content, new TypeReference<List<MovieGetDTO>>() {});
+        List<MovieGetDTO> responseMovies = objectMapper.readValue(content, new TypeReference<List<MovieGetDTO>>() {
+        });
 
         // Verify that the response contains data from our stubbed TMDb service
         boolean foundStubMovie = false;
@@ -190,9 +193,12 @@ public class MovieApiIntegrationTest {
 
             // Set different genres
             List<String> genres = new ArrayList<>();
-            if (i % 3 == 0) genres.add("Action");
-            if (i % 4 == 0) genres.add("Science Fiction");
-            if (i % 5 == 0) genres.add("Adventure");
+            if (i % 3 == 0)
+                genres.add("Action");
+            if (i % 4 == 0)
+                genres.add("Science Fiction");
+            if (i % 5 == 0)
+                genres.add("Adventure");
             movie.setGenres(genres);
 
             // Set actors and directors

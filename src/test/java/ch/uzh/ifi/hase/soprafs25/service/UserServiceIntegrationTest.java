@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -25,6 +26,7 @@ import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
  */
 @WebAppConfiguration
 @SpringBootTest
+@ActiveProfiles("test")
 public class UserServiceIntegrationTest {
 
   @Qualifier("userRepository")
@@ -81,7 +83,7 @@ public class UserServiceIntegrationTest {
         () -> userService.createUser(testUser2));
     assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
   }
-  
+
   @Test
   public void createUser_duplicateEmail_throwsException() {
     // Create first user
@@ -102,7 +104,7 @@ public class UserServiceIntegrationTest {
         () -> userService.createUser(testUser2));
     assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
   }
-  
+
   @Test
   public void loginUser_validCredentials_success() {
     // Setup - create a user
@@ -111,30 +113,30 @@ public class UserServiceIntegrationTest {
     testUser.setPassword("password");
     testUser.setEmail("test@example.com");
     userService.createUser(testUser);
-    
+
     // Execute - set status to offline and remove token to simulate logged out state
     User savedUser = userRepository.findByUsername("testUsername");
     savedUser.setStatus(UserStatus.OFFLINE);
     savedUser.setToken(null);
     userRepository.save(savedUser);
-    
+
     // Login
     User loggedInUser = userService.loginUser("testUsername", "password");
-    
+
     // Verify
     assertEquals(UserStatus.ONLINE, loggedInUser.getStatus());
     assertNotNull(loggedInUser.getToken());
   }
-  
+
   @Test
   public void loginUser_invalidUsername_throwsException() {
     // Attempt to login with non-existent username
     ResponseStatusException exception = assertThrows(ResponseStatusException.class,
         () -> userService.loginUser("nonExistentUser", "password"));
-    
+
     assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
   }
-  
+
   @Test
   public void loginUser_invalidPassword_throwsException() {
     // Setup - create a user
@@ -143,14 +145,14 @@ public class UserServiceIntegrationTest {
     testUser.setPassword("password");
     testUser.setEmail("test@example.com");
     userService.createUser(testUser);
-    
+
     // Attempt to login with wrong password
     ResponseStatusException exception = assertThrows(ResponseStatusException.class,
         () -> userService.loginUser("testUsername", "wrongPassword"));
-    
+
     assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatus());
   }
-  
+
   @Test
   public void logoutUser_validToken_userLoggedOut() {
     // Setup - create a user
@@ -159,27 +161,27 @@ public class UserServiceIntegrationTest {
     testUser.setPassword("password");
     testUser.setEmail("test@example.com");
     User createdUser = userService.createUser(testUser);
-    
+
     String token = createdUser.getToken();
-    
+
     // Execute
     userService.logoutUser(token);
-    
+
     // Verify
     User loggedOutUser = userRepository.findByUsername("testUsername");
     assertEquals(UserStatus.OFFLINE, loggedOutUser.getStatus());
     assertNull(loggedOutUser.getToken());
   }
-  
+
   @Test
   public void logoutUser_invalidToken_throwsException() {
     // Attempt to logout with invalid token
     ResponseStatusException exception = assertThrows(ResponseStatusException.class,
         () -> userService.logoutUser("invalidToken"));
-    
+
     assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatus());
   }
-  
+
   @Test
   public void getUserByToken_validToken_returnsUser() {
     // Setup - create a user
@@ -188,34 +190,34 @@ public class UserServiceIntegrationTest {
     testUser.setPassword("password");
     testUser.setEmail("test@example.com");
     User createdUser = userService.createUser(testUser);
-    
+
     String token = createdUser.getToken();
-    
+
     // Execute
     User foundUser = userService.getUserByToken(token);
-    
+
     // Verify
     assertNotNull(foundUser);
     assertEquals("testUsername", foundUser.getUsername());
   }
-  
+
   @Test
   public void getUserByToken_invalidToken_throwsException() {
     // Attempt to get user with invalid token
     ResponseStatusException exception = assertThrows(ResponseStatusException.class,
         () -> userService.getUserByToken("invalidToken"));
-    
+
     assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatus());
   }
-  
+
   @Test
   public void isUsernameAvailable_availableUsername_returnsTrue() {
     // Check availability of non-existent username
     boolean isAvailable = userService.isUsernameAvailable("newUsername");
-    
+
     assertTrue(isAvailable);
   }
-  
+
   @Test
   public void isUsernameAvailable_takenUsername_returnsFalse() {
     // Setup - create a user
@@ -224,21 +226,21 @@ public class UserServiceIntegrationTest {
     testUser.setPassword("password");
     testUser.setEmail("test@example.com");
     userService.createUser(testUser);
-    
+
     // Check availability of existing username
     boolean isAvailable = userService.isUsernameAvailable("testUsername");
-    
+
     assertEquals(false, isAvailable);
   }
-  
+
   @Test
   public void isEmailAvailable_availableEmail_returnsTrue() {
     // Check availability of non-existent email
     boolean isAvailable = userService.isEmailAvailable("new@example.com");
-    
+
     assertTrue(isAvailable);
   }
-  
+
   @Test
   public void isEmailAvailable_takenEmail_returnsFalse() {
     // Setup - create a user
@@ -247,10 +249,10 @@ public class UserServiceIntegrationTest {
     testUser.setPassword("password");
     testUser.setEmail("test@example.com");
     userService.createUser(testUser);
-    
+
     // Check availability of existing email
     boolean isAvailable = userService.isEmailAvailable("test@example.com");
-    
+
     assertEquals(false, isAvailable);
   }
 }

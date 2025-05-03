@@ -13,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @WebAppConfiguration
 @SpringBootTest
 @Transactional
+@ActiveProfiles("test")
 public class UserMovieServiceIntegrationTest {
 
     @Qualifier("userRepository")
@@ -38,7 +40,7 @@ public class UserMovieServiceIntegrationTest {
 
     @Autowired
     private UserMovieService userMovieService;
-    
+
     @Autowired
     private MovieService movieService;
 
@@ -110,17 +112,15 @@ public class UserMovieServiceIntegrationTest {
         userMovieService.addToWatchlist(testUser.getUserId(), testMovie.getMovieId(), testUser.getToken());
 
         // Try to add the same movie again
-        assertThrows(ResponseStatusException.class, () -> 
-            userMovieService.addToWatchlist(testUser.getUserId(), testMovie.getMovieId(), testUser.getToken())
-        );
+        assertThrows(ResponseStatusException.class, () -> userMovieService.addToWatchlist(testUser.getUserId(),
+                testMovie.getMovieId(), testUser.getToken()));
     }
 
     @Test
     public void addToWatchlist_unauthorizedUser_throwsException() {
         // Try to add movie to another user's watchlist
-        assertThrows(ResponseStatusException.class, () -> 
-            userMovieService.addToWatchlist(testUser.getUserId(), testMovie.getMovieId(), otherUser.getToken())
-        );
+        assertThrows(ResponseStatusException.class, () -> userMovieService.addToWatchlist(testUser.getUserId(),
+                testMovie.getMovieId(), otherUser.getToken()));
     }
 
     @Test
@@ -143,9 +143,8 @@ public class UserMovieServiceIntegrationTest {
     @Test
     public void removeFromWatchlist_nonExistingMovie_throwsException() {
         // Try to remove a movie that's not in the watchlist
-        assertThrows(ResponseStatusException.class, () ->
-            userMovieService.removeFromWatchlist(testUser.getUserId(), testMovie.getMovieId(), testUser.getToken())
-        );
+        assertThrows(ResponseStatusException.class, () -> userMovieService.removeFromWatchlist(testUser.getUserId(),
+                testMovie.getMovieId(), testUser.getToken()));
     }
 
     @Test

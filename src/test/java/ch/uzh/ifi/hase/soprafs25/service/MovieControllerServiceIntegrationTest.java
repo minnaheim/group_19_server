@@ -37,10 +37,10 @@ import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-
 /**
  * MovieControllerServiceIntegrationTest
- * This is a WebMvc integration test for testing the integration between MovieController and MovieService.
+ * This is a WebMvc integration test for testing the integration between
+ * MovieController and MovieService.
  * Unlike unit tests, these tests involve multiple components working together.
  */
 @SpringBootTest
@@ -95,8 +95,10 @@ public class MovieControllerServiceIntegrationTest {
     }
 
     /**
-     * Test 5.1 - Test the entire request-response cycle from controller to service and back
-     * This test verifies that a request to the controller correctly flows through to the service
+     * Test 5.1 - Test the entire request-response cycle from controller to service
+     * and back
+     * This test verifies that a request to the controller correctly flows through
+     * to the service
      * and back to the client with the expected response.
      */
     @Test
@@ -107,7 +109,7 @@ public class MovieControllerServiceIntegrationTest {
 
         // When making a request to the suggestions endpoint
         MvcResult result = mockMvc.perform(get("/movies/suggestions/{userId}", testUser.getUserId())
-                        .contentType(MediaType.APPLICATION_JSON))
+                .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
@@ -132,7 +134,7 @@ public class MovieControllerServiceIntegrationTest {
 
         // When making a request to the suggestions endpoint
         mockMvc.perform(get("/movies/suggestions/{userId}", testUser.getUserId())
-                        .contentType(MediaType.APPLICATION_JSON))
+                .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$[0].movieId", notNullValue()))
@@ -144,7 +146,8 @@ public class MovieControllerServiceIntegrationTest {
 
     /**
      * Test 5.3 - Test with various valid and invalid path parameters
-     * This test checks how the controller-service integration handles different types
+     * This test checks how the controller-service integration handles different
+     * types
      * of user IDs, including invalid ones.
      */
     @Test
@@ -153,18 +156,18 @@ public class MovieControllerServiceIntegrationTest {
 
         // Test with valid user ID
         mockMvc.perform(get("/movies/suggestions/{userId}", testUser.getUserId())
-                        .contentType(MediaType.APPLICATION_JSON))
+                .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
         // Test with non-existent user ID
         Long nonExistentUserId = 999999L;
         mockMvc.perform(get("/movies/suggestions/{userId}", nonExistentUserId)
-                        .contentType(MediaType.APPLICATION_JSON))
+                .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
 
         // Test with invalid user ID format (not a number)
         mockMvc.perform(get("/movies/suggestions/invalid-id")
-                        .contentType(MediaType.APPLICATION_JSON))
+                .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
     }
 
@@ -181,9 +184,12 @@ public class MovieControllerServiceIntegrationTest {
             movie.setPosterURL("https://example.com/poster" + i + ".jpg");
 
             List<String> genres = new ArrayList<>();
-            if (i % 3 == 0) genres.add("Action");
-            if (i % 4 == 0) genres.add("Science Fiction");
-            if (i % 5 == 0) genres.add("Adventure");
+            if (i % 3 == 0)
+                genres.add("Action");
+            if (i % 4 == 0)
+                genres.add("Science Fiction");
+            if (i % 5 == 0)
+                genres.add("Adventure");
             movie.setGenres(genres);
 
             movies.add(movie);
