@@ -1,11 +1,14 @@
 package ch.uzh.ifi.hase.soprafs25.service;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -29,32 +32,6 @@ import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
 @Service
 @Transactional
 public class GroupService {
-
-    public void startVotingPhase(Long groupId, Long userId) {
-        Group group = groupRepository.findById(groupId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
-        if (!group.getCreator().getUserId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the group creator can start the voting phase");
-        }
-        if (group.getPhase() != Group.GroupPhase.POOL) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Voting phase can only be started from POOL phase");
-        }
-        group.setPhase(Group.GroupPhase.VOTING);
-        groupRepository.save(group);
-    }
-
-    public void showResultsPhase(Long groupId, Long userId) {
-        Group group = groupRepository.findById(groupId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
-        if (!group.getCreator().getUserId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the group creator can show results phase");
-        }
-        if (group.getPhase() != Group.GroupPhase.VOTING) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Results phase can only be started from VOTING phase");
-        }
-        group.setPhase(Group.GroupPhase.RESULTS);
-        groupRepository.save(group);
-    }
 
     private final GroupRepository groupRepository;
     private final UserRepository userRepository;
@@ -237,5 +214,119 @@ public class GroupService {
         if (!pendingInvitesRm.isEmpty()) {
             groupInvitationRepository.deleteAll(pendingInvitesRm);
         }
+    }
+
+    // for timer handling
+    public void startPoolPhase(Long groupId, Long userId) {
+
+        Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
+
+        if (!group.getCreator().getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the group creator can start the pool phase");
+        }
+
+        group.setPhase(Group.GroupPhase.POOL);
+        group.setPhaseStartTime(LocalDateTime.now());
+        groupRepository.save(group);
+    }
+
+    public void startVotingPhase(Long groupId, Long userId) {
+        Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
+        // make sure only creator can do it
+        if (!group.getCreator().getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the group creator can start the voting phase");
+        }
+        if (group.getPhase() != Group.GroupPhase.POOL) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Voting phase can only be started from POOL phase");
+        }
+        
+        group.setPhase(Group.GroupPhase.VOTING);
+        // for timer handling
+        group.setPhaseStartTime(LocalDateTime.now());
+        groupRepository.save(group);
+    }
+
+    public void showResultsPhase(Long groupId, Long userId) {
+        Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
+        if (!group.getCreator().getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the group creator can show results phase");
+        }
+        if (group.getPhase() != Group.GroupPhase.VOTING) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Results phase can only be started from VOTING phase");
+        }
+        group.setPhase(Group.GroupPhase.RESULTS);
+        groupRepository.save(group);
+    }
+
+    // fixed rate is in ms
+    @Scheduled(fixedRate = 5000) // check every 5 sec
+    public void checkPhaseTimers() {
+        // get all currenct groups and iterate over them
+        List<Group> activeGroups = groupRepository.findAll();
+        for (Group group : activeGroups) {
+
+            if (group.getPhaseStartTime() != null) {
+                int passedSeconds = (int) Duration.between(group.getPhaseStartTime(), LocalDateTime.now()).getSeconds();
+                
+                if (group.getPhase() == Group.GroupPhase.POOL && passedSeconds >= group.getPoolPhaseDuration()) {
+                    // switch to voting phase
+                    group.setPhase(Group.GroupPhase.VOTING);
+                    group.setPhaseStartTime(LocalDateTime.now());
+                    groupRepository.save(group);
+                } 
+
+                else if (group.getPhase() == Group.GroupPhase.VOTING && 
+                passedSeconds >= group.getVotingPhaseDuration()) {
+                    // switch to results phase
+                    group.setPhase(Group.GroupPhase.RESULTS);
+                    groupRepository.save(group);
+                }
+            }
+        }
+    }
+
+    // to get time left
+    public int getRemainingTime(Long groupId) {
+
+        Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
+        if (group.getPhaseStartTime() == null || group.getPhase() == Group.GroupPhase.RESULTS) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No active timer for this group");
+        }
+        
+        int elapsed = (int) Duration.between(group.getPhaseStartTime(), LocalDateTime.now()).getSeconds();
+        int totalDuration;
+        if(group.getPhase() == Group.GroupPhase.POOL){
+            totalDuration = group.getPoolPhaseDuration();
+        }
+        else{
+            totalDuration = group.getVotingPhaseDuration();}
+
+        // either 0 or time left
+        return Math.max(0, totalDuration - elapsed);
+    }
+    
+    // setting pool duration
+    public void setPoolPhaseDuration(Long groupId, Long userId, Integer duration) {
+        Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
+        if (!group.getCreator().getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the group creator can set timer duration");
+        }
+        group.setPoolPhaseDuration(duration);
+        groupRepository.save(group);
+    }
+    // setting votting duration
+    public void setVotingPhaseDuration(Long groupId, Long userId, Integer duration) {
+        Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
+        if (!group.getCreator().getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the group creator can set timer duration");
+        }
+        group.setVotingPhaseDuration(duration);
+        groupRepository.save(group);
     }
 }

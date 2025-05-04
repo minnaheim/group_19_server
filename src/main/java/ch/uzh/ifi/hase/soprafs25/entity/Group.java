@@ -1,6 +1,7 @@
 package ch.uzh.ifi.hase.soprafs25.entity;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import javax.persistence.CascadeType;
@@ -52,6 +53,17 @@ public class Group implements Serializable {
     @OneToOne(mappedBy = "group", cascade = CascadeType.ALL)
     private MoviePool moviePool;
 
+    // timer handling
+    // default 5 minutes
+    @Column
+    private Integer poolPhaseDuration = 300;  
+
+    @Column
+    private Integer votingPhaseDuration = 300; 
+
+    @Column
+    private LocalDateTime phaseStartTime;
+    
     public Long getGroupId() {
         return groupId;
     }
@@ -97,5 +109,29 @@ public class Group implements Serializable {
 
     public void setPhase(GroupPhase phase) {
         this.phase = phase;
+    }
+
+    public Integer getPoolPhaseDuration() {
+        return poolPhaseDuration;
+    }
+
+    public void setPoolPhaseDuration(Integer poolPhaseDuration) {
+        this.poolPhaseDuration = poolPhaseDuration;
+    }
+
+    public Integer getVotingPhaseDuration() {
+        return votingPhaseDuration;
+    }
+
+    public void setVotingPhaseDuration(Integer votingPhaseDuration) {
+        this.votingPhaseDuration = votingPhaseDuration;
+    }
+
+    public LocalDateTime getPhaseStartTime() {
+        return phaseStartTime;
+    }
+
+    public void setPhaseStartTime(LocalDateTime phaseStartTime) {
+        this.phaseStartTime = phaseStartTime;
     }
 }

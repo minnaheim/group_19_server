@@ -1,5 +1,6 @@
 package ch.uzh.ifi.hase.soprafs25.rest.dto;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class GroupGetDTO {
@@ -11,6 +12,10 @@ public class GroupGetDTO {
     private List<Long> memberIds;
     private List<Long> movieIds;
     private String phase;
+    private Integer poolPhaseDuration;
+    private Integer votingPhaseDuration;
+    private LocalDateTime phaseStartTime;
+    private Long remainingTime;
 
     public Long getGroupId() {
         return groupId;
@@ -66,5 +71,37 @@ public class GroupGetDTO {
 
     public void setCreator(UserGetDTO creator) {
         this.creator = creator;
+    }
+
+    public Integer getPoolPhaseDuration() {
+    return poolPhaseDuration;
+}
+
+    public void setPoolPhaseDuration(Integer poolPhaseDuration) {
+        this.poolPhaseDuration = poolPhaseDuration;
+    }
+
+    public Integer getVotingPhaseDuration() {
+        return votingPhaseDuration;
+    }
+
+    public void setVotingPhaseDuration(Integer votingPhaseDuration) {
+        this.votingPhaseDuration = votingPhaseDuration;
+    }
+
+    public LocalDateTime getPhaseStartTime() {
+        return phaseStartTime;
+    }
+
+    public void setPhaseStartTime(LocalDateTime phaseStartTime) {
+        this.phaseStartTime = phaseStartTime;
+    }
+
+    public Long getRemainingTime() {
+        return remainingTime;
+    }
+
+    public void setRemainingTime(Long remainingTime) {
+        this.remainingTime = remainingTime;
     }
 } 
