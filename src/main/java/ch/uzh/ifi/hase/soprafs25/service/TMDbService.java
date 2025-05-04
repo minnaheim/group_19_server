@@ -1,6 +1,8 @@
 package ch.uzh.ifi.hase.soprafs25.service;
 
 import ch.uzh.ifi.hase.soprafs25.config.TMDbConfig;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.ActorDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.DirectorDTO;
 import ch.uzh.ifi.hase.soprafs25.entity.Movie;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -518,7 +520,6 @@ public class TMDbService {
 
             // Additional details not handled by mapTMDbMovieToEntity
 
-            //TODO add mapping "spoken_languages" to spoekenlanguages
             JsonNode spokenlanguagesNode = rootNode.path("spoken_languages");
             List<String> spokenlanguages = new ArrayList<>();
             if (spokenlanguagesNode.isArray()) {
@@ -900,4 +901,135 @@ public class TMDbService {
             return null;
         }
     }
+
+    /**
+     * Search for actors by name
+     *
+     * @param query Actor name to search for
+     * @return List of actors matching the search query
+     * @throws RestClientException if the API request fails
+     */
+    public List<ActorDTO> searchActors(String query) {
+        log.info("Searching for actors with query: {}", query);
+
+        if (query == null || query.trim().isEmpty()) {
+            throw new IllegalArgumentException("Actor search query cannot be empty");
+        }
+
+        try {
+            if (tmdbConfig.getApiKey().isEmpty()) {
+                log.warn("TMDB API key is not configured. Cannot search for actors.");
+                return Collections.emptyList();
+            }
+
+            String actorSearchEndpoint = tmdbConfig.getBaseUrl() + "/search/person";
+
+            // Build URL with query parameters
+            UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(actorSearchEndpoint)
+                    .queryParam("query", query)
+                    .queryParam("language", "en-US");
+
+            // Setup authentication headers
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(tmdbConfig.getApiKey());
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            // Execute the request
+            ResponseEntity<JsonNode> response = restTemplate.exchange(
+                    builder.toUriString(),
+                    HttpMethod.GET,
+                    entity,
+                    JsonNode.class
+            );
+
+            // Process the response
+            JsonNode responseBody = response.getBody();
+            if (responseBody != null && responseBody.has("results")) {
+                List<ActorDTO> actors = new ArrayList<>();
+                for (JsonNode result : responseBody.get("results")) {
+                    if (result.has("known_for_department") && "Acting".equals(result.get("known_for_department").asText())) {
+
+                        ActorDTO actor = new ActorDTO();
+                        actor.setActorId(result.get("id").asLong());
+                        actor.setActorName(result.get("name").asText());
+                        actors.add(actor);
+                    }
+                }
+                return actors;
+            }
+
+            return Collections.emptyList();
+        } catch (RestClientException e) {
+            log.error("Error searching for actors: {}", e.getMessage());
+            throw new RuntimeException("Error searching for actors: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Search for directors by name
+     *
+     * @param query Director name to search for
+     * @return List of directors matching the search query
+     * @throws RestClientException if the API request fails
+     */
+    public List<DirectorDTO> searchDirectors(String query) {
+        log.info("Searching for directors with query: {}", query);
+
+        if (query == null || query.trim().isEmpty()) {
+            throw new IllegalArgumentException("Director search query cannot be empty");
+        }
+
+        try {
+            if (tmdbConfig.getApiKey().isEmpty()) {
+                log.warn("TMDB API key is not configured. Cannot search for directors.");
+                return Collections.emptyList();
+            }
+
+            String directorSearchEndpoint = tmdbConfig.getBaseUrl() + "/search/person";
+
+            // Build URL with query parameters
+            UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(directorSearchEndpoint)
+                    .queryParam("query", query)
+                    .queryParam("language", "en-US");
+
+            // Setup authentication headers
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(tmdbConfig.getApiKey());
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            // Execute the request
+            ResponseEntity<JsonNode> response = restTemplate.exchange(
+                    builder.toUriString(),
+                    HttpMethod.GET,
+                    entity,
+                    JsonNode.class
+            );
+
+            // Process the response
+            JsonNode responseBody = response.getBody();
+            if (responseBody != null && responseBody.has("results")) {
+                List<DirectorDTO> directors = new ArrayList<>();
+                for (JsonNode result : responseBody.get("results")) {
+                    if (result.has("known_for_department") && "Directing".equals(result.get("known_for_department").asText())) {
+                        DirectorDTO director = new DirectorDTO();
+                        director.setDirectorId(result.get("id").asLong());
+                        director.setDirectorName(result.get("name").asText());
+                        directors.add(director);
+                    }
+                }
+                return directors;
+            }
+
+            return Collections.emptyList();
+        } catch (RestClientException e) {
+            log.error("Error searching for directors: {}", e.getMessage());
+            throw new RuntimeException("Error searching for directors: " + e.getMessage(), e);
+        }
+    }
 }
+
+

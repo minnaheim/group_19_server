@@ -6,6 +6,8 @@ import ch.uzh.ifi.hase.soprafs25.rest.dto.MovieGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.mapper.DTOMapper;
 import ch.uzh.ifi.hase.soprafs25.service.MovieService;
 import ch.uzh.ifi.hase.soprafs25.service.TMDbService;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.ActorDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.DirectorDTO;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -200,4 +202,54 @@ public class MovieController {
                 })
                 .collect(Collectors.toList());
     }
+    /**
+     * Search for actors by name
+     *
+     * @param actorname Actor name to search for
+     * @return List of actors matching the search term
+     * @throws ResponseStatusException if the search term is invalid or if there's an error in the API
+     */
+    @GetMapping("/movies/actors")
+    @ResponseStatus(HttpStatus.OK)
+    public List<ActorDTO> searchActors(@RequestParam(required = false) String actorname) {
+        // Validate search parameter
+        if (actorname == null || actorname.trim().length() < MIN_SEARCH_TERM_LENGTH) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Search term must be at least " +
+                    MIN_SEARCH_TERM_LENGTH + " character long");
+        }
+
+        try {
+            // Call TMDb service to search for actors
+            return tmdbService.searchActors(actorname);
+        }
+        catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+
+    }
+     /**
+     * Search for directors by name
+     *
+     * @param directorname Director name to search for
+     * @return List of directors matching the search term
+     * @throws ResponseStatusException if the search term is invalid or if there's an error in the API
+     */
+    @GetMapping("/movies/directors")
+    @ResponseStatus(HttpStatus.OK)
+    public List<DirectorDTO> searchDirectors(@RequestParam(required = false) String directorname) {
+        // Validate search parameter
+        if (directorname == null || directorname.trim().length() < MIN_SEARCH_TERM_LENGTH) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Search term must be at least " +
+                    MIN_SEARCH_TERM_LENGTH + " character long");
+        }
+
+        try {
+            // Call TMDb service to search for directors
+            return tmdbService.searchDirectors(directorname);
+        }
+        catch (Exception e){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+    }
 }
+
