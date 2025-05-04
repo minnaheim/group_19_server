@@ -16,6 +16,18 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.web.server.ResponseStatusException;
+import static org.hamcrest.Matchers.*;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import org.springframework.http.MediaType;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.ActorDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.DirectorDTO;
+import java.util.ArrayList;
+import java.util.List;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -287,5 +299,167 @@ public class MovieControllerTest {
                 .andExpect(jsonPath("$.genres[1].name", is("Adventure")))
                 .andExpect(jsonPath("$.genres[2].id", is(16)))
                 .andExpect(jsonPath("$.genres[2].name", is("Animation")));
+    }
+
+    /**
+     * Test searching for actors with a valid name
+     * This test verifies that the controller correctly retrieves actors by name
+     */
+    @Test
+    public void testSearchActors_ValidName() throws Exception {
+        // Prepare test data
+        List<ActorDTO> actors = new ArrayList<>();
+        ActorDTO actor = new ActorDTO();
+        actor.setActorId(1L);
+        actor.setActorName("Leonardo DiCaprio");
+        actors.add(actor);
+
+        // Mock the service
+        when(tmdbService.searchActors(eq("LeonardoDiCaprio"))).thenReturn(actors);
+
+        // Perform the GET request and validate the response
+        mockMvc.perform(get("/movies/actors")
+                        .param("actorname", "LeonardoDiCaprio")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].actorId", is(1)))
+                .andExpect(jsonPath("$[0].actorName", is("Leonardo DiCaprio")));
+
+        // Verify the service was called with the correct parameter
+        verify(tmdbService).searchActors("LeonardoDiCaprio");
+    }
+
+    /**
+     * Test searching for actors with an invalid name (empty)
+     * This test verifies that the controller correctly handles validation errors
+     */
+    @Test
+    public void testSearchActors_InvalidName_Empty() throws Exception {
+        // Mock the service to throw exception for empty name
+        when(tmdbService.searchActors(eq("")))
+                .thenThrow(new IllegalArgumentException("Search term must be at least 1 character long"));
+
+        // Perform the GET request and validate the error response
+        mockMvc.perform(get("/movies/actors")
+                        .param("actorname", "")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Bad Request")))
+                .andExpect(jsonPath("$.message", containsString("Search term must be at least 1 character long")));
+    }
+
+    /**
+     * Test searching for actors with a null name (missing parameter)
+     * This test verifies that the controller correctly handles missing parameters
+     */
+    @Test
+    public void testSearchActors_InvalidName_Null() throws Exception {
+        // Perform the GET request without the name parameter and validate the error response
+        mockMvc.perform(get("/movies/actors")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Bad Request")))
+                .andExpect(jsonPath("$.message", containsString("Search term must be at least 1 character long")));
+    }
+
+    /**
+     * Test searching for actors when TMDb service returns an error
+     * This test verifies that the controller correctly handles service errors
+     */
+    @Test
+    public void testSearchActors_ServiceError() throws Exception {
+        // Mock the service to throw exception for service error
+        when(tmdbService.searchActors(eq("LeonardoDiCaprio")))
+                .thenThrow(new RuntimeException("Error searching for actors: 401 Unauthorized"));
+
+        // Perform the GET request and validate the error response
+        mockMvc.perform(get("/movies/actors")
+                        .param("actorname", "LeonardoDiCaprio")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Bad Request")))
+                .andExpect(jsonPath("$.message", containsString("Error searching for actors: 401 Unauthorized")));
+    }
+
+    /**
+     * Test searching for directors with a valid name
+     * This test verifies that the controller correctly retrieves directors by name
+     */
+    @Test
+    public void testSearchDirectors_ValidName() throws Exception {
+        // Prepare test data
+        List<DirectorDTO> directors = new ArrayList<>();
+        DirectorDTO director = new DirectorDTO();
+        director.setDirectorId(1L);
+        director.setDirectorName("Christopher Nolan");
+        directors.add(director);
+
+        // Mock the service
+        when(tmdbService.searchDirectors(eq("ChristopherNolan"))).thenReturn(directors);
+
+        // Perform the GET request and validate the response
+        mockMvc.perform(get("/movies/directors")
+                        .param("directorname", "ChristopherNolan")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].directorId", is(1)))
+                .andExpect(jsonPath("$[0].directorName", is("Christopher Nolan")));
+
+        // Verify the service was called with the correct parameter
+        verify(tmdbService).searchDirectors("ChristopherNolan");
+    }
+
+    /**
+     * Test searching for directors with an invalid name (empty)
+     * This test verifies that the controller correctly handles validation errors
+     */
+    @Test
+    public void testSearchDirectors_InvalidName_Empty() throws Exception {
+        // Mock the service to throw exception for empty name
+        when(tmdbService.searchDirectors(eq("")))
+                .thenThrow(new IllegalArgumentException("Director search query cannot be empty"));
+
+        // Perform the GET request and validate the error response
+        mockMvc.perform(get("/movies/directors")
+                        .param("directorname", "")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Bad Request")))
+                .andExpect(jsonPath("$.message", containsString("Search term must be at least 1 character long")));
+    }
+
+    /**
+     * Test searching for directors with a null name (missing parameter)
+     * This test verifies that the controller correctly handles missing parameters
+     */
+    @Test
+    public void testSearchDirectors_InvalidName_Null() throws Exception {
+        // Perform the GET request without the name parameter and validate the error response
+        mockMvc.perform(get("/movies/directors")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Bad Request")))
+                .andExpect(jsonPath("$.message", containsString("Search term must be at least 1 character long")));
+    }
+
+    /**
+     * Test searching for directors when TMDb service returns an error
+     * This test verifies that the controller correctly handles service errors
+     */
+    @Test
+    public void testSearchDirectors_ServiceError() throws Exception {
+        // Mock the service to throw exception for service error
+        when(tmdbService.searchDirectors(eq("ChristopherNolan")))
+                .thenThrow(new RuntimeException("Error searching for directors: 401 Unauthorized"));
+
+        // Perform the GET request and validate the error response
+        mockMvc.perform(get("/movies/directors")
+                        .param("directorname", "ChristopherNolan")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Bad Request")))
+                .andExpect(jsonPath("$.message", containsString("Error searching for directors: 401 Unauthorized")));
     }
 }
