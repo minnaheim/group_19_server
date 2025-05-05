@@ -594,4 +594,106 @@ public class TMDbServiceTest {
         // Assert
         assertNull(result);
     }
+
+    @Test
+    public void searchMovies_emptyApiKey_returnsEmptyList() {
+        // Setup
+        Movie searchParams = new Movie();
+        searchParams.setTitle("Test Movie");
+
+        // Mock empty API key
+        when(tmdbConfig.getApiKey()).thenReturn("");
+
+        // Execute
+        List<Movie> result = tmdbService.searchMovies(searchParams);
+
+        // Verify
+        assertTrue(result.isEmpty());
+        verify(tmdbConfig).getApiKey();
+        verifyNoMoreInteractions(restTemplate); // Ensure API is not called
+    }
+
+    @Test
+    public void searchMovies_withGenreParam_apiError_returnsEmptyList() throws Exception {
+        // Setup
+        Movie searchParams = new Movie();
+        searchParams.addGenre("Action");
+
+        // Mock configuration
+        when(tmdbConfig.getApiKey()).thenReturn("test-api-key");
+        when(tmdbConfig.getBaseUrl()).thenReturn("https://api.themoviedb.org/3");
+
+        // Mock the HTTP response with error
+        ResponseEntity<String> errorResponse = new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+
+        when(restTemplate.exchange(
+                anyString(),
+                eq(HttpMethod.GET),
+                any(HttpEntity.class),
+                eq(String.class)))
+                .thenReturn(errorResponse);
+
+        // Execute
+        List<Movie> result = tmdbService.searchMovies(searchParams);
+
+        // Verify
+        assertTrue(result.isEmpty());
+        verify(restTemplate).exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
+    }
+
+    @Test
+    public void searchMovies_restClientException_returnsEmptyList() {
+        // Setup
+        Movie searchParams = new Movie();
+        searchParams.setTitle("Test Movie");
+
+        // Mock configuration
+        when(tmdbConfig.getApiKey()).thenReturn("test-api-key");
+        when(tmdbConfig.getBaseUrl()).thenReturn("https://api.themoviedb.org/3");
+
+        // Mock a RestClientException
+        when(restTemplate.exchange(
+                anyString(),
+                eq(HttpMethod.GET),
+                any(HttpEntity.class),
+                eq(String.class)))
+                .thenThrow(new RestClientException("Connection error"));
+
+        // Execute
+        List<Movie> result = tmdbService.searchMovies(searchParams);
+
+        // Verify
+        assertTrue(result.isEmpty());
+        verify(restTemplate).exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
+    }
+
+    @Test
+    public void searchMovies_unexpectedException_returnsEmptyList() throws Exception {
+        // Setup
+        Movie searchParams = new Movie();
+        searchParams.setTitle("Test Movie");
+
+        // Mock configuration
+        when(tmdbConfig.getApiKey()).thenReturn("test-api-key");
+        when(tmdbConfig.getBaseUrl()).thenReturn("https://api.themoviedb.org/3");
+
+        // Mock a response
+        ResponseEntity<String> response = new ResponseEntity<>("valid json", HttpStatus.OK);
+
+        when(restTemplate.exchange(
+                anyString(),
+                eq(HttpMethod.GET),
+                any(HttpEntity.class),
+                eq(String.class)))
+                .thenReturn(response);
+
+        // But throw exception on parsing
+        when(objectMapper.readTree(anyString())).thenThrow(new RuntimeException("Unexpected error"));
+
+        // Execute
+        List<Movie> result = tmdbService.searchMovies(searchParams);
+
+        // Verify
+        assertTrue(result.isEmpty());
+    }
 }
