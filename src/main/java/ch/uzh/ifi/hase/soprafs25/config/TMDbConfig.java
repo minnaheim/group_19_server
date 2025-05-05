@@ -21,7 +21,7 @@ public class TMDbConfig implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        String envToken = System.getenv("TMDB_API_TOKEN");
+        String envToken = getEnvironmentVariable("TMDB_API_TOKEN");
         logger.info("Checking for TMDB_API_TOKEN environment variable...");
 
         if (envToken != null) {
