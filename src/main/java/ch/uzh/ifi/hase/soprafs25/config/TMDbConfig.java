@@ -21,7 +21,7 @@ public class TMDbConfig implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        String envToken = System.getenv("TMDB_API_TOKEN");
+        String envToken = getEnvironmentVariable("TMDB_API_TOKEN");
         logger.info("Checking for TMDB_API_TOKEN environment variable...");
 
         if (envToken != null) {
@@ -50,7 +50,10 @@ public class TMDbConfig implements CommandLineRunner {
         logger.info("TMDb Base URL is set to: {}", baseUrl);
     }
 
-
+    // Protected method for testing
+    protected String getEnvironmentVariable(String name) {
+        return System.getenv(name);
+    }
 
     public String getApiKey() {
         return apiKey;
