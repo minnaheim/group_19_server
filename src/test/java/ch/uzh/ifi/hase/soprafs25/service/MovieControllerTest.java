@@ -17,6 +17,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.web.server.ResponseStatusException;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -462,4 +464,65 @@ public class MovieControllerTest {
                 .andExpect(jsonPath("$.error", is("Bad Request")))
                 .andExpect(jsonPath("$.message", containsString("Error searching for directors: 401 Unauthorized")));
     }
+
+    @Test
+    public void testGetMovies_NoSearchParameters() throws Exception {
+        mockMvc.perform(get("/movies")
+                        .param("page", "1"))
+                .andExpect(status().isBadRequest())
+                .andExpect(result -> assertTrue(result.getResolvedException() instanceof SearchValidationException))
+                .andExpect(result -> assertEquals("At least one search parameter must be provided",
+                        result.getResolvedException().getMessage()));
+    }
+
+    @Test
+    public void testGetMovies_TitleTooShort() throws Exception {
+        mockMvc.perform(get("/movies")
+                        .param("title", ""))
+                .andExpect(status().isBadRequest())
+                .andExpect(result -> assertTrue(result.getResolvedException() instanceof SearchValidationException))
+                .andExpect(result -> assertEquals("At least one search parameter must be provided",
+                        result.getResolvedException().getMessage()));
+    }
+
+    @Test
+    public void testGetMovies_NullGenre() throws Exception {
+        List<String> genres = new ArrayList<>();
+        genres.add(null);
+
+        mockMvc.perform(get("/movies")
+                        .param("genres", "ABC")
+                        .param("year", "1990"))
+                .andExpect(status().isBadRequest())
+                .andExpect(result -> assertTrue(result.getResolvedException() instanceof SearchValidationException))
+                .andExpect(result -> assertEquals("Invalid genre: ABC",
+                        result.getResolvedException().getMessage()));
+    }
+
+    @Test
+    public void testGetMovies_EmptyGenre() throws Exception {
+        mockMvc.perform(get("/movies")
+                        .param("genres", " ")
+                        .param("year", "1990"))
+                .andExpect(status().isBadRequest())
+                .andExpect(result -> assertTrue(result.getResolvedException() instanceof SearchValidationException))
+                .andExpect(result -> assertEquals("Genre cannot be empty",
+                        result.getResolvedException().getMessage()));
+    }
+
+    @Test
+    public void testGetMovies_InvalidGenre() throws Exception {
+        // Setup mock TMDbService to return valid genres list
+        JsonNode genresNode = new ObjectMapper().readTree(
+                "{\"genres\":[{\"id\":28,\"name\":\"Action\"},{\"id\":12,\"name\":\"Adventure\"}]}");
+        when(tmdbService.getGenres()).thenReturn(genresNode);
+
+        mockMvc.perform(get("/movies")
+                        .param("genres", "InvalidGenre"))
+                .andExpect(status().isBadRequest())
+                .andExpect(result -> assertTrue(result.getResolvedException() instanceof SearchValidationException))
+                .andExpect(result -> assertEquals("Invalid genre: InvalidGenre",
+                        result.getResolvedException().getMessage()));
+    }
+
 }
