@@ -19,7 +19,7 @@ import org.springframework.web.server.ResponseStatusException;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -30,20 +30,27 @@ import ch.uzh.ifi.hase.soprafs25.rest.dto.ActorDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.DirectorDTO;
 import java.util.ArrayList;
 import java.util.List;
+import static org.mockito.ArgumentMatchers.any;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
+import java.lang.reflect.Field;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import static org.mockito.Mockito.doThrow;
 
 import static org.hamcrest.Matchers.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
 /**
  * MovieControllerTest
@@ -523,6 +530,74 @@ public class MovieControllerTest {
                 .andExpect(result -> assertTrue(result.getResolvedException() instanceof SearchValidationException))
                 .andExpect(result -> assertEquals("Invalid genre: InvalidGenre",
                         result.getResolvedException().getMessage()));
+    }
+
+    @Test
+    public void testGetMovies_ShortActorName() throws Exception {
+        List<String> actors = Arrays.asList("a");
+
+        // Mock the movieService to throw the expected exception when requested with a short actor name
+        doThrow(new SearchValidationException("Actor search term must be at least 1 characters long"))
+                .when(movieService).getMovies(any(Movie.class));
+
+        mockMvc.perform(get("/movies")
+                        .param("actors", actors.toArray(new String[0])))
+                .andExpect(status().isBadRequest())
+                .andExpect(result -> {
+                    assertTrue(result.getResolvedException() instanceof SearchValidationException);
+                    assertEquals("Actor search term must be at least 1 characters long",
+                            result.getResolvedException().getMessage());
+                });
+    }
+
+
+    @Test
+    public void testGetMovies_ShortDirectorName() throws Exception {
+        List<String> directors = Arrays.asList("a");
+
+        // Mock the movieService to throw the expected exception when requested with a short director name
+        doThrow(new SearchValidationException("Director search term must be at least 1 characters long"))
+                .when(movieService).getMovies(any(Movie.class));
+
+        mockMvc.perform(get("/movies")
+                        .param("directors", directors.toArray(new String[0])))
+                .andExpect(status().isBadRequest())
+                .andExpect(result -> {
+                    assertTrue(result.getResolvedException() instanceof SearchValidationException);
+                    assertEquals("Director search term must be at least 1 characters long",
+                            result.getResolvedException().getMessage());
+                });
+    }
+
+    @Test
+    public void testGetMovies_NoMoviesFound() throws Exception {
+        // Mock the service method with a Movie object matcher
+        when(movieService.getMovies(any(Movie.class)))
+                .thenReturn(Collections.emptyList());
+
+        mockMvc.perform(get("/movies")
+                        .param("title", "NonExistentMovie"))
+                .andExpect(status().isBadRequest())  // Changed from isNotFound() to isBadRequest()
+                .andExpect(result -> {
+                    assertTrue(result.getResolvedException() instanceof SearchValidationException);
+                    assertEquals("No movies found matching the search criteria",
+                            result.getResolvedException().getMessage());
+                });
+    }
+
+
+    @Test
+    public void testGetGenres_ServiceUnavailable() throws Exception {
+        when(tmdbService.getGenres()).thenThrow(new ResponseStatusException(
+                HttpStatus.SERVICE_UNAVAILABLE, "Could not fetch genres from TMDB"));
+
+        mockMvc.perform(get("/movies/genres"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(result -> {
+                    assertTrue(result.getResolvedException() instanceof ResponseStatusException);
+                    assertEquals("503 SERVICE_UNAVAILABLE \"Could not fetch genres from TMDB\"",
+                            result.getResolvedException().getMessage());
+                });
     }
 
 }

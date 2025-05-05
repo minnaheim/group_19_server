@@ -78,9 +78,6 @@ public class MovieController {
 
                 // Validate each genre in the list
                 for (String genre : genres) {
-                    if (genre == null) {
-                        throw new SearchValidationException("Genre cannot be null");
-                    }
 
                     String trimmedGenre = genre.trim();
                     if (trimmedGenre.isEmpty()) {
