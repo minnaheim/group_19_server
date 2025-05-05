@@ -439,10 +439,6 @@ public class TMDbService {
                 return Collections.emptyList();
             }
         }
-        catch (RestClientException e) {
-            log.error("Error communicating with TMDb API: {}", e.getMessage());
-            return Collections.emptyList();
-        }
         catch (Exception e) {
             log.error("Unexpected error during TMDb search: {}", e.getMessage());
             return Collections.emptyList();
