@@ -839,4 +839,91 @@ public class TMDbServiceTest {
         // Verify empty list is returned
         assertTrue(result.isEmpty());
     }
+
+    @Test
+    public void searchMovies_restClientExceptionInSearchCall_returnsEmptyList() {
+        // Setup
+        Movie searchParams = new Movie();
+        searchParams.setTitle("Some Movie");
+
+        when(tmdbConfig.getApiKey()).thenReturn("valid-api-key");
+        String url = "https://api.themoviedb.org/3/search/movie?api_key=valid-api-key&query=Some+Movie";
+
+        // Mock RestClientException when calling API
+        when(restTemplate.exchange(
+                eq(url),
+                eq(HttpMethod.GET),
+                any(HttpEntity.class),
+                eq(String.class)))
+                .thenThrow(new RestClientException("Connection refused"));
+
+        // Execute
+        List<Movie> result = tmdbService.searchMovies(searchParams);
+
+        // Verify
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void searchMovies_unexpectedExceptionDuringMapping_returnsEmptyList() throws Exception {
+        // Setup
+        Movie searchParams = new Movie();
+        searchParams.setTitle("Some Movie");
+
+        when(tmdbConfig.getApiKey()).thenReturn("valid-api-key");
+        String url = "https://api.themoviedb.org/3/search/movie?api_key=valid-api-key&query=Some+Movie";
+
+        // Mock successful API response but failure during processing
+        ResponseEntity<String> mockResponse = new ResponseEntity<>("{\"results\":[{\"id\":1}]}", HttpStatus.OK);
+        when(restTemplate.exchange(
+                eq(url),
+                eq(HttpMethod.GET),
+                any(HttpEntity.class),
+                eq(String.class)))
+                .thenReturn(mockResponse);
+
+        // Simulate runtime exception during JSON parsing or movie mapping
+        when(objectMapper.readTree(anyString())).thenThrow(new RuntimeException("Unexpected processing error"));
+
+        // Execute
+        List<Movie> result = tmdbService.searchMovies(searchParams);
+
+        // Verify
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void searchMovies_nullPointerExceptionDuringProcessing_returnsEmptyList() throws Exception {
+        // Setup
+        Movie searchParams = new Movie();
+        searchParams.setTitle("Some Movie");
+
+        when(tmdbConfig.getApiKey()).thenReturn("valid-api-key");
+        String url = "https://api.themoviedb.org/3/search/movie?api_key=valid-api-key&query=Some+Movie";
+
+        // Mock successful API response
+        ResponseEntity<String> mockResponse = new ResponseEntity<>("{\"results\":[{\"id\":1}]}", HttpStatus.OK);
+        when(restTemplate.exchange(
+                eq(url),
+                eq(HttpMethod.GET),
+                any(HttpEntity.class),
+                eq(String.class)))
+                .thenReturn(mockResponse);
+
+        // Mock JsonNode but throw NPE when trying to access data
+        JsonNode mockJsonNode = mock(JsonNode.class);
+        when(objectMapper.readTree(anyString())).thenReturn(mockJsonNode);
+
+        // Simulate NullPointerException during processing
+        when(mockJsonNode.path(anyString())).thenThrow(new NullPointerException("Null value encountered"));
+
+        // Execute
+        List<Movie> result = tmdbService.searchMovies(searchParams);
+
+        // Verify
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
 }
