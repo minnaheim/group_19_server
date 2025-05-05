@@ -26,6 +26,7 @@ public class TMDbConfigTest {
         ReflectionTestUtils.setField(tmdbConfig, "logger", mockLogger);
     }
 
+
     @Test
     void testRunWhenEnvTokenIsNull() throws Exception {
         // Setup
@@ -35,9 +36,16 @@ public class TMDbConfigTest {
         // Execute
         tmdbConfig.run();
 
+        System.out.println("Testing environment token null scenario");
+        System.out.println("API Key: " + ReflectionTestUtils.getField(tmdbConfig, "apiKey"));
+        System.out.println("Base URL: " + ReflectionTestUtils.getField(tmdbConfig, "baseUrl"));
+
+
         // Verify
         verify(mockLogger).info("Checking for TMDB_API_TOKEN environment variable...");
         verify(mockLogger).info("TMDB_API_TOKEN environment variable is null");
+        verify(mockLogger).info(eq("Using local properties, apiKey length: {}"),
+                eq(28));
         verify(mockLogger).info(eq("TMDb API key is configured successfully. Key begins with: {}"),
                 eq("test-api-k..."));
         verify(mockLogger).info(eq("TMDb Base URL is set to: {}"), eq("https://test-url.com"));
@@ -48,6 +56,9 @@ public class TMDbConfigTest {
         // Configure
         ReflectionTestUtils.setField(tmdbConfig, "logger", mockLogger);
         ReflectionTestUtils.setField(tmdbConfig, "apiKey", null);
+
+        System.out.println("Testing no API key available scenario");
+        System.out.println("API Key before run: " + ReflectionTestUtils.getField(tmdbConfig, "apiKey"));
 
         // Act
         tmdbConfig.run();
@@ -61,6 +72,9 @@ public class TMDbConfigTest {
         // Configure
         ReflectionTestUtils.setField(tmdbConfig, "logger", mockLogger);
         ReflectionTestUtils.setField(tmdbConfig, "apiKey", "   ");
+
+        System.out.println("Testing blank API key scenario");
+        System.out.println("API Key before run: '" + ReflectionTestUtils.getField(tmdbConfig, "apiKey") + "'");
 
         // Act
         tmdbConfig.run();
