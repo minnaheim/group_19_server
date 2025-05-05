@@ -21,6 +21,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
 import java.util.List;
 import org.mockito.ArgumentCaptor;
+import java.util.Iterator;
 
 
 
@@ -696,4 +697,65 @@ public class TMDbServiceTest {
         // Verify
         assertTrue(result.isEmpty());
     }
+
+    @Test
+    public void searchMovies_withMultiplePages_returnsAllMovies() throws Exception {
+        // Given
+        when(tmdbConfig.getApiKey()).thenReturn("test-api-key");
+        when(tmdbConfig.getBaseUrl()).thenReturn("https://api.example.com");
+
+        // Create movie search params with a title
+        Movie searchParams = new Movie();
+        searchParams.setTitle("Test Movie");
+
+        // Mock first page response
+        String page1Response = "{\"page\":1,\"results\":[{\"id\":1,\"title\":\"Test Movie 1\",\"poster_path\":\"/poster1.jpg\",\"genre_ids\":[28,12],\"overview\":\"Description 1\",\"release_date\":\"2021-01-01\"}],\"total_pages\":2}";
+        JsonNode page1Root = objectMapper.readTree(page1Response);
+
+        // Mock second page response
+        String page2Response = "{\"page\":2,\"results\":[{\"id\":2,\"title\":\"Test Movie 2\",\"poster_path\":\"/poster2.jpg\",\"genre_ids\":[35,18],\"overview\":\"Description 2\",\"release_date\":\"2022-02-02\"}],\"total_pages\":2}";
+        JsonNode page2Root = objectMapper.readTree(page2Response);
+
+        // Setup response entities
+        ResponseEntity<String> page1Entity = new ResponseEntity<>(page1Response, HttpStatus.OK);
+        ResponseEntity<String> page2Entity = new ResponseEntity<>(page2Response, HttpStatus.OK);
+
+        // Mock HTTP requests for both pages
+        ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
+        when(restTemplate.exchange(
+                urlCaptor.capture(),
+                eq(HttpMethod.GET),
+                any(HttpEntity.class),
+                eq(String.class)))
+                .thenReturn(page1Entity)
+                .thenReturn(page2Entity);
+
+        // Mock objectMapper to return the JsonNode for each response
+        when(objectMapper.readTree(page1Response)).thenReturn(page1Root);
+        when(objectMapper.readTree(page2Response)).thenReturn(page2Root);
+
+        // When
+        List<Movie> result = tmdbService.searchMovies(searchParams);
+
+        // Then
+        assertEquals(2, result.size());
+
+        // Verify both pages were requested
+        List<String> capturedUrls = urlCaptor.getAllValues();
+        assertEquals(2, capturedUrls.size());
+
+        // First URL should contain page=1, second URL should contain page=2
+        assertTrue(capturedUrls.get(0).contains("page=1"));
+        assertTrue(capturedUrls.get(1).contains("page=2"));
+
+        // Verify movies were correctly parsed
+        assertEquals(1, result.get(0).getMovieId());
+        assertEquals("Test Movie 1", result.get(0).getTitle());
+        assertEquals(2, result.get(1).getMovieId());
+        assertEquals("Test Movie 2", result.get(1).getTitle());
+    }
+
+
+
+
 }
