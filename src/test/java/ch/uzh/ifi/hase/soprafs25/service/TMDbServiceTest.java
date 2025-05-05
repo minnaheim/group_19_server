@@ -8,9 +8,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.*;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -18,11 +16,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
-import java.util.List;
-import org.mockito.ArgumentCaptor;
-import java.util.Iterator;
-
+import java.util.*;
+import java.util.stream.Collectors;
 
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -755,7 +750,93 @@ public class TMDbServiceTest {
         assertEquals("Test Movie 2", result.get(1).getTitle());
     }
 
+    @Test
+    public void searchMovies_withDuplicateMovies_filtersOutDuplicates() throws Exception {
+        // Setup search parameters
+        Movie searchParams = new Movie();
+        searchParams.setTitle("Test Movie");
 
+        // Mock API key
+        when(tmdbConfig.getApiKey()).thenReturn("test-api-key");
+        when(tmdbConfig.getBaseUrl()).thenReturn("https://api.themoviedb.org/3");
 
+        // Create mock JSON response with duplicate movies
+        String mockResponse = "{\n" +
+                "  \"page\": 1,\n" +
+                "  \"results\": [\n" +
+                "    {\n" +
+                "      \"id\": 123,\n" +
+                "      \"title\": \"Duplicate Movie\",\n" +
+                "      \"poster_path\": \"/poster1.jpg\",\n" +
+                "      \"release_date\": \"2023-01-01\"\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"id\": 123,\n" +
+                "      \"title\": \"Duplicate Movie\",\n" +
+                "      \"poster_path\": \"/poster1.jpg\",\n" +
+                "      \"release_date\": \"2023-01-01\"\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"id\": 456,\n" +
+                "      \"title\": \"Unique Movie\",\n" +
+                "      \"poster_path\": \"/poster2.jpg\",\n" +
+                "      \"release_date\": \"2023-02-01\"\n" +
+                "    }\n" +
+                "  ],\n" +
+                "  \"total_pages\": 1\n" +
+                "}";
 
+        // Mock the HTTP response
+        ResponseEntity<String> mockResponseEntity = new ResponseEntity<>(mockResponse, HttpStatus.OK);
+
+        // Use ArgumentMatchers.any() for URI, HttpMethod, HttpEntity, and Class parameters
+        when(restTemplate.exchange(
+                ArgumentMatchers.anyString(),
+                ArgumentMatchers.eq(HttpMethod.GET),
+                ArgumentMatchers.any(HttpEntity.class),
+                ArgumentMatchers.eq(String.class)))
+                .thenReturn(mockResponseEntity);
+
+        // Mock ObjectMapper to return JsonNode
+        JsonNode mockJsonNode = objectMapper.readTree(mockResponse);
+        when(objectMapper.readTree(mockResponse)).thenReturn(mockJsonNode);
+
+        // Execute the method under test
+        List<Movie> results = tmdbService.searchMovies(searchParams);
+
+        // Verify results
+        assertNotNull(results);
+        assertEquals(2, results.size()); // Should have 2 unique movies, not 3
+
+        // Verify each movie ID is unique in the result set
+        Set<Long> movieIds = results.stream().map(Movie::getMovieId).collect(Collectors.toSet());
+        assertEquals(2, movieIds.size()); // Should have 2 unique IDs
+    }
+
+    @Test
+    public void searchMovies_apiErrorResponse_returnsEmptyList() throws Exception {
+        // Mock configuration
+        when(tmdbConfig.getApiKey()).thenReturn("test-api-key");
+
+        // Mock error response
+        ResponseEntity<String> errorResponse = new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+
+        // Mock REST template
+        when(restTemplate.exchange(
+                anyString(),
+                eq(HttpMethod.GET),
+                any(HttpEntity.class),
+                eq(String.class)))
+                .thenReturn(errorResponse);
+
+        // Create a movie with search parameters
+        Movie searchParams = new Movie();
+        searchParams.setTitle("Test");
+
+        // Execute the method
+        List<Movie> result = tmdbService.searchMovies(searchParams);
+
+        // Verify empty list is returned
+        assertTrue(result.isEmpty());
+    }
 }
