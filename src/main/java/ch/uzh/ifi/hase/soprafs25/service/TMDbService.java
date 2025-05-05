@@ -442,10 +442,8 @@ public class TMDbService {
                 log.error("Unexpected error during searching for movies: {}", e.getMessage());
                 return Collections.emptyList();
             }
-        } catch (RestClientException e) {
-            log.error("Error communicating with TMDb API: {}", e.getMessage());
-            return Collections.emptyList();
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Unexpected error during TMDb search: {}", e.getMessage());
             return Collections.emptyList();
         }
