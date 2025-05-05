@@ -50,7 +50,10 @@ public class TMDbConfig implements CommandLineRunner {
         logger.info("TMDb Base URL is set to: {}", baseUrl);
     }
 
-
+    // Protected method for testing
+    protected String getEnvironmentVariable(String name) {
+        return System.getenv(name);
+    }
 
     public String getApiKey() {
         return apiKey;
