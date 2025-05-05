@@ -36,8 +36,8 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
     *    the basic results without further filtering.
     * 3. If a list of actors/directors/genres is provided, it filters the result to only include movies where
     *    the movie's actors/directors/genres list contains at least one element from the provided actors list.
-    */
-    //TODO delete if not necessary
+
+
     default List<Movie> findBySearchParamsWithLists(String title, List<String> genres, Integer year,
                                                     List<String> actors, List<String> directors) {
         List<Movie> results = findByBasicSearchParams(title, year);
@@ -69,5 +69,6 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 
         return results;
     }
+    */
 }
 
