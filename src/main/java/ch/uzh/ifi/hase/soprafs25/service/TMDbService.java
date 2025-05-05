@@ -389,16 +389,11 @@ public class TMDbService {
                         if (searchParams.getActors() != null && !searchParams.getActors().isEmpty()) {
                             builder.queryParam("with_cast", searchParams.getActors());
                         }
-                        // TODO: implement actor search with person IDs
-                        // This would require additional API calls to convert actor names to IDs
-
 
                         // director
                         if (searchParams.getDirectors() != null && !searchParams.getDirectors().isEmpty()) {
                             builder.queryParam("with_crew", searchParams.getDirectors());
                         }
-                        // TODO: implement director search with person IDs
-                        // This would require additional API calls to convert director names to IDs
 
                         // Make the API call
                         ResponseEntity<String> response = restTemplate.exchange(

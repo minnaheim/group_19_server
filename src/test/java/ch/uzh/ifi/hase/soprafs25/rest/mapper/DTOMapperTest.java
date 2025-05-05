@@ -10,6 +10,11 @@ import ch.uzh.ifi.hase.soprafs25.rest.dto.UserPostDTO;
 import ch.uzh.ifi.hase.soprafs25.entity.Group;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.GroupGetDTO;
 
+import java.util.ArrayList;
+import java.util.List;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import ch.uzh.ifi.hase.soprafs25.entity.Movie;
+
 /**
  * DTOMapperTest
  * Tests if the mapping between the internal and the external/API representation
@@ -64,4 +69,51 @@ public class DTOMapperTest {
     assertEquals(group.getGroupName(), groupGetDTO.getGroupName());
     assertEquals(group.getPhase().name(), groupGetDTO.getPhase());
   }
+
+  @Test
+  public void testMapMoviesToIds_success() {
+    // Create a list of movies
+    List<Movie> movies = new ArrayList<>();
+
+    Movie movie1 = new Movie();
+    movie1.setMovieId(1L);
+    movie1.setTitle("Test Movie 1");
+
+    Movie movie2 = new Movie();
+    movie2.setMovieId(2L);
+    movie2.setTitle("Test Movie 2");
+
+    movies.add(movie1);
+    movies.add(movie2);
+
+    // Map the movies to IDs
+    List<Long> movieIds = DTOMapper.INSTANCE.mapMoviesToIds(movies);
+
+    // Check content
+    assertEquals(2, movieIds.size());
+    assertEquals(1L, movieIds.get(0));
+    assertEquals(2L, movieIds.get(1));
+  }
+
+  @Test
+  public void testMapMoviesToIds_emptyList() {
+    // Create an empty list of movies
+    List<Movie> movies = new ArrayList<>();
+
+    // Map the movies to IDs
+    List<Long> movieIds = DTOMapper.INSTANCE.mapMoviesToIds(movies);
+
+    // Check content
+    assertEquals(0, movieIds.size());
+  }
+
+  @Test
+  public void testMapMoviesToIds_nullList() {
+    // Map null to IDs
+    List<Long> movieIds = DTOMapper.INSTANCE.mapMoviesToIds(null);
+
+    // Check content
+    assertNull(movieIds);
+  }
+
 }
