@@ -1,38 +1,44 @@
 package ch.uzh.ifi.hase.soprafs25.service;
 
-import ch.uzh.ifi.hase.soprafs25.entity.Movie;
-import ch.uzh.ifi.hase.soprafs25.entity.RankingSubmissionLog;
-import ch.uzh.ifi.hase.soprafs25.entity.User;
-import ch.uzh.ifi.hase.soprafs25.entity.Group;
-import ch.uzh.ifi.hase.soprafs25.entity.MoviePool;
-import ch.uzh.ifi.hase.soprafs25.entity.UserMovieRanking;
-import ch.uzh.ifi.hase.soprafs25.entity.RankingResult;
-import ch.uzh.ifi.hase.soprafs25.exceptions.InvalidRankingException;
-import ch.uzh.ifi.hase.soprafs25.exceptions.UserNotFoundException;
-import ch.uzh.ifi.hase.soprafs25.exceptions.GroupNotFoundException;
-import ch.uzh.ifi.hase.soprafs25.repository.RankingSubmissionLogRepository;
-import ch.uzh.ifi.hase.soprafs25.repository.UserMovieRankingRepository;
-import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
-import ch.uzh.ifi.hase.soprafs25.repository.RankingResultRepository;
-import ch.uzh.ifi.hase.soprafs25.repository.GroupRepository;
-import ch.uzh.ifi.hase.soprafs25.rest.dto.RankingSubmitDTO;
-import ch.uzh.ifi.hase.soprafs25.rest.dto.MovieAverageRankDTO;
-import ch.uzh.ifi.hase.soprafs25.rest.mapper.DTOMapper;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.Optional;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.http.HttpStatus;
+
+import ch.uzh.ifi.hase.soprafs25.entity.Group;
+import ch.uzh.ifi.hase.soprafs25.entity.Movie;
+import ch.uzh.ifi.hase.soprafs25.entity.MoviePool;
+import ch.uzh.ifi.hase.soprafs25.entity.RankingResult;
+import ch.uzh.ifi.hase.soprafs25.entity.RankingSubmissionLog;
+import ch.uzh.ifi.hase.soprafs25.entity.User;
+import ch.uzh.ifi.hase.soprafs25.entity.UserMovieRanking;
+import ch.uzh.ifi.hase.soprafs25.exceptions.GroupNotFoundException;
+import ch.uzh.ifi.hase.soprafs25.exceptions.InvalidRankingException;
+import ch.uzh.ifi.hase.soprafs25.exceptions.UserNotFoundException;
+import ch.uzh.ifi.hase.soprafs25.repository.GroupRepository;
+import ch.uzh.ifi.hase.soprafs25.repository.RankingResultRepository;
+import ch.uzh.ifi.hase.soprafs25.repository.RankingSubmissionLogRepository;
+import ch.uzh.ifi.hase.soprafs25.repository.UserMovieRankingRepository;
+import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.MovieAverageRankDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.RankingSubmitDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.mapper.DTOMapper;
 
 @Service
 @Transactional
@@ -148,20 +154,50 @@ public class RankingService {
             return;
         }
 
+        // count total users
+        int totalUsers = group.getMembers().size();
+        // rank until top-5
+        int maxRank = 5;
+        int penaltyRank = maxRank + 1;
         // Group rankings by movie and calculate average rank for each within the group
-        Map<Movie, Double> averageRankings = groupRankings.stream()
+        Map<Movie, List<UserMovieRanking>> rankingsByMovie = groupRankings.stream()
                 .collect(Collectors.groupingBy(
-                        UserMovieRanking::getMovie,
-                        Collectors.averagingInt(UserMovieRanking::getRank)
-                ));
+                        UserMovieRanking::getMovie));
+                        // Collectors.averagingInt(UserMovieRanking::getRank)
+                
+        // new (adjusted) average rank per movie
+        Map<Movie, Double> adjustedAverageRanks = new HashMap<>();
+        // iterate over all movies and adjust their ranks
 
-        // Find the movie with the minimum average rank
-        Optional<Map.Entry<Movie, Double>> winnerEntry = averageRankings.entrySet().stream()
-                .min(Comparator.comparingDouble(Map.Entry::getValue));
+        for (Movie movie : group.getMoviePool().getMovies()) {
+            List<UserMovieRanking> ranks = rankingsByMovie.getOrDefault(movie, new ArrayList<>());
 
-        if (winnerEntry.isPresent()) {
-            Movie winningMovie = winnerEntry.get().getKey();
-            Double winningAverageRank = winnerEntry.get().getValue();
+            int actualVotes = ranks.size();
+            int missingVotes = totalUsers - actualVotes;
+            // adjust ranking
+            double totalScore = ranks.stream().mapToInt(UserMovieRanking::getRank).sum()
+                                 + missingVotes * penaltyRank;
+        
+            // adjusted average
+            double average = totalScore / totalUsers;
+            adjustedAverageRanks.put(movie, average);
+        }
+
+        // Find the movie with the minimum average rank and highest TMDB ranking
+        Optional<Movie> winnerMovie = adjustedAverageRanks.entrySet().stream()
+        .min(Comparator
+            .comparingDouble(Map.Entry<Movie, Double>::getValue)
+            .thenComparing(
+                entry -> entry.getKey().getTmdbRating() != null 
+                    ? -entry.getKey().getTmdbRating()  // Higher rating wins
+                    : Double.MAX_VALUE
+            )
+        )
+        .map(Map.Entry::getKey);
+
+        if (winnerMovie.isPresent()) {
+            Movie winningMovie = winnerMovie.get();
+            Double winningAverageRank = adjustedAverageRanks.get(winningMovie);
 
             RankingResult result = new RankingResult();
             result.setWinningMovie(winningMovie);

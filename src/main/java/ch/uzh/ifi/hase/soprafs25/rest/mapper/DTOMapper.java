@@ -93,6 +93,7 @@ public interface DTOMapper {
     @Mapping(source = "posterURL", target = "posterURL")
     @Mapping(source = "trailerURL", target = "trailerURL")
     @Mapping(source = "description", target = "description")
+    @Mapping(source = "tmdbRating", target = "tmdbRating")
     MovieGetDTO convertEntityToMovieGetDTO(Movie movie);
 
     @Mapping(target = "groupId", ignore = true)

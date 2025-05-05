@@ -14,6 +14,7 @@ public class MovieGetDTO {
     private String posterURL;
     private String trailerURL;
     private String description;
+    private Double tmdbRating;
 
     public long getMovieId() {
         return movieId;
@@ -113,5 +114,13 @@ public class MovieGetDTO {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Double getTmdbRating() {
+        return tmdbRating;
+    }
+
+    public void setTmdbRating(Double tmdbRating) {
+        this.tmdbRating = tmdbRating;
     }
 }

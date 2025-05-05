@@ -1,11 +1,12 @@
 package ch.uzh.ifi.hase.soprafs25.repository;
 
-import ch.uzh.ifi.hase.soprafs25.entity.RankingSubmissionLog;
-import ch.uzh.ifi.hase.soprafs25.entity.User;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import ch.uzh.ifi.hase.soprafs25.entity.RankingSubmissionLog;
+import ch.uzh.ifi.hase.soprafs25.entity.User;
 
 @Repository("rankingSubmissionLogRepository")
 public interface RankingSubmissionLogRepository extends JpaRepository<RankingSubmissionLog, Long> {

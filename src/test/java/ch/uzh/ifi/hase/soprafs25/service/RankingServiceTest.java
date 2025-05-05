@@ -1,27 +1,51 @@
 package ch.uzh.ifi.hase.soprafs25.service;
 
-import ch.uzh.ifi.hase.soprafs25.entity.*;
-import ch.uzh.ifi.hase.soprafs25.exceptions.*;
-import ch.uzh.ifi.hase.soprafs25.repository.*;
-import ch.uzh.ifi.hase.soprafs25.rest.dto.RankingSubmitDTO;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.*;
-import org.springframework.web.server.ResponseStatusException;
+import static org.mockito.ArgumentMatchers.eq;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
+import ch.uzh.ifi.hase.soprafs25.entity.Group;
+import ch.uzh.ifi.hase.soprafs25.entity.Movie;
+import ch.uzh.ifi.hase.soprafs25.entity.MoviePool;
+import ch.uzh.ifi.hase.soprafs25.entity.RankingResult;
+import ch.uzh.ifi.hase.soprafs25.entity.RankingSubmissionLog;
+import ch.uzh.ifi.hase.soprafs25.entity.User;
+import ch.uzh.ifi.hase.soprafs25.entity.UserMovieRanking;
+import ch.uzh.ifi.hase.soprafs25.exceptions.GroupNotFoundException;
+import ch.uzh.ifi.hase.soprafs25.exceptions.UserNotFoundException;
+import ch.uzh.ifi.hase.soprafs25.repository.GroupRepository;
+import ch.uzh.ifi.hase.soprafs25.repository.MovieRepository;
+import ch.uzh.ifi.hase.soprafs25.repository.RankingResultRepository;
+import ch.uzh.ifi.hase.soprafs25.repository.RankingSubmissionLogRepository;
+import ch.uzh.ifi.hase.soprafs25.repository.UserMovieRankingRepository;
+import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.RankingSubmitDTO;
 
 @ExtendWith(MockitoExtension.class)
 class RankingServiceTest {
@@ -376,6 +400,8 @@ class RankingServiceTest {
         // Arrange
         User user2 = new User(); user2.setUsername("user2");
         user2.setUserId(2L); // Set ID directly
+        // otherwise test failes due to adjusted implementation
+        testGroup.setMembers(Arrays.asList(testUser, user2));
         List<UserMovieRanking> rankings = Arrays.asList(
                 createRanking(testUser, movie1, 1, testGroup), // User 1 ranks Movie 1 as #1
                 createRanking(testUser, movie2, 2, testGroup),
@@ -405,6 +431,7 @@ class RankingServiceTest {
          user2.setUserId(2L); // Set ID directly
          // Movie 1: Rank 1 (user1), Rank 2 (user2) -> Avg 1.5
          // Movie 2: Rank 2 (user1), Rank 1 (user2) -> Avg 1.5 (TIE)
+         testGroup.setMembers(Arrays.asList(testUser, user2));
          List<UserMovieRanking> rankings = Arrays.asList(
                  createRanking(testUser, movie1, 1, testGroup),
                  createRanking(testUser, movie2, 2, testGroup),
@@ -427,6 +454,36 @@ class RankingServiceTest {
          assertEquals(testGroup, savedResult.getGroup());
      }
 
+    //  new test for checking tmdb rating ties solution
+    @Test
+    void calculateAndSaveWinner_tie_breaksWithTmdbRating() {
+        // Arrange
+        User user2 = new User(); user2.setUserId(2L);
+        testGroup.setMembers(Arrays.asList(testUser, user2)); // both voted
+    
+        movie1.setTmdbRating(7.2);
+        // expected winner
+        movie2.setTmdbRating(8.3);
+        
+        List<UserMovieRanking> rankings = Arrays.asList(
+            createRanking(testUser, movie1, 1, testGroup),
+            createRanking(testUser, movie2, 2, testGroup),
+            createRanking(user2, movie1, 2, testGroup),
+            createRanking(user2, movie2, 1, testGroup)
+        );
+        when(userMovieRankingRepository.findByGroup(testGroup)).thenReturn(rankings);
+    
+        // Act
+        rankingService.calculateAndSaveWinner(testGroupId);
+    
+        // Assert
+        ArgumentCaptor<RankingResult> resultCaptor = ArgumentCaptor.forClass(RankingResult.class);
+        verify(rankingResultRepository).save(resultCaptor.capture());
+        RankingResult savedResult = resultCaptor.getValue();
+    
+        assertEquals(movie2.getMovieId(), savedResult.getWinningMovie().getMovieId());
+        assertEquals(1.5, savedResult.getAverageRank());
+    }
 
     // --- Tests for getLatestRankingResult ---
 

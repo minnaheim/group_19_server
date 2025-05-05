@@ -1,32 +1,38 @@
 package ch.uzh.ifi.hase.soprafs25.service;
 
-import ch.uzh.ifi.hase.soprafs25.config.TMDbConfig;
-import ch.uzh.ifi.hase.soprafs25.rest.dto.ActorDTO;
-import ch.uzh.ifi.hase.soprafs25.rest.dto.DirectorDTO;
-import ch.uzh.ifi.hase.soprafs25.entity.Movie;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.*;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
-
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import java.util.HashSet;
-import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import ch.uzh.ifi.hase.soprafs25.config.TMDbConfig;
+import ch.uzh.ifi.hase.soprafs25.entity.Movie;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.ActorDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.DirectorDTO;
 
 
 @Service
@@ -512,7 +518,10 @@ public class TMDbService {
             }
 
             // Additional details not handled by mapTMDbMovieToEntity
-
+            // add TMDB rating
+            if (rootNode.has("vote_average")) {
+                movie.setTmdbRating(rootNode.get("vote_average").asDouble());
+            }
             JsonNode spokenlanguagesNode = rootNode.path("spoken_languages");
             List<String> spokenlanguages = new ArrayList<>();
             if (spokenlanguagesNode.isArray()) {

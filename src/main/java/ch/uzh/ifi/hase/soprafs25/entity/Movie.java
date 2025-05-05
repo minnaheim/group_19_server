@@ -4,13 +4,13 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.persistence.CollectionTable;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.Table;
-import javax.persistence.ElementCollection;
-import javax.persistence.CollectionTable;
 import javax.persistence.JoinColumn;
+import javax.persistence.Table;
 
 /**
  * Internal Movie Representation
@@ -80,6 +80,10 @@ public class Movie implements Serializable {
     @Column(length = 10000) //inorder to get large descriptions
     private String description;
 
+    // for tie-breaks in ranking
+    @Column
+    private Double tmdbRating;
+    
     // Getters and setters
     public long getMovieId() {
         return movieId;
@@ -183,6 +187,14 @@ public class Movie implements Serializable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Double getTmdbRating() {
+        return tmdbRating;
+    }
+
+    public void setTmdbRating(Double tmdbRating) {
+        this.tmdbRating = tmdbRating;
     }
 
 
