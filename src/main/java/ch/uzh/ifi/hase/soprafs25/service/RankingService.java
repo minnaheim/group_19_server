@@ -134,6 +134,34 @@ public class RankingService {
         rankingSubmissionLogRepository.save(submissionLog);
     }
 
+    private Map<Movie, Double> calculateAdjustedAverageRanks(Group group, List<UserMovieRanking> groupRankings) {
+        int totalUsers = group.getMembers().size();
+        int maxRank = 5;
+        int penaltyRank = maxRank + 1;
+    
+        // group rankings by movie
+        Map<Movie, List<UserMovieRanking>> rankingsByMovie = groupRankings.stream()
+                .collect(Collectors.groupingBy(UserMovieRanking::getMovie));
+    
+        // calculate adjusted average rank 
+        Map<Movie, Double> adjustedAverageRanks = new HashMap<>();
+        for (Movie movie : group.getMoviePool().getMovies()) {
+            List<UserMovieRanking> ranks = rankingsByMovie.getOrDefault(movie, new ArrayList<>());
+
+            int actualVotes = ranks.size();
+            int missingVotes = totalUsers - actualVotes;
+
+            // adjusted total score
+            double totalScore = ranks.stream().mapToInt(UserMovieRanking::getRank).sum()
+                                 + missingVotes * penaltyRank;
+    
+            // adjusted average rank
+            double average = totalScore / totalUsers;
+            adjustedAverageRanks.put(movie, average);
+        }
+    
+        return adjustedAverageRanks;
+    }
     /**
      * Calculates the movie with the lowest average rank from all submissions within a specific group
      * and saves the result for that group. If no rankings exist for the group,
@@ -154,34 +182,8 @@ public class RankingService {
             return;
         }
 
-        // count total users
-        int totalUsers = group.getMembers().size();
-        // rank until top-5
-        int maxRank = 5;
-        int penaltyRank = maxRank + 1;
-        // Group rankings by movie and calculate average rank for each within the group
-        Map<Movie, List<UserMovieRanking>> rankingsByMovie = groupRankings.stream()
-                .collect(Collectors.groupingBy(
-                        UserMovieRanking::getMovie));
-                        // Collectors.averagingInt(UserMovieRanking::getRank)
-                
-        // new (adjusted) average rank per movie
-        Map<Movie, Double> adjustedAverageRanks = new HashMap<>();
-        // iterate over all movies and adjust their ranks
+        Map<Movie, Double> adjustedAverageRanks = calculateAdjustedAverageRanks(group, groupRankings);
 
-        for (Movie movie : group.getMoviePool().getMovies()) {
-            List<UserMovieRanking> ranks = rankingsByMovie.getOrDefault(movie, new ArrayList<>());
-
-            int actualVotes = ranks.size();
-            int missingVotes = totalUsers - actualVotes;
-            // adjust ranking
-            double totalScore = ranks.stream().mapToInt(UserMovieRanking::getRank).sum()
-                                 + missingVotes * penaltyRank;
-        
-            // adjusted average
-            double average = totalScore / totalUsers;
-            adjustedAverageRanks.put(movie, average);
-        }
 
         // Find the movie with the minimum average rank and highest TMDB ranking
         Optional<Movie> winnerMovie = adjustedAverageRanks.entrySet().stream()
@@ -298,8 +300,8 @@ public class RankingService {
         }
 
         // Fetch all rankings submitted for this group
-        List<UserMovieRanking> allGroupRankings = userMovieRankingRepository.findByGroup(group);
-        if (allGroupRankings.isEmpty()) {
+        List<UserMovieRanking> groupRankings = userMovieRankingRepository.findByGroup(group);
+        if (groupRankings.isEmpty()) {
             log.warn("No rankings submitted yet for group {}. Returning empty ranking details.", groupId);
             // Return DTOs with null ranks for all movies in the pool
             return moviesInPool.stream()
@@ -313,34 +315,24 @@ public class RankingService {
                     .collect(Collectors.toList());
         }
 
-        // Group rankings by movie
-        Map<Movie, List<UserMovieRanking>> rankingsByMovie = allGroupRankings.stream()
-                .collect(Collectors.groupingBy(UserMovieRanking::getMovie));
+        Map<Movie, Double> adjustedAverageRanks = calculateAdjustedAverageRanks(group, groupRankings);
 
-        // Calculate average rank for each movie in the pool
-        List<MovieAverageRankDTO> averageRankDTOs = moviesInPool.stream()
-                .map(movie -> {
-                    MovieAverageRankDTO dto = new MovieAverageRankDTO();
-                    dto.setMovie(DTOMapper.INSTANCE.convertEntityToMovieGetDTO(movie));
-
-                    // Calculate average rank only if rankings exist for this movie
-                    List<UserMovieRanking> movieRankings = rankingsByMovie.get(movie);
-                    Double averageRank = null;
-                    if (movieRankings != null && !movieRankings.isEmpty()) {
-                        averageRank = movieRankings.stream()
-                                .mapToInt(UserMovieRanking::getRank)
-                                .average()
-                                .orElse(Double.NaN); // Should not happen if list is not empty
-                    }
-                    dto.setAverageRank(averageRank);
-                    return dto;
-                })
-                // Sort by average rank (ascending), handle nulls (movies with no rankings) last
-                .sorted(Comparator.comparing(MovieAverageRankDTO::getAverageRank, Comparator.nullsLast(Comparator.naturalOrder())))
-                .collect(Collectors.toList());
-
-        log.info("Retrieved complete ranking details for group {}", groupId);
-        return averageRankDTOs;
+        // create DTOs and sort by adjusted average rank and TMDB rating
+        // same logic as for winner, but now return list
+        return moviesInPool.stream().map(movie -> {
+            MovieAverageRankDTO dto = new MovieAverageRankDTO();
+            dto.setMovie(DTOMapper.INSTANCE.convertEntityToMovieGetDTO(movie));
+            dto.setAverageRank(adjustedAverageRanks.get(movie));
+            return dto;
+        })
+        .sorted(Comparator
+            .comparing(MovieAverageRankDTO::getAverageRank, Comparator.nullsLast(Comparator.naturalOrder()))
+            .thenComparing(dto -> dto.getMovie().getTmdbRating() != null 
+                ? -dto.getMovie().getTmdbRating()
+                : Double.MAX_VALUE
+            )
+        )
+        .collect(Collectors.toList());
     }
 
     private void validateRankings(List<RankingSubmitDTO> rankings, List<Movie> availableMovies, int requiredRankings) {

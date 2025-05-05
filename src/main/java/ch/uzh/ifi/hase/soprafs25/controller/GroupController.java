@@ -1,8 +1,8 @@
 package ch.uzh.ifi.hase.soprafs25.controller;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Collections;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -22,9 +22,9 @@ import ch.uzh.ifi.hase.soprafs25.exceptions.UserNotFoundException;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.GroupGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.GroupPostDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.MovieGetDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.RankingSubmitDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.UserGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.VoteStateGetDTO;
-import ch.uzh.ifi.hase.soprafs25.rest.dto.RankingSubmitDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.mapper.DTOMapper;
 import ch.uzh.ifi.hase.soprafs25.service.GroupService;
 import ch.uzh.ifi.hase.soprafs25.service.MoviePoolService;
@@ -197,5 +197,32 @@ public class GroupController {
         token = AuthorizationUtil.extractToken(token);
         Long adminUserId = userService.getUserByToken(token).getUserId();
         groupService.removeMember(groupId, memberId, adminUserId);
+    }
+
+
+    // timer endpoints
+    @PutMapping("/groups/{groupId}/pool-timer")
+    @ResponseStatus(HttpStatus.OK)
+    public void setPoolPhaseDuration(@PathVariable Long groupId, @RequestHeader("Authorization") String token, @RequestBody Integer duration) {
+        token = AuthorizationUtil.extractToken(token);
+        Long userId = userService.getUserByToken(token).getUserId();
+        groupService.setPoolPhaseDuration(groupId, userId, duration);
+    }
+
+    @PutMapping("/groups/{groupId}/voting-timer")
+    @ResponseStatus(HttpStatus.OK)
+    public void setVotingPhaseDuration(@PathVariable Long groupId, @RequestHeader("Authorization") String token, @RequestBody Integer duration) {
+        token = AuthorizationUtil.extractToken(token);
+        Long userId = userService.getUserByToken(token).getUserId();
+        groupService.setVotingPhaseDuration(groupId, userId, duration);
+    }
+
+    @GetMapping("/groups/{groupId}/timer")
+    @ResponseStatus(HttpStatus.OK)
+    public Integer getRemainingTime(@PathVariable Long groupId, @RequestHeader("Authorization") String token) {
+        token = AuthorizationUtil.extractToken(token);
+        userService.getUserByToken(token);
+        // in seconds
+        return groupService.getRemainingTime(groupId);
     }
 }
