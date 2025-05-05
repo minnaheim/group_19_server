@@ -1078,4 +1078,63 @@ public class TMDbServiceTest {
             tmdbService.searchActors("Tom Hanks");
         });
     }
+
+
+    @Test
+    public void searchDirectors_nullQuery_throwsIllegalArgumentException() {
+        // Arrange
+        String query = null;
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> tmdbService.searchDirectors(query)
+        );
+
+        assertEquals("Director search query cannot be empty", exception.getMessage());
+    }
+
+    @Test
+    public void searchDirectors_emptyQuery_throwsIllegalArgumentException() {
+        // Arrange
+        String query = "   ";
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> tmdbService.searchDirectors(query)
+        );
+
+        assertEquals("Director search query cannot be empty", exception.getMessage());
+    }
+
+
+    @Test
+    public void searchDirectors_apiErrorResponse_throwsRuntimeException() {
+        // Arrange
+        String query = "Spielberg";
+
+        when(tmdbConfig.getApiKey()).thenReturn("test-api-key");
+        when(tmdbConfig.getBaseUrl()).thenReturn("https://api.themoviedb.org/3");
+
+        // Mock RestClientException
+        RestClientException mockException = new RestClientException("API Error");
+        when(restTemplate.exchange(
+                anyString(),
+                eq(HttpMethod.GET),
+                any(HttpEntity.class),
+                eq(JsonNode.class)
+        )).thenThrow(mockException);
+
+        // Act & Assert
+        RuntimeException exception = assertThrows(
+                RuntimeException.class,
+                () -> tmdbService.searchDirectors(query)
+        );
+
+        assertTrue(exception.getMessage().contains("Error searching for directors"));
+        assertEquals(mockException, exception.getCause());
+    }
+
+
 }
