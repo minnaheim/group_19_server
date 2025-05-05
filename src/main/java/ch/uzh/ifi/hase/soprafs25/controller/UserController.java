@@ -38,19 +38,19 @@ public class UserController {
     this.userService = userService;
   }
 
-  // @GetMapping("/users")
-  // @ResponseStatus(HttpStatus.OK)
-  // public List<UserGetDTO> getAllUsers() {
-  //   // fetch all users in the internal representation
-  //   List<User> users = userService.getUsers();
-  //   List<UserGetDTO> userGetDTOs = new ArrayList<>();
+    @GetMapping("/users/all")
+    @ResponseStatus(HttpStatus.OK)
+    public List<UserGetDTO> getAllUsers(@RequestHeader("Authorization") String token) {
+        // Extract and validate token
+        token = AuthorizationUtil.extractToken(token);
+        userService.getUserByToken(token); // Verify user is authenticated
 
-  //   // convert each user to the API representation
-  //   for (User user : users) {
-  //     userGetDTOs.add(DTOMapper.INSTANCE.convertEntityToUserGetDTO(user));
-  //   }
-  //   return userGetDTOs;
-  // }
+        // Fetch all users
+        List<User> users = userService.getUsers();
+
+        // Convert to DTO and return
+        return DTOMapper.INSTANCE.convertEntityListToUserGetDTOList(users);
+    }
 
 // registration
 
