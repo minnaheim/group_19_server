@@ -434,7 +434,11 @@ public class TMDbService {
                     }
                 }
                 return resultMovies;
-            } catch (Exception e) {
+            } catch (RestClientException e) {
+                log.error("Error searching for movies: {}", e.getMessage());
+                return Collections.emptyList();
+            }
+            catch (Exception e) {
                 log.error("Unexpected error during searching for movies: {}", e.getMessage());
                 return Collections.emptyList();
             }
