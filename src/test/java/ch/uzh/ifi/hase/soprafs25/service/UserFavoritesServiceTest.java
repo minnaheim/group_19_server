@@ -175,4 +175,68 @@ class UserFavoritesServiceTest {
         // Assert
         assertEquals(testMovie, result);
     }
+
+    @Test
+    void saveFavoriteActors_SavesActors() {
+        List<String> actors = List.of("A1", "B2");
+        List<String> result = UserFavoritesService.saveFavoriteActors(1L, actors, "validToken");
+        assertEquals(actors, result);
+        verify(userRepository).save(any(User.class));
+    }
+
+    @Test
+    void saveFavoriteActors_ThrowsForInvalidToken() {
+        List<String> actors = List.of("A1", "B2");
+        assertThrows(ResponseStatusException.class, () -> {
+            UserFavoritesService.saveFavoriteActors(1L, actors, "invalidToken");
+        });
+    }
+
+    @Test
+    void getFavoriteActors_ReturnsEmptyListIfNotSet() {
+        testUser.setFavoriteActors((List<String>) null);
+        List<String> result = UserFavoritesService.getFavoriteActors(1L);
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void getFavoriteActors_ReturnsSavedActors() {
+        List<String> actors = List.of("A1", "B2");
+        testUser.setFavoriteActors(actors);
+        List<String> result = UserFavoritesService.getFavoriteActors(1L);
+        assertEquals(actors, result);
+    }
+
+    @Test
+    void saveFavoriteDirectors_SavesDirectors() {
+        List<String> dirs = List.of("D1", "D2");
+        List<String> result = UserFavoritesService.saveFavoriteDirectors(1L, dirs, "validToken");
+        assertEquals(dirs, result);
+        verify(userRepository).save(any(User.class));
+    }
+
+    @Test
+    void saveFavoriteDirectors_ThrowsForInvalidToken() {
+        List<String> dirs = List.of("D1", "D2");
+        assertThrows(ResponseStatusException.class, () -> {
+            UserFavoritesService.saveFavoriteDirectors(1L, dirs, "invalidToken");
+        });
+    }
+
+    @Test
+    void getFavoriteDirectors_ReturnsEmptyListIfNotSet() {
+        testUser.setFavoriteDirectors((List<String>) null);
+        List<String> result = UserFavoritesService.getFavoriteDirectors(1L);
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void getFavoriteDirectors_ReturnsSavedDirectors() {
+        List<String> dirs = List.of("D1", "D2");
+        testUser.setFavoriteDirectors(dirs);
+        List<String> result = UserFavoritesService.getFavoriteDirectors(1L);
+        assertEquals(dirs, result);
+    }
 }

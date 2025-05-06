@@ -183,4 +183,88 @@ class UserFavoritesServiceIntegrationTest {
         assertNotNull(result);
         assertEquals(testMovie.getMovieId(), result.getMovieId());
     }
+
+    @Test
+    void saveFavoriteActors_WithValidToken_SavesActors() {
+        // Arrange
+        List<String> actors = new ArrayList<>(List.of("A1", "B2"));
+
+        // Act
+        List<String> result = UserFavoritesService.saveFavoriteActors(
+                testUser.getUserId(), actors, testUser.getToken());
+
+        // Assert
+        assertEquals(actors, result);
+        User updated = userRepository.findById(testUser.getUserId()).get();
+        assertNotNull(updated.getFavoriteActors());
+        assertEquals(actors, updated.getFavoriteActors());
+    }
+
+    @Test
+    void saveFavoriteActors_WithInvalidToken_ThrowsException() {
+        // Arrange
+        List<String> actors = new ArrayList<>(List.of("A1", "B2"));
+
+        // Act & Assert
+        assertThrows(ResponseStatusException.class, () -> {
+            UserFavoritesService.saveFavoriteActors(
+                    testUser.getUserId(), actors, "wrongToken");
+        });
+    }
+
+    @Test
+    void getFavoriteActors_ReturnsCorrectActors() {
+        // Arrange via service
+        List<String> actors = new ArrayList<>(List.of("A1", "B2"));
+        UserFavoritesService.saveFavoriteActors(
+                testUser.getUserId(), actors, testUser.getToken());
+
+        // Act
+        List<String> result = UserFavoritesService.getFavoriteActors(testUser.getUserId());
+
+        // Assert
+        assertEquals(actors, result);
+    }
+
+    @Test
+    void saveFavoriteDirectors_WithValidToken_SavesDirectors() {
+        // Arrange
+        List<String> dirs = new ArrayList<>(List.of("D1", "D2"));
+
+        // Act
+        List<String> result = UserFavoritesService.saveFavoriteDirectors(
+                testUser.getUserId(), dirs, testUser.getToken());
+
+        // Assert
+        assertEquals(dirs, result);
+        User updated = userRepository.findById(testUser.getUserId()).get();
+        assertNotNull(updated.getFavoriteDirectors());
+        assertEquals(dirs, updated.getFavoriteDirectors());
+    }
+
+    @Test
+    void saveFavoriteDirectors_WithInvalidToken_ThrowsException() {
+        // Arrange
+        List<String> dirs = new ArrayList<>(List.of("D1", "D2"));
+
+        // Act & Assert
+        assertThrows(ResponseStatusException.class, () -> {
+            UserFavoritesService.saveFavoriteDirectors(
+                    testUser.getUserId(), dirs, "wrongToken");
+        });
+    }
+
+    @Test
+    void getFavoriteDirectors_ReturnsCorrectDirectors() {
+        // Arrange via service
+        List<String> dirs = new ArrayList<>(List.of("D1", "D2"));
+        UserFavoritesService.saveFavoriteDirectors(
+                testUser.getUserId(), dirs, testUser.getToken());
+
+        // Act
+        List<String> result = UserFavoritesService.getFavoriteDirectors(testUser.getUserId());
+
+        // Assert
+        assertEquals(dirs, result);
+    }
 }
