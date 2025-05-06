@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -25,6 +27,7 @@ import ch.uzh.ifi.hase.soprafs25.repository.MovieRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.RankingResultRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.UserMovieRankingRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.VotingStatusDTO;
 
 /**
  * Service class for handling group-related operations.
@@ -328,5 +331,29 @@ public class GroupService {
         }
         group.setVotingPhaseDuration(duration);
         groupRepository.save(group);
+    }
+
+    // for check which users have already submitted voting and which not
+    public List<VotingStatusDTO> getVotingStatus(Long groupId, Long requestingUserId){
+    
+        Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
+    
+    // only group creator can see it
+    if (!group.getCreator().getUserId().equals(requestingUserId)) {
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only group creator can view voting status");
+    }
+
+    // get all users who have submitted rankings, thus - voted
+    Set<Long> usersWhoVoted = userMovieRankingRepository.findByGroup(group)
+        .stream()
+        .map(ranking -> ranking.getUser().getUserId())
+        .collect(Collectors.toSet());
+
+    // return list of VotingStatusDTO objects 
+    return group.getMembers().stream().map(user -> new VotingStatusDTO(
+            user.getUserId(),
+            user.getUsername(),
+            usersWhoVoted.contains(user.getUserId())
+        )).collect(Collectors.toList());
     }
 }

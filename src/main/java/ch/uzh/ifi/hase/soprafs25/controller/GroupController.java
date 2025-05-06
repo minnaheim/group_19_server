@@ -25,6 +25,7 @@ import ch.uzh.ifi.hase.soprafs25.rest.dto.MovieGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.RankingSubmitDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.UserGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.VoteStateGetDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.VotingStatusDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.mapper.DTOMapper;
 import ch.uzh.ifi.hase.soprafs25.service.GroupService;
 import ch.uzh.ifi.hase.soprafs25.service.MoviePoolService;
@@ -225,4 +226,11 @@ public class GroupController {
         // in seconds
         return groupService.getRemainingTime(groupId);
     }
+
+    // to check which users have already voted
+    @GetMapping("/groups/{groupId}/voting-status")
+    public List<VotingStatusDTO> getVotingStatus(@RequestHeader("Authorization") String token, @PathVariable Long groupId) {
+    Long userId = userService.getUserByToken(AuthorizationUtil.extractToken(token)).getUserId();
+    return groupService.getVotingStatus(groupId, userId);
+}
 }
