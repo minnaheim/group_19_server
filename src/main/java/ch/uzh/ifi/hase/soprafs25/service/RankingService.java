@@ -37,6 +37,7 @@ import ch.uzh.ifi.hase.soprafs25.repository.RankingSubmissionLogRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.UserMovieRankingRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.MovieAverageRankDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.RankingResultsDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.RankingSubmitDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.mapper.DTOMapper;
 
@@ -222,22 +223,6 @@ public class RankingService {
     }
 
     /**
-     * Retrieves the most recently calculated ranking result for a specific group.
-     *
-     * @param groupId The ID of the group.
-     * @return An Optional containing the latest RankingResult for the group, or empty if none exists.
-     * @throws GroupNotFoundException If the group does not exist.
-     */
-    public Optional<RankingResult> getLatestRankingResult(Long groupId) {
-    Group group = groupRepository.findById(groupId)
-            .orElseThrow(() -> new GroupNotFoundException("Group with ID " + groupId + " not found."));
-    if (group.getPhase() != Group.GroupPhase.RESULTS) {
-        throw new ResponseStatusException(HttpStatus.CONFLICT, "Ranking results can only be viewed during the RESULTS phase");
-    }
-    return rankingResultRepository.findTopByGroupOrderByCalculationTimestampDesc(group);
-    }
-
-    /**
      * Retrieves the list of movies available for ranking within a specific group.
      *
      * @param groupId The ID of the group.
@@ -333,6 +318,45 @@ public class RankingService {
             )
         )
         .collect(Collectors.toList());
+    }
+
+    public RankingResultsDTO getRankingResults(Long groupId) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new GroupNotFoundException("Group with ID " + groupId + " not found."));
+        if (group.getPhase() != Group.GroupPhase.RESULTS) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Results can only be viewed after the RESULTS phase.");
+        }
+        // Ensure a saved winner exists
+        Optional<RankingResult> saved = rankingResultRepository.findTopByGroupOrderByCalculationTimestampDesc(group);
+        if (saved.isEmpty()) {
+            calculateAndSaveWinner(groupId);
+            saved = rankingResultRepository.findTopByGroupOrderByCalculationTimestampDesc(group);
+        }
+        RankingResult result = saved.get();
+        RankingResultsDTO dto = new RankingResultsDTO();
+        dto.setResultId(result.getId());
+        dto.setGroupId(groupId);
+        dto.setCalculatedAt(result.getCalculationTimestamp().toString());
+        dto.setWinningMovie(DTOMapper.INSTANCE.convertEntityToMovieRankGetDTO(result.getWinningMovie()));
+        long voters = userMovieRankingRepository.findByGroup(group).stream()
+                .map(umr -> umr.getUser().getUserId()).distinct().count();
+        dto.setNumberOfVoters((int) voters);
+        dto.setDetailedResults(getCompleteRankingResult(groupId));
+        return dto;
+    }
+
+    /**
+     * Retrieves the most recently calculated ranking result for a specific group.
+     * @param groupId the group ID
+     * @return optional RankingResult
+     */
+    public Optional<RankingResult> getLatestRankingResult(Long groupId) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new GroupNotFoundException("Group with ID " + groupId + " not found."));
+        if (group.getPhase() != Group.GroupPhase.RESULTS) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Ranking results can only be viewed during the RESULTS phase");
+        }
+        return rankingResultRepository.findTopByGroupOrderByCalculationTimestampDesc(group);
     }
 
     private void validateRankings(List<RankingSubmitDTO> rankings, List<Movie> availableMovies, int requiredRankings) {

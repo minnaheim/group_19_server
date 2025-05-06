@@ -37,6 +37,8 @@ import ch.uzh.ifi.hase.soprafs25.repository.RankingSubmissionLogRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.UserMovieRankingRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.RankingSubmitDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.RankingResultsDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.MovieRankGetDTO;
 import ch.uzh.ifi.hase.soprafs25.service.RankingService;
 
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -210,123 +212,27 @@ class RankingControllerTest {
                                                                                                       // if known
     }
 
-    // --- Tests for GET /groups/{groupId}/rankings/result ---
+    // --- Tests for GET /groups/{groupId}/rankings/results ---
 
     @Test
-    void getLatestRankingResult_resultExists_returnsOk() throws Exception {
-        // Set group phase to RESULTS
-        testGroup.setPhase(Group.GroupPhase.RESULTS);
-        groupRepository.saveAndFlush(testGroup);
-        // Arrange: Create and save a dummy RankingResult associated with the group
-        RankingResult dummyResult = new RankingResult();
-        dummyResult.setGroup(testGroup); // Associate with the test group
-        dummyResult.setWinningMovie(movie1); // Correct setter
-        dummyResult.setAverageRank(1.0); // Set required non-null field
-        dummyResult.setCalculationTimestamp(LocalDateTime.now()); // Correct setter
-        rankingResultRepository.saveAndFlush(dummyResult);
+    void getRankingResults_valid_returnsOkAndCorrectPayload() throws Exception {
+        // Stub service to return dummy DTO
+        RankingResultsDTO stubDto = new RankingResultsDTO();
+        stubDto.setResultId(123L);
+        stubDto.setNumberOfVoters(2);
+        stubDto.setCalculatedAt("2025-01-01T00:00:00Z");
+        MovieRankGetDTO win = new MovieRankGetDTO();
+        win.setMovieId(movie1.getMovieId()); win.setTitle(movie1.getTitle());
+        stubDto.setWinningMovie(win);
+        stubDto.setDetailedResults(List.of());
+        doReturn(stubDto).when(rankingService).getRankingResults(testGroup.getGroupId());
 
-        // Act & Assert
-        mockMvc.perform(get("/groups/{groupId}/rankings/result", testGroup.getGroupId())
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk()) // Expect 200 OK
-                .andExpect(jsonPath("$.winningMovie.movieId").value(movie1.getMovieId()))
-                .andExpect(jsonPath("$.winningMovie.title").value(movie1.getTitle()));
-        // Add more assertions as needed (e.g., calculationTime)
-    }
-
-    @Test
-    void getLatestRankingResult_noResult_returnsNotFound() throws Exception {
-        // Set group phase to RESULTS
-        testGroup.setPhase(Group.GroupPhase.RESULTS);
-        groupRepository.saveAndFlush(testGroup);
-        // Arrange: Ensure no results exist for this group (done by @Transactional and
-        // setup)
-
-        // Act & Assert
-        mockMvc.perform(get("/groups/{groupId}/rankings/result", testGroup.getGroupId())
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound()); // Expect 404 Not Found
-    }
-
-    // --- NEW TEST FOR COMPLETE RANKING RESULT ---
-    @Test
-    void getGroupCompleteRankingResult_validInput_returnsSortedListWithAverages() throws Exception {
-        // Set group phase to RESULTS
-        testGroup.setPhase(Group.GroupPhase.RESULTS);
-        groupRepository.saveAndFlush(testGroup);
-        // Stub service to return pool movies in VOTING phase
-        doReturn(availableMovies).when(rankingService).getRankableMoviesForGroup(testGroup.getGroupId());
-        // Setup: Submit rankings from two users
-        // User 1: A(1), B(2), C(3), D(4), E(5)
-        userMovieRankingRepository.saveAll(asList(
-                createRanking(testUser, testGroup, movie1, 1),
-                createRanking(testUser, testGroup, movie2, 2),
-                createRanking(testUser, testGroup, movie3, 3),
-                createRanking(testUser, testGroup, movie4, 4),
-                createRanking(testUser, testGroup, movie5, 5)));
-        userMovieRankingRepository.flush();
-        // User 2: A(2), B(1), C(3), D(4), E(5)
-        userMovieRankingRepository.saveAll(asList(
-                createRanking(testUser2, testGroup, movie1, 2),
-                createRanking(testUser2, testGroup, movie2, 1),
-                createRanking(testUser2, testGroup, movie3, 3),
-                createRanking(testUser2, testGroup, movie4, 4),
-                createRanking(testUser2, testGroup, movie5, 5)));
-        userMovieRankingRepository.flush();
-
-        // Expected Averages: A=(1+2)/2=1.5, B=(2+1)/2=1.5, C=(3+3)/2=3.0,
-        // D=(4+4)/2=4.0, E=(5+5)/2=5.0
-        // Expected Order: A (1.5), B (1.5), C (3.0), D (4.0), E (5.0) - Tie-breaking
-        // not specified, so order of A/B might vary
-        // Let's assume stable sort or check possibilities
-
-        // Action & Assert
-        mockMvc.perform(get("/groups/{groupId}/rankings/details", testGroup.getGroupId()))
+        mockMvc.perform(get("/groups/{groupId}/rankings/results", testGroup.getGroupId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(5))) // Expecting 5 movies
-                // Check first element (either Movie A or B with avg 1.5)
-                .andExpect(jsonPath("$[0].movie.movieId", equalTo((int) movie1.getMovieId())))
-                .andExpect(jsonPath("$[0].averageRank", equalTo(1.5)))
-                .andExpect(jsonPath("$[1].movie.movieId", equalTo((int) movie2.getMovieId())))
-                .andExpect(jsonPath("$[1].averageRank", equalTo(1.5)))
-                .andExpect(jsonPath("$[2].movie.movieId", equalTo((int) movie3.getMovieId())))
-                .andExpect(jsonPath("$[2].averageRank", equalTo(3.0)))
-                .andExpect(jsonPath("$[3].movie.movieId", equalTo((int) movie4.getMovieId())))
-                .andExpect(jsonPath("$[3].averageRank", equalTo(4.0)))
-                .andExpect(jsonPath("$[4].movie.movieId", equalTo((int) movie5.getMovieId())))
-                .andExpect(jsonPath("$[4].averageRank", equalTo(5.0)));
-
-        // Ensure A and B are distinct in the first two positions
-        // This is harder with jsonPath, might need custom matcher or parsing response
-    }
-
-    @Test
-    void getGroupCompleteRankingResult_noRankingsSubmitted_returnsOkAndListWithNullAverages() throws Exception {
-        // Set group phase to RESULTS
-        testGroup.setPhase(Group.GroupPhase.RESULTS);
-        groupRepository.saveAndFlush(testGroup);
-        // Stub service to return pool movies
-        doReturn(availableMovies).when(rankingService).getRankableMoviesForGroup(testGroup.getGroupId());
-        // Setup: No rankings submitted, just the group and movie pool exist
-
-        // Action & Assert
-        mockMvc.perform(get("/groups/{groupId}/rankings/details", testGroup.getGroupId()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(5))) // Expecting 5 movies
-                // Check that averageRanks are null and movies are present (order might be
-                // alphabetical)
-                .andExpect(jsonPath("$[0].movie.movieId", equalTo((int) movie1.getMovieId())))
-                .andExpect(jsonPath("$[0].averageRank").doesNotExist()) // Average rank should be null or absent
-                .andExpect(jsonPath("$[1].movie.movieId", equalTo((int) movie2.getMovieId())))
-                .andExpect(jsonPath("$[1].averageRank").doesNotExist()); // Average rank should be null or absent
-        // Optional: Check alphabetical sort order if needed
-    }
-
-    @Test
-    void getGroupCompleteRankingResult_invalidGroupId_returnsNotFound() throws Exception {
-        // Action & Assert
-        mockMvc.perform(get("/groups/{groupId}/rankings/details", 999L)) // Non-existent ID
-                .andExpect(status().isNotFound());
+                .andExpect(jsonPath("$.resultId").value(123))
+                .andExpect(jsonPath("$.numberOfVoters").value(2))
+                .andExpect(jsonPath("$.winningMovie.movieId").value((int) movie1.getMovieId()))
+                .andExpect(jsonPath("$.detailedResults", hasSize(0)));
     }
 
     // --- Helper Methods ---
