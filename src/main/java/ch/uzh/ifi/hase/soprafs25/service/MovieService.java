@@ -132,6 +132,8 @@ public class MovieService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "User with ID " + userId + " not found"));
 
+        log.info("Found user {}", user);
+
         // Create sets of movies to exclude (already watched or in watchlist)
         Set<Long> excludedMovieIds = new HashSet<>();
         if (user.getWatchedMovies() != null) {
@@ -143,6 +145,7 @@ public class MovieService {
 
         // Collect all user favorites
         List<String> favoriteGenres = user.getFavoriteGenres();
+        log.info("getMovieSuggestions: Favorite genres are {}", favoriteGenres);
         List<String> favoriteActorIds = new ArrayList<>();
         List<String> favoriteDirectorIds = new ArrayList<>();
 
@@ -150,10 +153,12 @@ public class MovieService {
         if (user.getFavoriteActors() != null) {
             favoriteActorIds.addAll(user.getFavoriteActors());
         }
+        log.info("getMovieSuggestions: Favorite actors are {}", favoriteActorIds);
 
         if (user.getFavoriteDirectors() != null) {
             favoriteDirectorIds.addAll(user.getFavoriteDirectors());
         }
+        log.info("getMovieSuggestions: Favorite directors are {}", favoriteDirectorIds);
 
         // Maximum number of API calls to prevent excessive requests
         final int MAX_API_CALLS = 200;
@@ -169,7 +174,7 @@ public class MovieService {
 
         // Execute searches in order until we have enough suggestions or reach API call limit
         for (Movie searchParams : searchQueries) {
-            log.info("for (Movie searchParams : searchQueries) loop");
+            log.info("for (Movie searchParams : {}) loop", searchQueries);
             if (suggestions.size() >= limit || apiCallCount >= MAX_API_CALLS) {
                 break;
             }
@@ -227,6 +232,7 @@ public class MovieService {
      */
     private List<Movie> generateSearchPermutations(List<String> genres, List<String> actors, List<String> directors) {
         List<Movie> searchQueries = new ArrayList<>();
+        log.info("generateSearchPermutations: genres are {}, actors are {}, directors are {}", genres, actors, directors);
 
         // Start with the most specific search (all parameters)
         if (!genres.isEmpty() && !actors.isEmpty() && !directors.isEmpty()) {
