@@ -4,18 +4,22 @@ import ch.uzh.ifi.hase.soprafs25.entity.Movie;
 import ch.uzh.ifi.hase.soprafs25.entity.User;
 import ch.uzh.ifi.hase.soprafs25.repository.MovieRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.ActorDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.DirectorDTO;
+import ch.uzh.ifi.hase.soprafs25.service.TMDbService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.*;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -27,10 +31,10 @@ class MovieServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private TMDbService tmdbService;
+    private MovieRepository movieRepository;
 
     @Mock
-    private MovieRepository movieRepository;
+    private TMDbService tmdbService;
 
     @InjectMocks
     private MovieService movieService;
@@ -41,6 +45,7 @@ class MovieServiceTest {
     private Movie testMovie3;
     private Movie watchedMovie;
     private Movie watchlistMovie;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void setup() {
@@ -98,19 +103,31 @@ class MovieServiceTest {
         testUser.setFavoriteGenres(favoriteGenres);
 
         // Setup favorite actors
-        Map<String, String> favoriteActors = new HashMap<>();
-        favoriteActors.put("6193", "Leonardo DiCaprio");
-        favoriteActors.put("24045", "Joseph Gordon-Levitt");
-        favoriteActors.put("1357546", "Ken Watanabe");
-        favoriteActors.put("2524", "Tom Hardy");
-        favoriteActors.put("27578", "Elliot Page");
-        testUser.setFavoriteActors(favoriteActors);
+        List<ActorDTO> favoriteActorDTOs = new ArrayList<>();
+        ActorDTO actor1 = new ActorDTO(); actor1.setId(6193); actor1.setName("Leonardo DiCaprio");
+        ActorDTO actor2 = new ActorDTO(); actor2.setId(24045); actor2.setName("Joseph Gordon-Levitt");
+        ActorDTO actor3 = new ActorDTO(); actor3.setId(1357546); actor3.setName("Ken Watanabe");
+        ActorDTO actor4 = new ActorDTO(); actor4.setId(2524); actor4.setName("Tom Hardy");
+        ActorDTO actor5 = new ActorDTO(); actor5.setId(27578); actor5.setName("Elliot Page");
+        favoriteActorDTOs.addAll(Arrays.asList(actor1, actor2, actor3, actor4, actor5));
+        try {
+            String actorsJson = objectMapper.writeValueAsString(favoriteActorDTOs);
+            testUser.setFavoriteActorsJson(actorsJson);
+        } catch (Exception e) {
+            fail("Failed to serialize favorite actors to JSON: " + e.getMessage());
+        }
 
         // Setup favorite directors
-        Map<String, String> favoriteDirectors = new HashMap<>();
-        favoriteDirectors.put("525", "Christopher Nolan");
-        favoriteDirectors.put("1408530", "Emma Thomas");
-        testUser.setFavoriteDirectors(favoriteDirectors);
+        List<DirectorDTO> favoriteDirectorDTOs = new ArrayList<>();
+        DirectorDTO director1 = new DirectorDTO(); director1.setId(525); director1.setName("Christopher Nolan");
+        DirectorDTO director2 = new DirectorDTO(); director2.setId(1408530); director2.setName("Emma Thomas");
+        favoriteDirectorDTOs.addAll(Arrays.asList(director1, director2));
+        try {
+            String directorsJson = objectMapper.writeValueAsString(favoriteDirectorDTOs);
+            testUser.setFavoriteDirectorsJson(directorsJson);
+        } catch (Exception e) {
+            fail("Failed to serialize favorite directors to JSON: " + e.getMessage());
+        }
 
         // Setup watchlist and watched movies
         testUser.setWatchlist(Collections.singletonList(testMovie2));
@@ -142,6 +159,18 @@ class MovieServiceTest {
      */
     @Test
     void testGetMovieSuggestions_withUserFavorites() {
+        // Prepare a user for this specific test
+        User userWithPrefs = new User();
+        userWithPrefs.setUserId(2341L);
+        userWithPrefs.setUsername("user2341");
+        userWithPrefs.setFavoriteGenres(Arrays.asList("Sci-Fi")); // Example preference
+        userWithPrefs.setFavoriteActorsJson("[]");
+        userWithPrefs.setFavoriteDirectorsJson("[]");
+        userWithPrefs.setWatchlist(new ArrayList<>());
+        userWithPrefs.setWatchedMovies(new ArrayList<>());
+
+        when(userRepository.findById(2341L)).thenReturn(Optional.of(userWithPrefs));
+
         // Prepare movie suggestions to be returned by TMDbService
         List<Movie> suggestedMovies = new ArrayList<>();
         suggestedMovies.add(testMovie3); // Suggested movie that is not in watchlist or watched
@@ -171,40 +200,41 @@ class MovieServiceTest {
      */
     @Test
     void testGetMovieSuggestions_mockTMDbService() {
-        // create different movie sets based on the search parameters
+        // Setup a user with some preferences
+        Long userId = 2341L;
+        testUser = new User();
+        testUser.setUserId(userId);
+        testUser.setFavoriteGenres(Arrays.asList("Action")); // Add a favorite genre
+        // Initialize favorite actors/directors to empty lists if not further specified
+        testUser.setFavoriteActorsJson("[]"); 
+        testUser.setFavoriteDirectorsJson("[]");
+        testUser.setWatchlist(new ArrayList<>()); 
+        testUser.setWatchedMovies(new ArrayList<>()); 
 
-        // Create a list of unique movies to return for each search
-        List<Movie> uniqueMovies = new ArrayList<>();
-        for (int i = 1; i <= 20; i++) {
+        when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
+
+        // Create a list of 3 unique movies to be returned by the mock
+        List<Movie> mockedResponseMovies = new ArrayList<>();
+        for (int i = 1; i <= 3; i++) {
             Movie movie = new Movie();
             movie.setMovieId(300L + i);
             movie.setTitle("Suggested Movie " + i);
-            uniqueMovies.add(movie);
+            mockedResponseMovies.add(movie);
         }
 
-        // Return different movies for each call to simulate realistic behavior
-        when(tmdbService.searchMovies(any(Movie.class))).thenAnswer(invocation -> {
-            // Create a new list for each call to prevent modification issues
-            List<Movie> resultMovies = new ArrayList<>();
-
-            // Add 3 unique movies for each call (adjust as needed)
-            for (int i = 0; i < 3; i++) {
-                int index = (int) (Math.random() * uniqueMovies.size());
-                if (index < uniqueMovies.size()) {
-                    resultMovies.add(uniqueMovies.get(index));
-                }
-            }
-
-            return resultMovies;
-        });
+        // Mock tmdbService.searchMovies to return our list of 3 movies for any search query
+        when(tmdbService.searchMovies(any(Movie.class))).thenReturn(mockedResponseMovies);
 
         // Execute
-        List<Movie> suggestions = movieService.getMovieSuggestions(2341L, 3);
+        // Calling with userId and a limit of 3 for suggestions
+        List<Movie> suggestions = movieService.getMovieSuggestions(userId, 3);
 
         // Verify
         assertEquals(3, suggestions.size(), "The method should return exactly 3 movies");
 
-        // Verify TMDbService was called at least once
+        // Verify TMDbService.searchMovies was called.
+        // It should be called for permutations generated from user's preferences.
+        // Given one favorite genre, it should generate at least one permutation and thus call searchMovies.
         verify(tmdbService, atLeastOnce()).searchMovies(any(Movie.class));
     }
 
@@ -214,24 +244,43 @@ class MovieServiceTest {
      */
     @Test
     void testGetMovieSuggestions_filterWatchedAndWatchlist() {
-        // test to verify filtering of watched and watchlist movies
+        // Configure testUser specifically for this test's scenario.
 
-        // Mock movieService to return movies including watched and watchlist movies
-        List<Movie> allMovies = Arrays.asList(testMovie1, testMovie2, testMovie3, watchedMovie, watchlistMovie);
-        when(movieService.getMovies(any(Movie.class))).thenReturn(allMovies);
+        // Setup User's watched and watchlist for this specific test
+        // This will use the instances of watchedMovie and watchlistMovie from @BeforeEach
+        testUser.setWatchedMovies(new ArrayList<>(Arrays.asList(watchedMovie)));
+        testUser.setWatchlist(new ArrayList<>(Arrays.asList(watchlistMovie)));
+        // Ensure user has some preferences to trigger permutation generation
+        if (testUser.getFavoriteGenres() == null || testUser.getFavoriteGenres().isEmpty()) {
+            testUser.setFavoriteGenres(Arrays.asList("Action")); 
+        }
+        if (testUser.getFavoriteActorsJson() == null || testUser.getFavoriteActorsJson().equals("null")) {
+            testUser.setFavoriteActorsJson("[]");
+        }
+        if (testUser.getFavoriteDirectorsJson() == null || testUser.getFavoriteDirectorsJson().equals("null")) {
+            testUser.setFavoriteDirectorsJson("[]");
+        }
+
+        when(userRepository.findById(testUser.getUserId())).thenReturn(Optional.of(testUser));
+
+        // Mock tmdbService to return a list including movies that should be filtered
+        // Ensure these are the same movie instances (or at least movies with the same IDs) as those in user's lists
+        List<Movie> allMoviesFromTMDb = new ArrayList<>(Arrays.asList(testMovie1, testMovie2, testMovie3, watchedMovie, watchlistMovie));
+        when(tmdbService.searchMovies(any(Movie.class))).thenReturn(allMoviesFromTMDb);
 
         // Call the method under test
         List<Movie> suggestions = movieService.getMovieSuggestions(testUser.getUserId(), 10);
 
         // Verify suggestions do not contain watched or watchlist movies
         assertNotNull(suggestions);
-        assertFalse(suggestions.contains(watchedMovie), "Watched movie should be filtered out");
-        assertFalse(suggestions.contains(watchlistMovie), "Watchlist movie should be filtered out");
+        assertFalse(suggestions.stream().anyMatch(m -> Objects.equals(m.getMovieId(), watchedMovie.getMovieId())), "Watched movie should be filtered out");
+        assertFalse(suggestions.stream().anyMatch(m -> Objects.equals(m.getMovieId(), watchlistMovie.getMovieId())), "Watchlist movie should be filtered out");
 
         // Verify other movies are included
-        assertTrue(suggestions.contains(testMovie1));
-        assertTrue(suggestions.contains(testMovie2));
-        assertTrue(suggestions.contains(testMovie3));
+        assertTrue(suggestions.stream().anyMatch(m -> Objects.equals(m.getMovieId(), testMovie1.getMovieId())), "TestMovie1 should be present if not filtered");
+        assertTrue(suggestions.stream().anyMatch(m -> Objects.equals(m.getMovieId(), testMovie2.getMovieId())), "TestMovie2 should be present if not filtered");
+        assertTrue(suggestions.stream().anyMatch(m -> Objects.equals(m.getMovieId(), testMovie3.getMovieId())), "TestMovie3 should be present if not filtered");
+        assertEquals(3, suggestions.size(), "Should return 3 movies after filtering");
     }
 
     /**
@@ -244,8 +293,8 @@ class MovieServiceTest {
 
         // Set up test data
         List<String> genres = Arrays.asList("Action", "Adventure");
-        List<String> actors = Arrays.asList("6193", "24045");
-        List<String> directors = Arrays.asList("525");
+        List<Long> actors = Arrays.asList(6193L, 24045L);
+        List<Long> directors = Arrays.asList(525L);
 
         // Create spy on movieService to test private method
         MovieService spyMovieService = spy(movieService);
@@ -277,8 +326,8 @@ class MovieServiceTest {
         // First permutation should have all parameters (most specific)
         Movie firstPermutation = permutations.get(0);
         assertEquals(genres, firstPermutation.getGenres());
-        assertEquals(actors, firstPermutation.getActors());
-        assertEquals(directors, firstPermutation.getDirectors());
+        assertEquals(actors.stream().map(String::valueOf).collect(Collectors.toList()), firstPermutation.getActors());
+        assertEquals(directors.stream().map(String::valueOf).collect(Collectors.toList()), firstPermutation.getDirectors());
 
         // Verify decreasing specificity in permutations
         boolean foundGenreOnlyQuery = false;
@@ -318,6 +367,15 @@ class MovieServiceTest {
     void testGetMovieSuggestions_respectLimit() {
         // test to verify respect for requested limit
 
+        // Configure testUser with some preferences for this test.
+        testUser.setFavoriteGenres(Arrays.asList("Comedy")); // Add a favorite genre
+        testUser.setFavoriteActorsJson("[]"); 
+        testUser.setFavoriteDirectorsJson("[]");
+        testUser.setWatchlist(new ArrayList<>());
+        testUser.setWatchedMovies(new ArrayList<>());
+
+        when(userRepository.findById(testUser.getUserId())).thenReturn(Optional.of(testUser));
+
         // Create a large number of test movies
         List<Movie> manyMovies = new ArrayList<>();
         for (int i = 0; i < 150; i++) {
@@ -327,8 +385,8 @@ class MovieServiceTest {
             manyMovies.add(movie);
         }
 
-        // Mock movieService to return many movies
-        when(movieService.getMovies(any(Movie.class))).thenReturn(manyMovies);
+        // Mock tmdbService.searchMovies to return many movies
+        when(tmdbService.searchMovies(any(Movie.class))).thenReturn(manyMovies);
 
         // Test with different limits
         int limit1 = 10;
@@ -354,20 +412,20 @@ class MovieServiceTest {
 
         // Create user with no favorites
         User userNoPrefs = new User();
-        userNoPrefs.setUserId(9999L);
-        userNoPrefs.setUsername("userNoPrefs");
-        userNoPrefs.setFavoriteGenres(Collections.emptyList());
-        userNoPrefs.setFavoriteActors(Collections.emptyMap());
-        userNoPrefs.setFavoriteDirectors(Collections.emptyMap());
-        userNoPrefs.setWatchedMovies(Collections.emptyList());
+        userNoPrefs.setUserId(2L);
+        userNoPrefs.setFavoriteGenres(Collections.emptyList()); // No favorite genres
+        userNoPrefs.setFavoriteActorsJson("[]"); // Empty JSON array for actors
+        userNoPrefs.setFavoriteDirectorsJson("[]"); // Empty JSON array for directors
         userNoPrefs.setWatchlist(Collections.emptyList());
+        userNoPrefs.setWatchedMovies(Collections.emptyList());
 
         // Mock repository to return this user
         when(userRepository.findById(userNoPrefs.getUserId())).thenReturn(Optional.of(userNoPrefs));
 
-        // Mock movieService to return movies for empty search params
+        // Mock tmdbService to return movies for empty search params
+        // (i.e., when Movie object has no genres, actors, or directors specified)
         List<Movie> defaultMovies = Arrays.asList(testMovie1, testMovie2, testMovie3);
-        when(movieService.getMovies(argThat(movie ->
+        when(tmdbService.searchMovies(argThat(movie ->
                 (movie.getGenres() == null || movie.getGenres().isEmpty()) &&
                         (movie.getActors() == null || movie.getActors().isEmpty()) &&
                         (movie.getDirectors() == null || movie.getDirectors().isEmpty())
@@ -376,7 +434,7 @@ class MovieServiceTest {
         // Call the method under test
         List<Movie> suggestions = movieService.getMovieSuggestions(userNoPrefs.getUserId(), 10);
 
-        // Verify tmdbService was called with empty parameters
+        // Verify tmdbService was called with effectively empty search parameters
         verify(tmdbService).searchMovies(argThat(movie ->
                 (movie.getGenres() == null || movie.getGenres().isEmpty()) &&
                         (movie.getActors() == null || movie.getActors().isEmpty()) &&
@@ -399,18 +457,15 @@ class MovieServiceSearchPermutationsTest {
     @Mock
     private UserRepository userRepository;
 
-    @Mock
-    private TMDbService tmdbService;
-
     private MovieService movieService;
     private Method generateSearchPermutationsMethod;
 
     @BeforeEach
-    public void setup() throws NoSuchMethodException {
+    public void setup() throws Exception {
         MockitoAnnotations.openMocks(this);
 
         // Create the MovieService instance with mocked dependencies
-        movieService = new MovieService(movieRepository, tmdbService, userRepository);
+        movieService = new MovieService(movieRepository, null, userRepository);
 
         // Use reflection to access the private method
         generateSearchPermutationsMethod = MovieService.class.getDeclaredMethod(
@@ -427,13 +482,13 @@ class MovieServiceSearchPermutationsTest {
     public void testGenerateSearchPermutationsWithVariousCombinations() throws Exception {
         // Define test input
         List<String> genres = Arrays.asList("Action", "Adventure");
-        List<String> actors = Arrays.asList("123", "456");
-        List<String> directors = Arrays.asList("789");
+        List<Long> actorIds = Arrays.asList(123L, 456L);
+        List<Long> directorIds = Arrays.asList(789L);
 
         // Call the private method via reflection
         @SuppressWarnings("unchecked")
         List<Movie> result = (List<Movie>) generateSearchPermutationsMethod.invoke(
-                movieService, genres, actors, directors
+                movieService, genres, actorIds, directorIds
         );
 
         // Assertions for various combinations Verify that all expected combinations are generated
@@ -442,8 +497,8 @@ class MovieServiceSearchPermutationsTest {
         // Check if the most specific search (all parameters) is first
         Movie firstSearch = result.get(0);
         assertEquals(genres, firstSearch.getGenres(), "First search should have all genres");
-        assertEquals(actors, firstSearch.getActors(), "First search should have all actors");
-        assertEquals(directors, firstSearch.getDirectors(), "First search should have all directors");
+        assertEquals(actorIds.stream().map(String::valueOf).collect(Collectors.toList()), firstSearch.getActors(), "First search should have all actors");
+        assertEquals(directorIds.stream().map(String::valueOf).collect(Collectors.toList()), firstSearch.getDirectors(), "First search should have all directors");
 
         // Verify total number of permutations
         // 1 (all params) + 3 (two params) + 3 (single category) + 2 (individual genres) + 2 (individual actors) + 1 (individual director)
@@ -478,13 +533,13 @@ class MovieServiceSearchPermutationsTest {
     public void testSearchPermutationsOrder() throws Exception {
         // Define test input
         List<String> genres = Arrays.asList("Action", "Adventure");
-        List<String> actors = Arrays.asList("123", "456");
-        List<String> directors = Arrays.asList("789");
+        List<Long> actorIds = Arrays.asList(123L, 456L);
+        List<Long> directorIds = Arrays.asList(789L);
 
         // Call the private method via reflection
         @SuppressWarnings("unchecked")
         List<Movie> result = (List<Movie>) generateSearchPermutationsMethod.invoke(
-                movieService, genres, actors, directors
+                movieService, genres, actorIds, directorIds
         );
 
         // Verify the order is from most specific to least specific First should have all parameters
@@ -563,13 +618,13 @@ class MovieServiceSearchPermutationsTest {
     public void testIndividualItemPermutations() throws Exception {
         // Setup multiple items in each category
         List<String> genres = Arrays.asList("Action", "Adventure", "Comedy");
-        List<String> actors = Arrays.asList("123", "456");
-        List<String> directors = Arrays.asList("789", "012");
+        List<Long> actorIds = Arrays.asList(123L, 456L);
+        List<Long> directorIds = Arrays.asList(789L, 12L); // 012L is 10 in octal, 12L is clearer for decimal 12
 
         // Call the method
         @SuppressWarnings("unchecked")
         List<Movie> result = (List<Movie>) generateSearchPermutationsMethod.invoke(
-                movieService, genres, actors, directors
+                movieService, genres, actorIds, directorIds
         );
 
         // Verify individual item permutations are included Count individual genre permutations
@@ -604,7 +659,3 @@ class MovieServiceSearchPermutationsTest {
         assertEquals(2, individualDirectorCount, "Should have a permutation for each individual director");
     }
 }
-
-
-
-

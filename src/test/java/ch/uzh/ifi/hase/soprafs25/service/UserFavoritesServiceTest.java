@@ -4,24 +4,25 @@ import ch.uzh.ifi.hase.soprafs25.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs25.entity.Movie;
 import ch.uzh.ifi.hase.soprafs25.entity.User;
 import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.ActorDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.DirectorDTO;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
+
 import static org.mockito.Mockito.*;
 
 class UserFavoritesServiceTest {
@@ -35,16 +36,18 @@ class UserFavoritesServiceTest {
     @Mock
     private TMDbService tmdbService;
 
-    @InjectMocks
     private UserFavoritesService UserFavoritesService;
 
     private User testUser;
     private Movie testMovie;
     private JsonNode genresNode;
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void setup() throws Exception {
         MockitoAnnotations.openMocks(this);
+
+        UserFavoritesService = new UserFavoritesService(userRepository, movieService, tmdbService, objectMapper);
 
         // Set up test user
         testUser = new User();
@@ -61,9 +64,8 @@ class UserFavoritesServiceTest {
         testMovie.setTitle("Test Movie");
         
         // Set up genres data
-        ObjectMapper mapper = new ObjectMapper();
         String genresJson = "[{\"id\":28,\"name\":\"Action\"},{\"id\":12,\"name\":\"Adventure\"},{\"id\":16,\"name\":\"Animation\"}]";
-        genresNode = mapper.readTree(genresJson);
+        genresNode = objectMapper.readTree(genresJson);
 
         // Configure mocks
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
@@ -177,16 +179,41 @@ class UserFavoritesServiceTest {
     }
 
     @Test
-    void saveFavoriteActors_SavesActors() {
-        List<String> actors = List.of("A1", "B2");
-        List<String> result = UserFavoritesService.saveFavoriteActors(1L, actors, "validToken");
-        assertEquals(actors, result);
-        verify(userRepository).save(any(User.class));
+    void saveFavoriteActors_SavesActors() throws JsonProcessingException {
+        // Arrange
+        ActorDTO actor1 = new ActorDTO();
+        actor1.setId(1);
+        actor1.setName("Actor One");
+        ActorDTO actor2 = new ActorDTO();
+        actor2.setId(2);
+        actor2.setName("Actor Two");
+        List<ActorDTO> actors = List.of(actor1, actor2);
+        String expectedJson = objectMapper.writeValueAsString(actors);
+
+        // Act
+        List<ActorDTO> result = UserFavoritesService.saveFavoriteActors(1L, actors, "validToken");
+
+        // Assert
+        assertEquals(actors.size(), result.size());
+        for (int i = 0; i < actors.size(); i++) {
+            assertEquals(actors.get(i).getId(), result.get(i).getId());
+            assertEquals(actors.get(i).getName(), result.get(i).getName());
+        }
+        
+        // Verify that the user entity was updated with the JSON string
+        verify(userRepository).save(testUser); 
+        assertEquals(expectedJson, testUser.getFavoriteActorsJson());
     }
 
     @Test
     void saveFavoriteActors_ThrowsForInvalidToken() {
-        List<String> actors = List.of("A1", "B2");
+        // Arrange
+        ActorDTO actor1 = new ActorDTO();
+        actor1.setId(1);
+        actor1.setName("Actor One");
+        List<ActorDTO> actors = List.of(actor1);
+
+        // Act & Assert
         assertThrows(ResponseStatusException.class, () -> {
             UserFavoritesService.saveFavoriteActors(1L, actors, "invalidToken");
         });
@@ -194,49 +221,118 @@ class UserFavoritesServiceTest {
 
     @Test
     void getFavoriteActors_ReturnsEmptyListIfNotSet() {
-        testUser.setFavoriteActors((List<String>) null);
-        List<String> result = UserFavoritesService.getFavoriteActors(1L);
+        // Arrange
+        testUser.setFavoriteActorsJson(null); 
+
+        // Act
+        List<ActorDTO> result = UserFavoritesService.getFavoriteActors(1L);
+
+        // Assert
         assertNotNull(result);
         assertTrue(result.isEmpty());
     }
 
     @Test
-    void getFavoriteActors_ReturnsSavedActors() {
-        List<String> actors = List.of("A1", "B2");
-        testUser.setFavoriteActors(actors);
-        List<String> result = UserFavoritesService.getFavoriteActors(1L);
-        assertEquals(actors, result);
+    void getFavoriteActors_ReturnsSavedActors() throws JsonProcessingException {
+        // Arrange
+        ActorDTO actor1 = new ActorDTO();
+        actor1.setId(1);
+        actor1.setName("Actor One");
+        ActorDTO actor2 = new ActorDTO();
+        actor2.setId(2);
+        actor2.setName("Actor Two");
+        List<ActorDTO> expectedActors = List.of(actor1, actor2);
+        String actorsJson = objectMapper.writeValueAsString(expectedActors);
+        testUser.setFavoriteActorsJson(actorsJson);
+
+        // Act
+        List<ActorDTO> result = UserFavoritesService.getFavoriteActors(1L);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(expectedActors.size(), result.size());
+        for (int i = 0; i < expectedActors.size(); i++) {
+            assertEquals(expectedActors.get(i).getId(), result.get(i).getId());
+            assertEquals(expectedActors.get(i).getName(), result.get(i).getName());
+        }
     }
 
     @Test
-    void saveFavoriteDirectors_SavesDirectors() {
-        List<String> dirs = List.of("D1", "D2");
-        List<String> result = UserFavoritesService.saveFavoriteDirectors(1L, dirs, "validToken");
-        assertEquals(dirs, result);
-        verify(userRepository).save(any(User.class));
+    void saveFavoriteDirectors_SavesDirectors() throws JsonProcessingException {
+        // Arrange
+        DirectorDTO director1 = new DirectorDTO();
+        director1.setId(1);
+        director1.setName("Director One");
+        DirectorDTO director2 = new DirectorDTO();
+        director2.setId(2);
+        director2.setName("Director Two");
+        List<DirectorDTO> directors = List.of(director1, director2);
+        String expectedJson = objectMapper.writeValueAsString(directors);
+
+        // Act
+        List<DirectorDTO> result = UserFavoritesService.saveFavoriteDirectors(1L, directors, "validToken");
+
+        // Assert
+        assertEquals(directors.size(), result.size());
+        for (int i = 0; i < directors.size(); i++) {
+            assertEquals(directors.get(i).getId(), result.get(i).getId());
+            assertEquals(directors.get(i).getName(), result.get(i).getName());
+        }
+
+        // Verify that the user entity was updated with the JSON string
+        verify(userRepository).save(testUser);
+        assertEquals(expectedJson, testUser.getFavoriteDirectorsJson());
     }
 
     @Test
     void saveFavoriteDirectors_ThrowsForInvalidToken() {
-        List<String> dirs = List.of("D1", "D2");
+        // Arrange
+        DirectorDTO director1 = new DirectorDTO();
+        director1.setId(1);
+        director1.setName("Director One");
+        List<DirectorDTO> directors = List.of(director1);
+
+        // Act & Assert
         assertThrows(ResponseStatusException.class, () -> {
-            UserFavoritesService.saveFavoriteDirectors(1L, dirs, "invalidToken");
+            UserFavoritesService.saveFavoriteDirectors(1L, directors, "invalidToken");
         });
     }
 
     @Test
     void getFavoriteDirectors_ReturnsEmptyListIfNotSet() {
-        testUser.setFavoriteDirectors((List<String>) null);
-        List<String> result = UserFavoritesService.getFavoriteDirectors(1L);
+        // Arrange
+        testUser.setFavoriteDirectorsJson(null); 
+
+        // Act
+        List<DirectorDTO> result = UserFavoritesService.getFavoriteDirectors(1L);
+
+        // Assert
         assertNotNull(result);
         assertTrue(result.isEmpty());
     }
 
     @Test
-    void getFavoriteDirectors_ReturnsSavedDirectors() {
-        List<String> dirs = List.of("D1", "D2");
-        testUser.setFavoriteDirectors(dirs);
-        List<String> result = UserFavoritesService.getFavoriteDirectors(1L);
-        assertEquals(dirs, result);
+    void getFavoriteDirectors_ReturnsSavedDirectors() throws JsonProcessingException {
+        // Arrange
+        DirectorDTO director1 = new DirectorDTO();
+        director1.setId(1);
+        director1.setName("Director One");
+        DirectorDTO director2 = new DirectorDTO();
+        director2.setId(2);
+        director2.setName("Director Two");
+        List<DirectorDTO> expectedDirectors = List.of(director1, director2);
+        String directorsJson = objectMapper.writeValueAsString(expectedDirectors);
+        testUser.setFavoriteDirectorsJson(directorsJson);
+
+        // Act
+        List<DirectorDTO> result = UserFavoritesService.getFavoriteDirectors(1L);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(expectedDirectors.size(), result.size());
+        for (int i = 0; i < expectedDirectors.size(); i++) {
+            assertEquals(expectedDirectors.get(i).getId(), result.get(i).getId());
+            assertEquals(expectedDirectors.get(i).getName(), result.get(i).getName());
+        }
     }
 }

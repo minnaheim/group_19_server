@@ -9,11 +9,12 @@ import ch.uzh.ifi.hase.soprafs25.rest.dto.UserGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.UserPostDTO;
 import ch.uzh.ifi.hase.soprafs25.entity.Group;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.GroupGetDTO;
+import ch.uzh.ifi.hase.soprafs25.entity.Movie;
 
 import java.util.ArrayList;
 import java.util.List;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import ch.uzh.ifi.hase.soprafs25.entity.Movie;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * DTOMapperTest
@@ -113,7 +114,8 @@ public class DTOMapperTest {
     List<Long> movieIds = DTOMapper.INSTANCE.mapMoviesToIds(null);
 
     // Check content
-    assertNull(movieIds);
+    assertNotNull(movieIds); // Should not be null
+    assertTrue(movieIds.isEmpty()); // Should be an empty list
   }
 
 }

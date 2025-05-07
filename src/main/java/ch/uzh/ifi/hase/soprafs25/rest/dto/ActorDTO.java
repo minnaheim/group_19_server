@@ -1,22 +1,22 @@
 package ch.uzh.ifi.hase.soprafs25.rest.dto;
 
 public class ActorDTO {
-    private Long actorId;
-    private String actorname;
+    private Integer id;
+    private String name;
 
-    public Long getActorId() {
-        return actorId;
+    public Integer getId() {
+        return id;
     }
 
-    public void setActorId(Long actorId) {
-        this.actorId = actorId;
+    public void setId(Integer id) {
+        this.id = id;
     }
 
-    public String getActorName() {
-        return actorname;
+    public String getName() {
+        return name;
     }
 
-    public void setActorName(String actorname) {
-        this.actorname = actorname;
+    public void setName(String name) {
+        this.name = name;
     }
 }

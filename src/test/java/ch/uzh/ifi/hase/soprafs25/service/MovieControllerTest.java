@@ -3,8 +3,10 @@ package ch.uzh.ifi.hase.soprafs25.service;
 import ch.uzh.ifi.hase.soprafs25.controller.MovieController;
 import ch.uzh.ifi.hase.soprafs25.entity.Movie;
 import ch.uzh.ifi.hase.soprafs25.exceptions.SearchValidationException;
-import com.fasterxml.jackson.databind.JsonNode;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.ActorDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.DirectorDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +14,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.web.server.ResponseStatusException;
@@ -25,32 +26,12 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import org.springframework.http.MediaType;
-import ch.uzh.ifi.hase.soprafs25.rest.dto.ActorDTO;
-import ch.uzh.ifi.hase.soprafs25.rest.dto.DirectorDTO;
-import java.util.ArrayList;
-import java.util.List;
-import static org.mockito.ArgumentMatchers.any;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
-import java.lang.reflect.Field;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
-
-import static org.hamcrest.Matchers.*;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 
 /**
  * MovieControllerTest
@@ -133,15 +114,8 @@ public class MovieControllerTest {
     @Test // Test for GET /movies endpoint with invalid parameters
     public void testGetMovies_InvalidParameters() throws Exception {
         // Perform the request with invalid year parameter
-        MockHttpServletResponse response = mockMvc.perform(get("/movies")
-                        .param("year", "3000")  // Invalid year
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andReturn().getResponse();
-
-        // Update the assertion to match the actual response format
         mockMvc.perform(get("/movies")
-                        .param("year", "3000")
+                        .param("year", "3000")  // Invalid year
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Bad Request"))
@@ -319,8 +293,8 @@ public class MovieControllerTest {
         // Prepare test data
         List<ActorDTO> actors = new ArrayList<>();
         ActorDTO actor = new ActorDTO();
-        actor.setActorId(1L);
-        actor.setActorName("Leonardo DiCaprio");
+        actor.setId(1); // Corrected: setId and use int
+        actor.setName("Leonardo DiCaprio"); // Corrected: setName
         actors.add(actor);
 
         // Mock the service
@@ -332,8 +306,8 @@ public class MovieControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].actorId", is(1)))
-                .andExpect(jsonPath("$[0].actorName", is("Leonardo DiCaprio")));
+                .andExpect(jsonPath("$[0].id", is(1)))
+                .andExpect(jsonPath("$[0].name", is("Leonardo DiCaprio")));
 
         // Verify the service was called with the correct parameter
         verify(tmdbService).searchActors("LeonardoDiCaprio");
@@ -400,8 +374,8 @@ public class MovieControllerTest {
         // Prepare test data
         List<DirectorDTO> directors = new ArrayList<>();
         DirectorDTO director = new DirectorDTO();
-        director.setDirectorId(1L);
-        director.setDirectorName("Christopher Nolan");
+        director.setId(1); // Corrected: setId and use int
+        director.setName("Christopher Nolan"); // Corrected: setName
         directors.add(director);
 
         // Mock the service
@@ -413,8 +387,8 @@ public class MovieControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].directorId", is(1)))
-                .andExpect(jsonPath("$[0].directorName", is("Christopher Nolan")));
+                .andExpect(jsonPath("$[0].id", is(1)))
+                .andExpect(jsonPath("$[0].name", is("Christopher Nolan")));
 
         // Verify the service was called with the correct parameter
         verify(tmdbService).searchDirectors("ChristopherNolan");

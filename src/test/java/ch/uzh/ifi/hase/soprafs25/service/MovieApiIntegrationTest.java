@@ -5,8 +5,11 @@ import ch.uzh.ifi.hase.soprafs25.entity.User;
 import ch.uzh.ifi.hase.soprafs25.repository.MovieRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.MovieGetDTO;
-import com.fasterxml.jackson.core.type.TypeReference;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.ActorDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.DirectorDTO;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +28,6 @@ import java.util.*;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -62,7 +64,7 @@ public class MovieApiIntegrationTest {
     private ObjectMapper objectMapper;
 
     @BeforeEach
-    public void setup() {
+    public void setup() throws Exception {
         // Initialize object mapper
         this.objectMapper = new ObjectMapper();
 
@@ -139,7 +141,7 @@ public class MovieApiIntegrationTest {
         actionMovie.setPosterURL("http://example.com/poster101.jpg");
         actionMovies.add(actionMovie);
 
-        when(tmdbService.searchMovies(any(Movie.class))).thenReturn(actionMovies);
+        when(tmdbService.searchMovies(any())).thenReturn(actionMovies);
 
         // Test with real user from database
         MvcResult result = mockMvc.perform(get("/movies/suggestions/{userId}", testUser.getUserId()))
@@ -151,18 +153,13 @@ public class MovieApiIntegrationTest {
         });
 
         // Verify that the response contains data from our stubbed TMDb service
-        boolean foundStubMovie = false;
         for (MovieGetDTO movie : responseMovies) {
             if (movie.getMovieId() == 101) {
                 assertEquals("Action Movie", movie.getTitle());
                 assertEquals("http://example.com/poster101.jpg", movie.getPosterURL());
-                foundStubMovie = true;
                 break;
             }
         }
-
-        // We might not find the stub movie if other movies from our test setup
-        // are sufficient to fulfill the request, so this is not a strict assertion
     }
 
     /**
@@ -222,7 +219,7 @@ public class MovieApiIntegrationTest {
     /**
      * Helper method to create a test user with favorites
      */
-    private User createTestUser() {
+    private User createTestUser() throws JsonProcessingException {
         User user = new User();
         user.setUsername("testUser");
         user.setEmail("test.user@gmail.com");
@@ -243,20 +240,34 @@ public class MovieApiIntegrationTest {
         favoriteMovie = movieRepository.save(favoriteMovie);
         user.setFavoriteMovie(favoriteMovie);
 
-        // Set favorite actors
+        // Setup favorite actors
         Map<String, String> favoriteActors = new HashMap<>();
         favoriteActors.put("6193", "Leonardo DiCaprio");
         favoriteActors.put("24045", "Joseph Gordon-Levitt");
         favoriteActors.put("1357546", "Ken Watanabe");
         favoriteActors.put("2524", "Tom Hardy");
         favoriteActors.put("27578", "Elliot Page");
-        user.setFavoriteActors(favoriteActors);
+        List<ActorDTO> actorDTOs = new ArrayList<>();
+        for (Map.Entry<String, String> entry : favoriteActors.entrySet()) {
+            ActorDTO actor = new ActorDTO();
+            actor.setId(Integer.parseInt(entry.getKey()));
+            actor.setName(entry.getValue());
+            actorDTOs.add(actor);
+        }
+        user.setFavoriteActorsJson(objectMapper.writeValueAsString(actorDTOs));
 
-        // Set favorite directors
+        // Setup favorite directors
         Map<String, String> favoriteDirectors = new HashMap<>();
         favoriteDirectors.put("525", "Christopher Nolan");
         favoriteDirectors.put("1408530", "Emma Thomas");
-        user.setFavoriteDirectors(favoriteDirectors);
+        List<DirectorDTO> directorDTOs = new ArrayList<>();
+        for (Map.Entry<String, String> entry : favoriteDirectors.entrySet()) {
+            DirectorDTO director = new DirectorDTO();
+            director.setId(Integer.parseInt(entry.getKey()));
+            director.setName(entry.getValue());
+            directorDTOs.add(director);
+        }
+        user.setFavoriteDirectorsJson(objectMapper.writeValueAsString(directorDTOs));
 
         // Set watchlist
         List<Movie> watchlist = new ArrayList<>();

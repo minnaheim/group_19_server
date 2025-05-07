@@ -1,12 +1,18 @@
 package ch.uzh.ifi.hase.soprafs25.rest.mapper;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.Named;
 import org.mapstruct.ReportingPolicy;
 import org.mapstruct.factory.Mappers;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import ch.uzh.ifi.hase.soprafs25.entity.FriendRequest;
 import ch.uzh.ifi.hase.soprafs25.entity.Group;
@@ -15,6 +21,8 @@ import ch.uzh.ifi.hase.soprafs25.entity.Movie;
 import ch.uzh.ifi.hase.soprafs25.entity.MoviePool;
 import ch.uzh.ifi.hase.soprafs25.entity.RankingResult;
 import ch.uzh.ifi.hase.soprafs25.entity.User;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.ActorDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.DirectorDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.FriendRequestGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.FriendRequestPostDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.GroupGetDTO;
@@ -43,6 +51,7 @@ import ch.uzh.ifi.hase.soprafs25.rest.dto.UserPostDTO;
 public interface DTOMapper {
 
     DTOMapper INSTANCE = Mappers.getMapper(DTOMapper.class);
+    ObjectMapper objectMapper = new ObjectMapper(); // Helper for JSON processing
 
     @Mapping(source = "username", target = "username")
     @Mapping(source = "email", target = "email")
@@ -58,8 +67,8 @@ public interface DTOMapper {
     @Mapping(source = "token", target = "token")
     @Mapping(source = "bio", target = "bio")
     @Mapping(source = "favoriteGenres", target = "favoriteGenres")
-    @Mapping(source = "favoriteActors", target = "favoriteActors")
-    @Mapping(source = "favoriteDirectors", target = "favoriteDirectors")
+    @Mapping(source = "favoriteActorsJson", target = "favoriteActors", qualifiedByName = "actorsJsonToStringList")
+    @Mapping(source = "favoriteDirectorsJson", target = "favoriteDirectors", qualifiedByName = "directorsJsonToStringList")
     @Mapping(source = "favoriteMovie", target = "favoriteMovie")
     @Mapping(source = "watchlist", target = "watchlist")
     @Mapping(source = "watchedMovies", target = "watchedMovies")
@@ -90,26 +99,29 @@ public interface DTOMapper {
     @Mapping(source = "directors", target = "directors")
     @Mapping(source = "spokenlanguages", target = "spokenlanguages")
     @Mapping(source = "originallanguage", target = "originallanguage")
-    @Mapping(source = "posterURL", target = "posterURL")
     @Mapping(source = "trailerURL", target = "trailerURL")
+    @Mapping(source = "posterURL", target = "posterURL")
     @Mapping(source = "description", target = "description")
-    @Mapping(source = "tmdbRating", target = "tmdbRating")
     MovieGetDTO convertEntityToMovieGetDTO(Movie movie);
 
+    @Mapping(source = "groupName", target = "groupName")
     @Mapping(target = "groupId", ignore = true)
     @Mapping(target = "creator", ignore = true)
     @Mapping(target = "members", ignore = true)
     @Mapping(target = "moviePool", ignore = true)
-    @Mapping(source = "groupName", target = "groupName")
+    @Mapping(target = "phase", ignore = true)
+    @Mapping(target = "poolPhaseDuration", ignore = true)
+    @Mapping(target = "votingPhaseDuration", ignore = true)
+    @Mapping(target = "phaseStartTime", ignore = true)
     Group convertGroupPostDTOtoEntity(GroupPostDTO groupPostDTO);
 
     @Mapping(source = "groupId", target = "groupId")
     @Mapping(source = "groupName", target = "groupName")
-    @Mapping(source = "creator", target = "creator")
+    @Mapping(source = "creator", target = "creator") // User to UserGetDTO
     @Mapping(source = "creator.userId", target = "creatorId")
-    @Mapping(source = "members", target = "memberIds")
-    @Mapping(source = "moviePool.movies", target = "movieIds")
-    @Mapping(expression = "java(group.getPhase().name())", target = "phase")
+    @Mapping(source = "members", target = "memberIds", qualifiedByName = "mapUsersToIds")
+    @Mapping(source = "moviePool.movies", target = "movieIds", qualifiedByName = "mapMoviesToIds")
+    @Mapping(expression = "java(group.getPhase() != null ? group.getPhase().name() : null)", target = "phase")
     @Mapping(source = "poolPhaseDuration", target = "poolPhaseDuration")
     @Mapping(source = "votingPhaseDuration", target = "votingPhaseDuration")
     @Mapping(source = "phaseStartTime", target = "phaseStartTime")
@@ -117,7 +129,6 @@ public interface DTOMapper {
     GroupGetDTO convertEntityToGroupGetDTO(Group group);
 
     List<GroupGetDTO> convertEntityListToGroupGetDTOList(List<Group> groups);
-
 
     @Mapping(source = "movieId", target = "movieId")
     @Mapping(source = "title", target = "title")
@@ -154,7 +165,6 @@ public interface DTOMapper {
     @Mapping(source = "responseTime", target = "responseTime")
     GroupInvitationGetDTO convertEntityToGroupInvitationGetDTO(GroupInvitation groupInvitation);
 
-
     @Mapping(target = "invitationId", ignore = true)
     @Mapping(target = "sender", ignore = true)
     @Mapping(target = "receiver", ignore = true)
@@ -170,21 +180,28 @@ public interface DTOMapper {
     @Mapping(source = "lastUpdated", target = "lastUpdated")
     MoviePoolGetDTO convertEntityToMoviePoolGetDTO(MoviePool moviePool);
 
-
     @Mapping(target = "poolId", ignore = true)
     @Mapping(target = "group", ignore = true)
     @Mapping(target = "lastUpdated", ignore = true)
     MoviePool convertMoviePoolPostDTOtoEntity(MoviePoolPostDTO moviePoolPostDTO);
 
     default List<Long> mapUsersToIds(List<User> users) {
-      if (users == null) return null;
+      if (users == null) return Collections.emptyList(); 
       return users.stream()
                  .map(User::getUserId)
                  .collect(Collectors.toList());
     }
 
+    @Named("mapUserEntitiesToUserGetDTOs")
+    default List<UserGetDTO> mapUserEntitiesToUserGetDTOs(List<User> users) {
+        if (users == null) return null;
+        return users.stream()
+                .map(this::convertEntityToUserGetDTO)
+                .collect(Collectors.toList());
+    }
+
     default List<Long> mapMoviesToIds(List<Movie> movies) {
-      if (movies == null) return null;
+      if (movies == null) return Collections.emptyList(); 
       return movies.stream()
                   .map(Movie::getMovieId)
                   .collect(Collectors.toList());
@@ -196,5 +213,34 @@ public interface DTOMapper {
       return movies.stream()
                   .map(this::convertEntityToMovieGetDTO)
                   .collect(Collectors.toList());
-  }
+    }
+
+    @Named("actorsJsonToStringList")
+    default List<String> actorsJsonToStringList(String actorsJson) {
+        if (actorsJson == null || actorsJson.isEmpty()) {
+            return Collections.emptyList();
+        }
+        try {
+            List<ActorDTO> actorList = objectMapper.readValue(actorsJson, new TypeReference<List<ActorDTO>>() {});
+            return actorList.stream().map(ActorDTO::getName).collect(Collectors.toList());
+        } catch (JsonProcessingException e) {
+            // Consider logging this exception or handling it as per your application's error strategy
+            System.err.println("Error parsing favorite actors JSON: " + e.getMessage());
+            return Collections.emptyList(); // Or throw a custom exception
+        }
+    }
+
+    @Named("directorsJsonToStringList")
+    default List<String> directorsJsonToStringList(String directorsJson) {
+        if (directorsJson == null || directorsJson.isEmpty()) {
+            return Collections.emptyList();
+        }
+        try {
+            List<DirectorDTO> directorList = objectMapper.readValue(directorsJson, new TypeReference<List<DirectorDTO>>() {});
+            return directorList.stream().map(DirectorDTO::getName).collect(Collectors.toList());
+        } catch (JsonProcessingException e) {
+            System.err.println("Error parsing favorite directors JSON: " + e.getMessage());
+            return Collections.emptyList();
+        }
+    }
 }

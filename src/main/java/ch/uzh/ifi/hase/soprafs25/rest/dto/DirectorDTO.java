@@ -1,22 +1,22 @@
 package ch.uzh.ifi.hase.soprafs25.rest.dto;
 
 public class DirectorDTO {
-    private Long directorId;
-    private String directorname;
+    private Integer id;
+    private String name;
 
-    public Long getDirectorId() {
-        return directorId;
+    public Integer getId() {
+        return id;
     }
 
-    public void setDirectorId(Long directorId) {
-        this.directorId = directorId;
+    public void setId(Integer id) {
+        this.id = id;
     }
 
-    public String getDirectorName() {
-        return directorname;
+    public String getName() {
+        return name;
     }
 
-    public void setDirectorName(String directorname) {
-        this.directorname = directorname;
+    public void setName(String name) {
+        this.name = name;
     }
 }

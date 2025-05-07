@@ -6,6 +6,8 @@ import ch.uzh.ifi.hase.soprafs25.rest.dto.UserFavoritesGenresDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.UserFavoritesMovieDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.UserFavoritesActorsDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.UserFavoritesDirectorsDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.ActorDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.DirectorDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.UserFavoritesDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.mapper.DTOMapper;
 import ch.uzh.ifi.hase.soprafs25.service.UserFavoritesService;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * UserFavoritesController
@@ -117,7 +120,7 @@ public class UserFavoritesController {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
         }
-        List<String> updatedActors = userFavoritesService.saveFavoriteActors(
+        List<ActorDTO> updatedActors = userFavoritesService.saveFavoriteActors(
                 userId, actorsDTO.getFavoriteActors(), token);
         UserFavoritesActorsDTO responseDTO = new UserFavoritesActorsDTO();
         responseDTO.setFavoriteActors(updatedActors);
@@ -131,7 +134,7 @@ public class UserFavoritesController {
     @ResponseStatus(HttpStatus.OK)
     public UserFavoritesActorsDTO getFavoriteActors(
             @PathVariable("userId") Long userId) {
-        List<String> actors = userFavoritesService.getFavoriteActors(userId);
+        List<ActorDTO> actors = userFavoritesService.getFavoriteActors(userId);
         UserFavoritesActorsDTO responseDTO = new UserFavoritesActorsDTO();
         responseDTO.setFavoriteActors(actors);
         return responseDTO;
@@ -150,7 +153,7 @@ public class UserFavoritesController {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
         }
-        List<String> updatedDirectors = userFavoritesService.saveFavoriteDirectors(
+        List<DirectorDTO> updatedDirectors = userFavoritesService.saveFavoriteDirectors(
                 userId, directorsDTO.getFavoriteDirectors(), token);
         UserFavoritesDirectorsDTO responseDTO = new UserFavoritesDirectorsDTO();
         responseDTO.setFavoriteDirectors(updatedDirectors);
@@ -164,7 +167,7 @@ public class UserFavoritesController {
     @ResponseStatus(HttpStatus.OK)
     public UserFavoritesDirectorsDTO getFavoriteDirectors(
             @PathVariable("userId") Long userId) {
-        List<String> directors = userFavoritesService.getFavoriteDirectors(userId);
+        List<DirectorDTO> directors = userFavoritesService.getFavoriteDirectors(userId);
         UserFavoritesDirectorsDTO responseDTO = new UserFavoritesDirectorsDTO();
         responseDTO.setFavoriteDirectors(directors);
         return responseDTO;
@@ -179,8 +182,20 @@ public class UserFavoritesController {
         UserFavoritesDTO dto = new UserFavoritesDTO();
         dto.setFavoriteGenres(userFavoritesService.getGenreFavorites(userId));
         dto.setFavoriteMovie(userFavoritesService.getFavoriteMovie(userId));
-        dto.setFavoriteActors(userFavoritesService.getFavoriteActors(userId));
-        dto.setFavoriteDirectors(userFavoritesService.getFavoriteDirectors(userId));
+        
+        // Get ActorDTOs and convert to List<String> of names for the DTO
+        List<ActorDTO> favoriteActorsList = userFavoritesService.getFavoriteActors(userId);
+        List<String> favoriteActorNames = favoriteActorsList.stream()
+                                                            .map(ActorDTO::getName)
+                                                            .collect(Collectors.toList());
+        dto.setFavoriteActors(favoriteActorNames);
+
+        // Get DirectorDTOs and convert to List<String> of names for the DTO
+        List<DirectorDTO> favoriteDirectorsList = userFavoritesService.getFavoriteDirectors(userId);
+        List<String> favoriteDirectorNames = favoriteDirectorsList.stream()
+                                                                .map(DirectorDTO::getName)
+                                                                .collect(Collectors.toList());
+        dto.setFavoriteDirectors(favoriteDirectorNames);
         return dto;
     }
 }

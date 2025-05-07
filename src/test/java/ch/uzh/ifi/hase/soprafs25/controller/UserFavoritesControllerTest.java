@@ -5,6 +5,8 @@ import ch.uzh.ifi.hase.soprafs25.rest.dto.UserFavoritesActorsDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.UserFavoritesDirectorsDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.UserFavoritesGenresDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.UserFavoritesMovieDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.ActorDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.DirectorDTO;
 
 import ch.uzh.ifi.hase.soprafs25.service.UserFavoritesService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -136,8 +138,21 @@ class UserFavoritesControllerTest {
         Movie movie = new Movie();
         movie.setMovieId(123L);
         movie.setTitle("Test Movie");
+
+        ActorDTO actor1 = new ActorDTO();
+        actor1.setId(1);
+        actor1.setName("Favorite Actor 1");
+        List<ActorDTO> favoriteActors = List.of(actor1);
+
+        DirectorDTO director1 = new DirectorDTO();
+        director1.setId(10);
+        director1.setName("Favorite Director 1");
+        List<DirectorDTO> favoriteDirectors = List.of(director1);
+
         given(UserFavoritesService.getGenreFavorites(anyLong())).willReturn(genreNames);
         given(UserFavoritesService.getFavoriteMovie(anyLong())).willReturn(movie);
+        given(UserFavoritesService.getFavoriteActors(anyLong())).willReturn(favoriteActors);
+        given(UserFavoritesService.getFavoriteDirectors(anyLong())).willReturn(favoriteDirectors);
 
         // Act & Assert
         MockHttpServletRequestBuilder getRequest = get("/users/1/favorites")
@@ -148,12 +163,21 @@ class UserFavoritesControllerTest {
                 .andExpect(jsonPath("$.favoriteGenres[0]", is("Action")))
                 .andExpect(jsonPath("$.favoriteGenres[1]", is("Adventure")))
                 .andExpect(jsonPath("$.favoriteMovie.movieId", is(123)))
-                .andExpect(jsonPath("$.favoriteMovie.title", is("Test Movie")));
+                .andExpect(jsonPath("$.favoriteMovie.title", is("Test Movie")))
+                .andExpect(jsonPath("$.favoriteActors[0]", is("Favorite Actor 1")))
+                .andExpect(jsonPath("$.favoriteDirectors[0]", is("Favorite Director 1")));
     }
 
     @Test
     void saveFavoriteActors_WithValidData_ReturnsActors() throws Exception {
-        List<String> actors = List.of("A1", "B2");
+        ActorDTO actor1 = new ActorDTO();
+        actor1.setId(1);
+        actor1.setName("Actor One");
+        ActorDTO actor2 = new ActorDTO();
+        actor2.setId(2);
+        actor2.setName("Actor Two");
+        List<ActorDTO> actors = List.of(actor1, actor2);
+
         given(UserFavoritesService.saveFavoriteActors(anyLong(), anyList(), anyString()))
                 .willReturn(actors);
         UserFavoritesActorsDTO request = new UserFavoritesActorsDTO();
@@ -163,44 +187,73 @@ class UserFavoritesControllerTest {
                 .header("Authorization", "Bearer token")
                 .content(asJsonString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.favoriteActors[0]", is("A1")))
-                .andExpect(jsonPath("$.favoriteActors[1]", is("B2")));
+                .andExpect(jsonPath("$.favoriteActors[0].id", is(1)))
+                .andExpect(jsonPath("$.favoriteActors[0].name", is("Actor One")))
+                .andExpect(jsonPath("$.favoriteActors[1].id", is(2)))
+                .andExpect(jsonPath("$.favoriteActors[1].name", is("Actor Two")));
     }
 
     @Test
     void getFavoriteActors_ReturnsActors() throws Exception {
-        List<String> actors = List.of("A1", "B2");
+        ActorDTO actor1 = new ActorDTO();
+        actor1.setId(1);
+        actor1.setName("Actor One");
+        ActorDTO actor2 = new ActorDTO();
+        actor2.setId(2);
+        actor2.setName("Actor Two");
+        List<ActorDTO> actors = List.of(actor1, actor2);
+
         given(UserFavoritesService.getFavoriteActors(anyLong())).willReturn(actors);
         mockMvc.perform(get("/users/1/favorites/actors").contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.favoriteActors[0]", is("A1")))
-                .andExpect(jsonPath("$.favoriteActors[1]", is("B2")));
+                .andExpect(jsonPath("$.favoriteActors[0].id", is(1)))
+                .andExpect(jsonPath("$.favoriteActors[0].name", is("Actor One")))
+                .andExpect(jsonPath("$.favoriteActors[1].id", is(2)))
+                .andExpect(jsonPath("$.favoriteActors[1].name", is("Actor Two")));
     }
 
     @Test
     void saveFavoriteDirectors_WithValidData_ReturnsDirectors() throws Exception {
-        List<String> dirs = List.of("D1", "D2");
+        DirectorDTO director1 = new DirectorDTO();
+        director1.setId(1);
+        director1.setName("Director One");
+        DirectorDTO director2 = new DirectorDTO();
+        director2.setId(2);
+        director2.setName("Director Two");
+        List<DirectorDTO> directors = List.of(director1, director2);
+
         given(UserFavoritesService.saveFavoriteDirectors(anyLong(), anyList(), anyString()))
-                .willReturn(dirs);
+                .willReturn(directors);
         UserFavoritesDirectorsDTO request = new UserFavoritesDirectorsDTO();
-        request.setFavoriteDirectors(dirs);
+        request.setFavoriteDirectors(directors);
         mockMvc.perform(post("/users/1/favorites/directors")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer token")
                 .content(asJsonString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.favoriteDirectors[0]", is("D1")))
-                .andExpect(jsonPath("$.favoriteDirectors[1]", is("D2")));
+                .andExpect(jsonPath("$.favoriteDirectors[0].id", is(1)))
+                .andExpect(jsonPath("$.favoriteDirectors[0].name", is("Director One")))
+                .andExpect(jsonPath("$.favoriteDirectors[1].id", is(2)))
+                .andExpect(jsonPath("$.favoriteDirectors[1].name", is("Director Two")));
     }
 
     @Test
     void getFavoriteDirectors_ReturnsDirectors() throws Exception {
-        List<String> dirs = List.of("D1", "D2");
-        given(UserFavoritesService.getFavoriteDirectors(anyLong())).willReturn(dirs);
+        DirectorDTO director1 = new DirectorDTO();
+        director1.setId(1);
+        director1.setName("Director One");
+        DirectorDTO director2 = new DirectorDTO();
+        director2.setId(2);
+        director2.setName("Director Two");
+        List<DirectorDTO> directors = List.of(director1, director2);
+
+        given(UserFavoritesService.getFavoriteDirectors(anyLong())).willReturn(directors);
         mockMvc.perform(get("/users/1/favorites/directors").contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.favoriteDirectors[0]", is("D1")))
-                .andExpect(jsonPath("$.favoriteDirectors[1]", is("D2")));
+                .andExpect(jsonPath("$.favoriteDirectors[0].id", is(1)))
+                .andExpect(jsonPath("$.favoriteDirectors[0].name", is("Director One")))
+                .andExpect(jsonPath("$.favoriteDirectors[1].id", is(2)))
+                .andExpect(jsonPath("$.favoriteDirectors[1].name", is("Director Two")));
     }
 
     /**

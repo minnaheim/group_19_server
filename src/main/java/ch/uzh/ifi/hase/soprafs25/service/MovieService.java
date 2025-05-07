@@ -5,6 +5,8 @@ import ch.uzh.ifi.hase.soprafs25.entity.User;
 import ch.uzh.ifi.hase.soprafs25.exceptions.SearchValidationException;
 import ch.uzh.ifi.hase.soprafs25.repository.MovieRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.ActorDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.DirectorDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +18,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Movie Service
@@ -30,6 +35,7 @@ public class MovieService {
     private final MovieRepository movieRepository;
     private final TMDbService tmdbService;
     private final UserRepository userRepository;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
     public MovieService(@Qualifier("movieRepository") MovieRepository movieRepository, TMDbService tmdbService, UserRepository userRepository) {
@@ -70,8 +76,8 @@ public class MovieService {
                 // Save to local DB for future queries
                 if (movie != null) {
                     movieRepository.save(movie);
+                    log.info("Fetched movie {} from TMDb. Actors count: {}", movie.getMovieId(), movie.getActors() != null ? movie.getActors().size() : "null/empty");
                 }
-                log.info("getActors size is? {}", movie.getActors().size());
             } catch (Exception e) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Movie with ID " + movieId + " was not found");
@@ -143,16 +149,32 @@ public class MovieService {
 
         // Collect all user favorites
         List<String> favoriteGenres = user.getFavoriteGenres();
-        List<String> favoriteActorIds = new ArrayList<>();
-        List<String> favoriteDirectorIds = new ArrayList<>();
+        if (favoriteGenres == null) {
+            favoriteGenres = Collections.emptyList();
+        }
+        List<Long> favoriteActorIds = new ArrayList<>();
+        List<Long> favoriteDirectorIds = new ArrayList<>();
 
-        // Extract actor and director IDs
-        if (user.getFavoriteActors() != null) {
-            favoriteActorIds.addAll(user.getFavoriteActors());
+        String actorsJson = user.getFavoriteActorsJson();
+        if (actorsJson != null && !actorsJson.isEmpty()) {
+            try {
+                List<ActorDTO> favoriteActors = objectMapper.readValue(actorsJson, new TypeReference<List<ActorDTO>>() {});
+                favoriteActors.forEach(actor -> favoriteActorIds.add(actor.getId().longValue()));
+            } catch (Exception e) {
+                // Handle parsing error, e.g., log it or throw a custom exception
+                System.err.println("Error parsing favorite actors JSON for user " + userId + ": " + e.getMessage());
+            }
         }
 
-        if (user.getFavoriteDirectors() != null) {
-            favoriteDirectorIds.addAll(user.getFavoriteDirectors());
+        String directorsJson = user.getFavoriteDirectorsJson();
+        if (directorsJson != null && !directorsJson.isEmpty()) {
+            try {
+                List<DirectorDTO> favoriteDirectors = objectMapper.readValue(directorsJson, new TypeReference<List<DirectorDTO>>() {});
+                favoriteDirectors.forEach(director -> favoriteDirectorIds.add(director.getId().longValue()));
+            } catch (Exception e) {
+                // Handle parsing error
+                System.err.println("Error parsing favorite directors JSON for user " + userId + ": " + e.getMessage());
+            }
         }
 
         // Maximum number of API calls to prevent excessive requests
@@ -225,15 +247,15 @@ public class MovieService {
      * @param directors List of director IDs
      * @return List of Movie objects with search parameters
      */
-    private List<Movie> generateSearchPermutations(List<String> genres, List<String> actors, List<String> directors) {
+    private List<Movie> generateSearchPermutations(List<String> genres, List<Long> actors, List<Long> directors) {
         List<Movie> searchQueries = new ArrayList<>();
 
         // Start with the most specific search (all parameters)
         if (!genres.isEmpty() && !actors.isEmpty() && !directors.isEmpty()) {
             Movie fullSearch = new Movie();
             fullSearch.setGenres(new ArrayList<>(genres));
-            fullSearch.setActors(actors.stream().collect(Collectors.toList()));
-            fullSearch.setDirectors(directors.stream().collect(Collectors.toList()));
+            fullSearch.setActors(actors.stream().map(String::valueOf).collect(Collectors.toList()));
+            fullSearch.setDirectors(directors.stream().map(String::valueOf).collect(Collectors.toList()));
             searchQueries.add(fullSearch);
         }
 
@@ -242,7 +264,7 @@ public class MovieService {
         if (!genres.isEmpty() && !actors.isEmpty()) {
             Movie search = new Movie();
             search.setGenres(new ArrayList<>(genres));
-            search.setActors(actors.stream().collect(Collectors.toList()));
+            search.setActors(actors.stream().map(String::valueOf).collect(Collectors.toList()));
             searchQueries.add(search);
         }
 
@@ -250,15 +272,15 @@ public class MovieService {
         if (!genres.isEmpty() && !directors.isEmpty()) {
             Movie search = new Movie();
             search.setGenres(new ArrayList<>(genres));
-            search.setDirectors(directors.stream().collect(Collectors.toList()));
+            search.setDirectors(directors.stream().map(String::valueOf).collect(Collectors.toList()));
             searchQueries.add(search);
         }
 
         // Actors + Directors
         if (!actors.isEmpty() && !directors.isEmpty()) {
             Movie search = new Movie();
-            search.setActors(actors.stream().collect(Collectors.toList()));
-            search.setDirectors(directors.stream().collect(Collectors.toList()));
+            search.setActors(actors.stream().map(String::valueOf).collect(Collectors.toList()));
+            search.setDirectors(directors.stream().map(String::valueOf).collect(Collectors.toList()));
             searchQueries.add(search);
         }
 
@@ -273,14 +295,14 @@ public class MovieService {
         // Only Actors
         if (!actors.isEmpty()) {
             Movie search = new Movie();
-            search.setActors(actors.stream().collect(Collectors.toList()));
+            search.setActors(actors.stream().map(String::valueOf).collect(Collectors.toList()));
             searchQueries.add(search);
         }
 
         // Only Directors
         if (!directors.isEmpty()) {
             Movie search = new Movie();
-            search.setDirectors(directors.stream().collect(Collectors.toList()));
+            search.setDirectors(directors.stream().map(String::valueOf).collect(Collectors.toList()));
             searchQueries.add(search);
         }
 
@@ -292,16 +314,16 @@ public class MovieService {
         }
 
         // Add individual actor searches
-        for (String actor : actors) {
+        for (Long actor : actors) {
             Movie search = new Movie();
-            search.setActors(Collections.singletonList(actor));
+            search.setActors(Collections.singletonList(String.valueOf(actor)));
             searchQueries.add(search);
         }
 
         // Add individual director searches
-        for (String director : directors) {
+        for (Long director : directors) {
             Movie search = new Movie();
-            search.setDirectors(Collections.singletonList(director));
+            search.setDirectors(Collections.singletonList(String.valueOf(director)));
             searchQueries.add(search);
         }
 

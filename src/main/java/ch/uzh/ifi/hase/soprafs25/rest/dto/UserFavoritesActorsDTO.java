@@ -7,13 +7,13 @@ import java.util.List;
  */
 public class UserFavoritesActorsDTO {
 
-    private List<String> favoriteActors;
+    private List<ActorDTO> favoriteActors;
 
-    public List<String> getFavoriteActors() {
+    public List<ActorDTO> getFavoriteActors() {
         return favoriteActors;
     }
 
-    public void setFavoriteActors(List<String> favoriteActors) {
+    public void setFavoriteActors(List<ActorDTO> favoriteActors) {
         this.favoriteActors = favoriteActors;
     }
 }

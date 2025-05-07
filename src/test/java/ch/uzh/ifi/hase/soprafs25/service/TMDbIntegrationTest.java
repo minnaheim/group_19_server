@@ -1,51 +1,46 @@
 package ch.uzh.ifi.hase.soprafs25.service;
 
+import ch.uzh.ifi.hase.soprafs25.entity.User; 
 import ch.uzh.ifi.hase.soprafs25.entity.Movie;
-import ch.uzh.ifi.hase.soprafs25.entity.User;
+import ch.uzh.ifi.hase.soprafs25.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs25.repository.MovieRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.ActorDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.DirectorDTO;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
-import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.ArrayList; 
+import java.util.Arrays; 
+import java.util.Collections; 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch; 
+import java.util.concurrent.ExecutorService; 
+import java.util.concurrent.Executors; 
+import java.util.concurrent.TimeUnit; 
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
-import org.springframework.http.HttpStatus;
-
-/**
- * TMDbIntegrationTest
- * This class contains integration tests for the interaction between
- * MovieService and the real TMDbService.
- * Unlike other tests that mock the TMDbService, these tests use the actual
- * TMDbService
- * to verify compatibility with the real TMDb API.
- *
- * Note: These tests require an active internet connection and may be impacted
- * by TMDb API
- * availability and rate limiting.
- */
-@ExtendWith(SpringExtension.class)
 @SpringBootTest
-@ActiveProfiles("test")
 @Transactional
 public class TMDbIntegrationTest {
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
     private MovieService movieService;
@@ -64,22 +59,24 @@ public class TMDbIntegrationTest {
     private List<Movie> testWatchedMovies;
 
     @BeforeEach
-    public void setup() {
-        // Clean up any existing data
+    void setup() throws JsonProcessingException {
         movieRepository.deleteAll();
         userRepository.deleteAll();
 
-        // Create test watchlist and watched movies
         testWatchlistMovies = createTestWatchlistMovies();
         testWatchedMovies = createTestWatchedMovies();
 
-        // Create test user with favorites
         testUser = createTestUser();
 
-        // Save movies and user to repository
         testWatchlistMovies.forEach(movie -> movieRepository.save(movie));
         testWatchedMovies.forEach(movie -> movieRepository.save(movie));
         userRepository.save(testUser);
+    }
+
+    @AfterEach
+    void teardown() {
+        userRepository.deleteAll();
+        movieRepository.deleteAll();
     }
 
     /**
@@ -138,13 +135,29 @@ public class TMDbIntegrationTest {
         }
 
         // Get a list of actor IDs from the user's favorite actors map
-        if (testUser.getFavoriteActors() != null && !testUser.getFavoriteActors().isEmpty()) {
-            searchParams.setActors(testUser.getFavoriteActors());
+        String actorsJson = testUser.getFavoriteActorsJson();
+        if (actorsJson != null && !actorsJson.isEmpty()) {
+            try {
+                List<ActorDTO> actorDTOs = objectMapper.readValue(actorsJson, new TypeReference<List<ActorDTO>>() {});
+                if (actorDTOs != null && !actorDTOs.isEmpty()) {
+                    searchParams.setActors(actorDTOs.stream().map(ActorDTO::getId).map(String::valueOf).collect(Collectors.toList()));
+                }
+            } catch (JsonProcessingException e) {
+                fail("Error parsing favorite actors JSON: " + e.getMessage());
+            }
         }
 
         // Get a list of director IDs from the user's favorite directors map
-        if (testUser.getFavoriteDirectors() != null && !testUser.getFavoriteDirectors().isEmpty()) {
-            searchParams.setDirectors(testUser.getFavoriteDirectors());
+        String directorsJson = testUser.getFavoriteDirectorsJson();
+        if (directorsJson != null && !directorsJson.isEmpty()) {
+            try {
+                List<DirectorDTO> directorDTOs = objectMapper.readValue(directorsJson, new TypeReference<List<DirectorDTO>>() {});
+                if (directorDTOs != null && !directorDTOs.isEmpty()) {
+                    searchParams.setDirectors(directorDTOs.stream().map(DirectorDTO::getId).map(String::valueOf).collect(Collectors.toList()));
+                }
+            } catch (JsonProcessingException e) {
+                fail("Error parsing favorite directors JSON: " + e.getMessage());
+            }
         }
 
         // Get movies directly from TMDbService
@@ -330,12 +343,13 @@ public class TMDbIntegrationTest {
     /**
      * Helper method to create a test user with favorites
      */
-    private User createTestUser() {
+    private User createTestUser() throws JsonProcessingException {
         User user = new User();
         user.setUsername("testUser");
         user.setEmail("test.user@gmail.com");
         user.setPassword("dskjföaldskj^^32142");
         user.setBio("what kind of string is bio?");
+        user.setStatus(UserStatus.ONLINE);
 
         // Set favorite genres
         user.setFavoriteGenres(Arrays.asList("Action", "Science Fiction", "Adventure"));
@@ -347,13 +361,27 @@ public class TMDbIntegrationTest {
         favoriteActors.put("1357546", "Ken Watanabe");
         favoriteActors.put("2524", "Tom Hardy");
         favoriteActors.put("27578", "Elliot Page");
-        user.setFavoriteActors(favoriteActors);
+        List<ActorDTO> actorDTOs = favoriteActors.entrySet().stream()
+            .map(entry -> {
+                ActorDTO dto = new ActorDTO();
+                try { dto.setId(Integer.parseInt(entry.getKey())); } catch (NumberFormatException e) { /* ID might be optional or set later */ }
+                dto.setName(entry.getValue());
+                return dto;
+            }).collect(Collectors.toList());
+        user.setFavoriteActorsJson(objectMapper.writeValueAsString(actorDTOs));
 
         // Set favorite directors
         Map<String, String> favoriteDirectors = new HashMap<>();
         favoriteDirectors.put("525", "Christopher Nolan");
         favoriteDirectors.put("1408530", "Emma Thomas");
-        user.setFavoriteDirectors(favoriteDirectors);
+        List<DirectorDTO> directorDTOs = favoriteDirectors.entrySet().stream()
+            .map(entry -> {
+                DirectorDTO dto = new DirectorDTO();
+                try { dto.setId(Integer.parseInt(entry.getKey())); } catch (NumberFormatException e) { /* ID might be optional or set later */ }
+                dto.setName(entry.getValue());
+                return dto;
+            }).collect(Collectors.toList());
+        user.setFavoriteDirectorsJson(objectMapper.writeValueAsString(directorDTOs));
 
         // Set watchlist and watched movies
         user.setWatchlist(testWatchlistMovies);

@@ -3,6 +3,7 @@ package ch.uzh.ifi.hase.soprafs25.entity;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
@@ -197,5 +198,17 @@ public class Movie implements Serializable {
         this.tmdbRating = tmdbRating;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Movie movie = (Movie) o;
+        return movieId == movie.movieId;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(movieId);
+    }
 
 }

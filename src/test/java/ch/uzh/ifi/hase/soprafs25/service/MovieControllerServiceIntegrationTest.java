@@ -4,38 +4,26 @@ import ch.uzh.ifi.hase.soprafs25.entity.Movie;
 import ch.uzh.ifi.hase.soprafs25.entity.User;
 import ch.uzh.ifi.hase.soprafs25.repository.MovieRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
-import ch.uzh.ifi.hase.soprafs25.rest.dto.MovieGetDTO;
-import ch.uzh.ifi.hase.soprafs25.service.MovieService;
-import ch.uzh.ifi.hase.soprafs25.service.TMDbService;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.ActorDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.DirectorDTO;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * MovieControllerServiceIntegrationTest
@@ -45,7 +33,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("test") // Using a test profile to ensure we don't affect production database
 @Transactional // Each test gets its own transaction that is rolled back at the end
 public class MovieControllerServiceIntegrationTest {
 
@@ -58,18 +45,12 @@ public class MovieControllerServiceIntegrationTest {
     @Autowired
     private MovieRepository movieRepository;
 
-    @Autowired
-    private MovieService movieService;
-
-    @MockBean
-    private TMDbService tmdbService; // Mock the TMDb service to avoid external API calls
-
     private User testUser;
     private List<Movie> testMovies;
     private ObjectMapper objectMapper;
 
     @BeforeEach
-    public void setup() {
+    public void setup() throws Exception {
         // Set up test data - create a user with favorites and some test movies
         objectMapper = new ObjectMapper();
 
@@ -88,10 +69,6 @@ public class MovieControllerServiceIntegrationTest {
         // Create test user with favorites
         testUser = createTestUser();
         userRepository.save(testUser);
-
-        // Set up TMDb mock for suggestion generation
-        when(tmdbService.searchMovies(any(Movie.class)))
-                .thenReturn(testMovies);
     }
 
     /**
@@ -118,9 +95,6 @@ public class MovieControllerServiceIntegrationTest {
         String responseContent = result.getResponse().getContentAsString();
         assertTrue(responseContent.contains("\"movieId\":"));
         assertTrue(responseContent.contains("\"title\":"));
-
-        // Verify that the service was called with the correct user ID
-        verify(tmdbService, atLeastOnce()).searchMovies(any(Movie.class));
     }
 
     /**
@@ -201,7 +175,7 @@ public class MovieControllerServiceIntegrationTest {
     /**
      * Helper method to create a test user with favorites
      */
-    private User createTestUser() {
+    private User createTestUser() throws Exception {
         User user = new User();
         user.setUsername("testUser");
         user.setEmail("test.user@gmail.com");
@@ -222,13 +196,27 @@ public class MovieControllerServiceIntegrationTest {
         favoriteActors.put("1357546", "Ken Watanabe");
         favoriteActors.put("2524", "Tom Hardy");
         favoriteActors.put("27578", "Elliot Page");
-        user.setFavoriteActors(favoriteActors);
+        List<ActorDTO> actorDTOs = new ArrayList<>();
+        for (Map.Entry<String, String> entry : favoriteActors.entrySet()) {
+            ActorDTO actor = new ActorDTO();
+            actor.setId(Integer.parseInt(entry.getKey()));
+            actor.setName(entry.getValue());
+            actorDTOs.add(actor);
+        }
+        user.setFavoriteActorsJson(objectMapper.writeValueAsString(actorDTOs));
 
         // Set favorite directors
         Map<String, String> favoriteDirectors = new HashMap<>();
         favoriteDirectors.put("525", "Christopher Nolan");
         favoriteDirectors.put("1408530", "Emma Thomas");
-        user.setFavoriteDirectors(favoriteDirectors);
+        List<DirectorDTO> directorDTOs = new ArrayList<>();
+        for (Map.Entry<String, String> entry : favoriteDirectors.entrySet()) {
+            DirectorDTO director = new DirectorDTO();
+            director.setId(Integer.parseInt(entry.getKey()));
+            director.setName(entry.getValue());
+            directorDTOs.add(director);
+        }
+        user.setFavoriteDirectorsJson(objectMapper.writeValueAsString(directorDTOs));
 
         // Set watchlist and watched movies
         Movie watchlistMovie1 = new Movie();

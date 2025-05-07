@@ -34,7 +34,9 @@ import ch.uzh.ifi.hase.soprafs25.entity.Movie;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.ActorDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.DirectorDTO;
 
-
+/**
+ * Service for interacting with the TMDb API
+ */
 @Service
 public class TMDbService {
 
@@ -954,14 +956,20 @@ public class TMDbService {
                     if (result.has("known_for_department") && "Acting".equals(result.get("known_for_department").asText())) {
 
                         ActorDTO actor = new ActorDTO();
-                        actor.setActorId(result.get("id").asLong());
-                        actor.setActorName(result.get("name").asText());
-                        actors.add(actor);
+                        if (result.has("id") && result.get("id").isNumber() && result.has("name") && result.get("name").isTextual()) {
+                            actor.setId(result.get("id").asInt()); // Corrected: setId and cast to int
+                            actor.setName(result.get("name").asText()); // Corrected: setName
+                            actors.add(actor);
+                        }
                     }
                 }
+                // Log the actors list before returning
+                log.info("Actors found by TMDbService.searchActors for query '{}':", query);
+                actors.forEach(a -> log.info("  Actor ID: {}, Name: {}", a.getId(), a.getName()));
                 return actors;
             }
 
+            log.info("No actors found by TMDbService.searchActors for query '{}' or response body was null/missing results.", query);
             return Collections.emptyList();
         } catch (RestClientException e) {
             log.error("Error searching for actors: {}", e.getMessage());
@@ -1018,9 +1026,11 @@ public class TMDbService {
                 for (JsonNode result : responseBody.get("results")) {
                     if (result.has("known_for_department") && "Directing".equals(result.get("known_for_department").asText())) {
                         DirectorDTO director = new DirectorDTO();
-                        director.setDirectorId(result.get("id").asLong());
-                        director.setDirectorName(result.get("name").asText());
-                        directors.add(director);
+                        if (result.has("id") && result.get("id").isNumber() && result.has("name") && result.get("name").isTextual()) {
+                            director.setId(result.get("id").asInt()); // Corrected: setId and cast to int
+                            director.setName(result.get("name").asText()); // Corrected: setName
+                            directors.add(director);
+                        }
                     }
                 }
                 return directors;
@@ -1033,5 +1043,3 @@ public class TMDbService {
         }
     }
 }
-
-

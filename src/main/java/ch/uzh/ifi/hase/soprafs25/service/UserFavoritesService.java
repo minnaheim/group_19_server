@@ -3,6 +3,10 @@ package ch.uzh.ifi.hase.soprafs25.service;
 import ch.uzh.ifi.hase.soprafs25.entity.Movie;
 import ch.uzh.ifi.hase.soprafs25.entity.User;
 import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.ActorDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.DirectorDTO;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -36,11 +40,12 @@ public class UserFavoritesService {
     @Autowired
     public UserFavoritesService(UserRepository userRepository, 
                                  MovieService movieService,
-                                 TMDbService tmdbService) {
+                                 TMDbService tmdbService,
+                                 ObjectMapper objectMapper) {
         this.userRepository = userRepository;
         this.movieService = movieService;
         this.tmdbService = tmdbService;
-        this.objectMapper = new ObjectMapper();
+        this.objectMapper = objectMapper;
     }
 
     /**
@@ -141,17 +146,25 @@ public class UserFavoritesService {
     /**
      * Save favorite actors for a user (list clears all if empty)
      */
-    public List<String> saveFavoriteActors(Long userId, List<String> actorList, String requesterToken) {
-        log.info("saveFavoriteActors called with userId={}, actors={}", userId, actorList);
+    public List<ActorDTO> saveFavoriteActors(Long userId, List<ActorDTO> favoriteActors, String requesterToken) {
+        log.info("saveFavoriteActors called with userId={}, actorsCount={}", userId, favoriteActors != null ? favoriteActors.size() : "null");
+        // Log the content of favoriteActors to inspect IDs
+        if (favoriteActors != null) {
+            favoriteActors.forEach(actor -> log.info("Incoming ActorDTO: id={}, name={}", actor.getId(), actor.getName()));
+        }
         User user = getUserById(userId);
         authorizeUserAction(user, requesterToken);
-        if (actorList == null) {
-            user.setFavoriteActors(new ArrayList<>());
-        } else {
-            user.setFavoriteActors(actorList);
+
+        try {
+            String favoriteActorsJson = objectMapper.writeValueAsString(favoriteActors != null ? favoriteActors : new ArrayList<>());
+            user.setFavoriteActorsJson(favoriteActorsJson);
+            userRepository.save(user);
+            log.info("Favorite actors saved for user {}: {}", user.getUsername(), favoriteActorsJson);
+            return favoriteActors != null ? favoriteActors : new ArrayList<>();
+        } catch (JsonProcessingException e) {
+            log.error("Error serializing favorite actors for user {}: {}", userId, e.getMessage());
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error saving favorite actors");
         }
-        userRepository.save(user);
-        return user.getFavoriteActors();
     }
 
     /**
@@ -160,29 +173,39 @@ public class UserFavoritesService {
      * @param userId the ID of the user
      * @return list of favorite actors, empty if none set
      */
-    public List<String> getFavoriteActors(Long userId) {
+    public List<ActorDTO> getFavoriteActors(Long userId) {
         User user = getUserById(userId);
-        if (user.getFavoriteActors() == null) {
-            user.setFavoriteActors(new ArrayList<>());
-            userRepository.save(user);
+        String favoriteActorsJson = user.getFavoriteActorsJson();
+        if (favoriteActorsJson != null && !favoriteActorsJson.isEmpty()) {
+            try {
+                return objectMapper.readValue(favoriteActorsJson, new TypeReference<List<ActorDTO>>() {});
+            } catch (JsonProcessingException e) {
+                log.error("Error deserializing favorite actors for user {}: {}", userId, e.getMessage());
+                // Return empty list or throw an exception based on desired error handling
+                return new ArrayList<>(); 
+            }
         }
-        return user.getFavoriteActors();
+        return new ArrayList<>();
     }
 
     /**
      * Save favorite directors for a user (list clears all if empty)
      */
-    public List<String> saveFavoriteDirectors(Long userId, List<String> directorList, String requesterToken) {
-        log.info("saveFavoriteDirectors called with userId={}, directors={}", userId, directorList);
+    public List<DirectorDTO> saveFavoriteDirectors(Long userId, List<DirectorDTO> favoriteDirectors, String requesterToken) {
+        log.info("saveFavoriteDirectors called with userId={}, directorsCount={}", userId, favoriteDirectors != null ? favoriteDirectors.size() : "null");
         User user = getUserById(userId);
         authorizeUserAction(user, requesterToken);
-        if (directorList == null) {
-            user.setFavoriteDirectors(new ArrayList<>());
-        } else {
-            user.setFavoriteDirectors(directorList);
+        
+        try {
+            String favoriteDirectorsJson = objectMapper.writeValueAsString(favoriteDirectors != null ? favoriteDirectors : new ArrayList<>());
+            user.setFavoriteDirectorsJson(favoriteDirectorsJson);
+            userRepository.save(user);
+            log.info("Favorite directors saved for user {}: {}", user.getUsername(), favoriteDirectorsJson);
+            return favoriteDirectors != null ? favoriteDirectors : new ArrayList<>();
+        } catch (JsonProcessingException e) {
+            log.error("Error serializing favorite directors for user {}: {}", userId, e.getMessage());
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error saving favorite directors");
         }
-        userRepository.save(user);
-        return user.getFavoriteDirectors();
     }
 
     /**
@@ -191,13 +214,19 @@ public class UserFavoritesService {
      * @param userId the ID of the user
      * @return list of favorite directors, empty if none set
      */
-    public List<String> getFavoriteDirectors(Long userId) {
+    public List<DirectorDTO> getFavoriteDirectors(Long userId) {
         User user = getUserById(userId);
-        if (user.getFavoriteDirectors() == null) {
-            user.setFavoriteDirectors(new ArrayList<>());
-            userRepository.save(user);
+        String favoriteDirectorsJson = user.getFavoriteDirectorsJson();
+        if (favoriteDirectorsJson != null && !favoriteDirectorsJson.isEmpty()) {
+            try {
+                return objectMapper.readValue(favoriteDirectorsJson, new TypeReference<List<DirectorDTO>>() {});
+            } catch (JsonProcessingException e) {
+                log.error("Error deserializing favorite directors for user {}: {}", userId, e.getMessage());
+                // Return empty list or throw an exception based on desired error handling
+                return new ArrayList<>();
+            }
         }
-        return user.getFavoriteDirectors();
+        return new ArrayList<>();
     }
 
     /**
