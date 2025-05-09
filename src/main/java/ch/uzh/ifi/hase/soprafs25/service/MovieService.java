@@ -175,26 +175,51 @@ public class MovieService {
 
         log.info("Generated {} search permutations for user {}: {}", searchQueries.size(), userId, searchQueries);
 
+        int remainingQueries = searchQueries.size();
+        int remainingLimit = limit;
+
         // Execute searches in order until we have enough suggestions or reach API call limit
         for (Movie searchParams : searchQueries) {
-            log.info("for (Movie searchParams : {}) loop", searchQueries);
+            log.info("Processing search query {} of {}", (searchQueries.size() - remainingQueries + 1), searchQueries.size());
+
             if (suggestions.size() >= limit || apiCallCount >= MAX_API_CALLS) {
                 break;
             }
 
+            // Calculate quota for current query - distribute remaining limit evenly among remaining queries
+            // Round up to ensure we use at least 1 movie per query
+            int currentQueryQuota = (int) Math.ceil((double) remainingLimit / remainingQueries);
+            log.info("Current query quota: {} (remaining limit: {}, remaining queries: {} ----- current params: {})",
+                    currentQueryQuota, remainingLimit, remainingQueries, searchParams);
+
             List<Movie> results = tmdbService.searchMovies(searchParams);
             apiCallCount++;
 
-            // Filter out excluded movies and add to suggestions
+            // Track how many movies we've added from this query
+            int moviesAddedFromCurrentQuery = 0;
+
+            // Filter out excluded movies and add to suggestions, but only up to the current query's quota
             for (Movie movie : results) {
-                if (!excludedMovieIds.contains(movie.getMovieId())) {
+                if (!excludedMovieIds.contains(movie.getMovieId()) &&
+                        moviesAddedFromCurrentQuery < currentQueryQuota &&
+                        !suggestions.contains(movie)) {
+
                     suggestions.add(movie);
+                    log.info("Added movie {} to suggestions", movie.getTitle());
+                    moviesAddedFromCurrentQuery++;
 
                     if (suggestions.size() >= limit) {
                         break;
                     }
                 }
             }
+
+            // Update remaining limit and queries for next iteration
+            remainingLimit = limit - suggestions.size();
+            remainingQueries--;
+
+            log.info("Added {} movies from current query. Total suggestions so far: {}",
+                    moviesAddedFromCurrentQuery, suggestions.size());
         }
 
         // If we still don't have enough suggestions, try a search with empty params
@@ -225,8 +250,8 @@ public class MovieService {
     }
 
     /**
-     * Generate search parameter permutations ordered by specificity
-     * helper method to generate search parameter permutations
+     * Generate search parameter permutations ordered by specificity,
+     * prioritizing directors over actors, and actors over genres
      *
      * @param genres List of genre names
      * @param actors List of actor IDs
@@ -235,87 +260,77 @@ public class MovieService {
      */
     private List<Movie> generateSearchPermutations(List<String> genres, List<String> actors, List<String> directors) {
         List<Movie> searchQueries = new ArrayList<>();
-        log.info("generateSearchPermutations: genres are {}, actors are {}, directors are {}", genres, actors, directors);
 
-        // Start with the most specific search (all parameters)
-        if (!genres.isEmpty() && !actors.isEmpty() && !directors.isEmpty()) {
-            Movie fullSearch = new Movie();
-            fullSearch.setGenres(new ArrayList<>(genres));
-            fullSearch.setActors(actors.stream().collect(Collectors.toList()));
-            fullSearch.setDirectors(directors.stream().collect(Collectors.toList()));
-            searchQueries.add(fullSearch);
+        // 1. First search query - intersection of all directors, actors, and genres
+        if (!directors.isEmpty() && !actors.isEmpty() && !genres.isEmpty()) {
+            Movie allCriteria = new Movie();
+            allCriteria.setDirectors(directors);
+            allCriteria.setActors(actors);
+            allCriteria.setGenres(genres);
+            searchQueries.add(allCriteria);
         }
 
-        // Generate permutations with one parameter missing
-        // Genres + Actors
-        if (!genres.isEmpty() && !actors.isEmpty()) {
-            Movie search = new Movie();
-            search.setGenres(new ArrayList<>(genres));
-            search.setActors(actors.stream().collect(Collectors.toList()));
-            searchQueries.add(search);
+        // 2. All genres with intersection of all directors and actors
+        if (!directors.isEmpty() && !actors.isEmpty() && !genres.isEmpty()) {
+            for (String genre : genres) {
+                Movie query = new Movie();
+                query.setDirectors(directors);
+                query.setActors(actors);
+                query.setGenres(Collections.singletonList(genre));
+                searchQueries.add(query);
+            }
         }
 
-        // Genres + Directors
-        if (!genres.isEmpty() && !directors.isEmpty()) {
-            Movie search = new Movie();
-            search.setGenres(new ArrayList<>(genres));
-            search.setDirectors(directors.stream().collect(Collectors.toList()));
-            searchQueries.add(search);
+        // 3. All actors with intersection of all directors
+        if (!directors.isEmpty() && !actors.isEmpty()) {
+            for (String actor : actors) {
+                Movie query = new Movie();
+                query.setDirectors(directors);
+                query.setActors(Collections.singletonList(actor));
+                searchQueries.add(query);
+            }
         }
 
-        // Actors + Directors
-        if (!actors.isEmpty() && !directors.isEmpty()) {
-            Movie search = new Movie();
-            search.setActors(actors.stream().collect(Collectors.toList()));
-            search.setDirectors(directors.stream().collect(Collectors.toList()));
-            searchQueries.add(search);
-        }
-
-        // Single parameter searches
-        // Only Genres
-        if (!genres.isEmpty()) {
-            Movie search = new Movie();
-            search.setGenres(new ArrayList<>(genres));
-            searchQueries.add(search);
-        }
-
-        // Only Actors
-        if (!actors.isEmpty()) {
-            Movie search = new Movie();
-            search.setActors(actors.stream().collect(Collectors.toList()));
-            searchQueries.add(search);
-        }
-
-        // Only Directors
+        // 4. All directors individually
         if (!directors.isEmpty()) {
-            Movie search = new Movie();
-            search.setDirectors(directors.stream().collect(Collectors.toList()));
-            searchQueries.add(search);
+            for (String director : directors) {
+                Movie query = new Movie();
+                query.setDirectors(Collections.singletonList(director));
+                searchQueries.add(query);
+            }
         }
 
-        // Add individual genre searches
-        for (String genre : genres) {
-            Movie search = new Movie();
-            search.setGenres(Collections.singletonList(genre));
-            searchQueries.add(search);
+        // 5. All genres with intersection of all actors (no directors)
+        if (!actors.isEmpty() && !genres.isEmpty()) {
+            for (String genre : genres) {
+                Movie query = new Movie();
+                query.setActors(actors);
+                query.setGenres(Collections.singletonList(genre));
+                searchQueries.add(query);
+            }
         }
 
-        // Add individual actor searches
-        for (String actor : actors) {
-            Movie search = new Movie();
-            search.setActors(Collections.singletonList(actor));
-            searchQueries.add(search);
+        // 6. All actors individually (no directors)
+        if (!actors.isEmpty()) {
+            for (String actor : actors) {
+                Movie query = new Movie();
+                query.setActors(Collections.singletonList(actor));
+                searchQueries.add(query);
+            }
         }
 
-        // Add individual director searches
-        for (String director : directors) {
-            Movie search = new Movie();
-            search.setDirectors(Collections.singletonList(director));
-            searchQueries.add(search);
+        // 7. All genres individually
+        if (!genres.isEmpty()) {
+            for (String genre : genres) {
+                Movie query = new Movie();
+                query.setGenres(Collections.singletonList(genre));
+                searchQueries.add(query);
+            }
         }
 
         return searchQueries;
     }
+
 
     /**
      * Helper method to find actor IDs by actor names using the /movies/actors endpoint
