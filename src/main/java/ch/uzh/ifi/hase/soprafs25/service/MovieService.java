@@ -17,6 +17,13 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriUtils;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.ActorDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.DirectorDTO;
+import java.util.ArrayList;
+
 /**
  * Movie Service
  * This class is the "worker" and responsible for all functionality related to the movie
@@ -146,19 +153,15 @@ public class MovieService {
         // Collect all user favorites
         List<String> favoriteGenres = user.getFavoriteGenres();
         log.info("getMovieSuggestions: Favorite genres are {}", favoriteGenres);
-        List<String> favoriteActorIds = new ArrayList<>();
-        List<String> favoriteDirectorIds = new ArrayList<>();
+        List<String> favoriteActorNames = user.getFavoriteActors();
+        log.info("getMovieSuggestions: Favorite actornames are {}", favoriteActorNames);
+        List<String> favoriteDirectorNames = user.getFavoriteDirectors();
+        log.info("getMovieSuggestions: Favorite directornames are {}", favoriteDirectorNames);
 
-        // Extract actor and director IDs
-        if (user.getFavoriteActors() != null) {
-            favoriteActorIds.addAll(user.getFavoriteActors());
-        }
-        log.info("getMovieSuggestions: Favorite actors are {}", favoriteActorIds);
-
-        if (user.getFavoriteDirectors() != null) {
-            favoriteDirectorIds.addAll(user.getFavoriteDirectors());
-        }
-        log.info("getMovieSuggestions: Favorite directors are {}", favoriteDirectorIds);
+        List<String> favoriteActorIds = HelperMethodFindActorIds(favoriteActorNames);
+        log.info("getMovieSuggestions: Favorite actorid's are {}", favoriteActorIds);
+        List<String> favoriteDirectorIds = HelperMethodFindDirectorIds(favoriteDirectorNames);
+        log.info("getMovieSuggestions: Favorite directorid's are {}", favoriteDirectorIds);
 
         // Maximum number of API calls to prevent excessive requests
         final int MAX_API_CALLS = 200;
@@ -312,5 +315,110 @@ public class MovieService {
         }
 
         return searchQueries;
+    }
+
+    /**
+     * Helper method to find actor IDs by actor names using the /movies/actors endpoint
+     *
+     * @param favoriteActorNames List of actor names to look up
+     * @return List of actor IDs corresponding to the names
+     */
+    private List<String> HelperMethodFindActorIds(List<String> favoriteActorNames) {
+        List<String> favoriteActorIds = new ArrayList<>();
+        if (favoriteActorNames == null || favoriteActorNames.isEmpty()) {
+            return favoriteActorIds;
+        }
+
+        RestTemplate restTemplate = new RestTemplate();
+        String baseUrl = "https://sopra-fs25-group-19-server.oa.r.appspot.com";
+
+        for (String actorName : favoriteActorNames) {
+            try {
+                // Encode the actor name for use in URL
+                String encodedName = UriUtils.encodeQueryParam(actorName, "UTF-8");
+                String url = baseUrl + "/movies/actors?actorname=" + encodedName;
+
+                // Make the API call
+                ResponseEntity<ActorDTO[]> response = restTemplate.getForEntity(url, ActorDTO[].class);
+                ActorDTO[] actors = response.getBody();
+
+                if (actors != null && actors.length > 0) {
+                    // First try to find exact match
+                    boolean exactMatchFound = false;
+                    for (ActorDTO actor : actors) {
+                        if (actor.getActorName().equalsIgnoreCase(actorName)) {
+                            favoriteActorIds.add(String.valueOf(actor.getActorId()));
+                            exactMatchFound = true;
+                            break;
+                        }
+                    }
+
+                    // If no exact match, take the first result
+                    if (!exactMatchFound && actors.length > 0) {
+                        favoriteActorIds.add(String.valueOf(actors[0].getActorId()));
+                    }
+                }
+
+                log.info("Found actor ID for {}: {}", actorName,
+                        favoriteActorIds.isEmpty() ? "No match found" : favoriteActorIds.get(favoriteActorIds.size() - 1));
+
+            } catch (Exception e) {
+                log.error("Error finding actor ID for {}: {}", actorName, e.getMessage());
+            }
+        }
+
+        return favoriteActorIds;
+    }
+
+    /**
+     * Helper method to find director IDs by director names using the /movies/directors endpoint
+     *
+     * @param favoriteDirectorNames List of director names to look up
+     * @return List of director IDs corresponding to the names
+     */
+    private List<String> HelperMethodFindDirectorIds(List<String> favoriteDirectorNames) {
+        List<String> favoriteDirectorIds = new ArrayList<>();
+        if (favoriteDirectorNames == null || favoriteDirectorNames.isEmpty()) {
+            return favoriteDirectorIds;
+        }
+
+        RestTemplate restTemplate = new RestTemplate();
+        String baseUrl = "https://sopra-fs25-group-19-server.oa.r.appspot.com";
+
+        for (String directorName : favoriteDirectorNames) {
+            try {
+                // Encode the director name for use in URL
+                String encodedName = UriUtils.encodeQueryParam(directorName, "UTF-8");
+                String url = baseUrl + "/movies/directors?directorname=" + encodedName;
+
+                // Make the API call
+                ResponseEntity<DirectorDTO[]> response = restTemplate.getForEntity(url, DirectorDTO[].class);
+                DirectorDTO[] directors = response.getBody();
+
+                if (directors != null && directors.length > 0) {
+                    // First try to find exact match
+                    boolean exactMatchFound = false;
+                    for (DirectorDTO director : directors) {
+                        if (director.getDirectorName().equalsIgnoreCase(directorName)) {
+                            favoriteDirectorIds.add(String.valueOf(director.getDirectorId()));
+                            exactMatchFound = true;
+                            break;
+                        }
+                    }
+
+                    // If no exact match, take the first result
+                    if (!exactMatchFound && directors.length > 0) {
+                        favoriteDirectorIds.add(String.valueOf(directors[0].getDirectorId()));
+                    }
+                }
+
+                log.info("Found director ID for {}: {}", directorName,
+                        favoriteDirectorIds.isEmpty() ? "No match found" : favoriteDirectorIds.get(favoriteDirectorIds.size() - 1));
+
+            } catch (Exception e) {
+                log.error("Error finding director ID for {}: {}", directorName, e.getMessage());
+            }
+        }
+        return favoriteDirectorIds;
     }
 }
