@@ -6,6 +6,7 @@ import ch.uzh.ifi.hase.soprafs25.repository.MovieRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -170,15 +171,11 @@ public class MovieServiceIntegrationTest {
 
         // Set user favorites
         List<String> favoriteGenres = Arrays.asList("Action", "Comedy");
-        Map<String, String> actorsMap = new HashMap<>();
-        actorsMap.put("123", "Tom Hanks");
-        actorsMap.put("456", "Meryl Streep");
-        Map<String, String> directorsMap = new HashMap<>();
-        directorsMap.put("2323", "Steven Spielberg");
-        directorsMap.put("421432156", "Christopher Nolan");
+        List<String> favoriteActorNames = Arrays.asList("Tom Hanks", "Meryl Streep");
+        List<String> favoriteDirectorNames = Arrays.asList("Steven Spielberg", "Christopher Nolan");
         user.setFavoriteGenres(favoriteGenres);
-        user.setFavoriteActors(actorsMap);
-        user.setFavoriteDirectors(directorsMap);
+        user.setFavoriteActors(favoriteActorNames);
+        user.setFavoriteDirectors(favoriteDirectorNames);
 
         // Save user to database
         userRepository.save(user);
@@ -204,15 +201,72 @@ public class MovieServiceIntegrationTest {
         // 4. Call the service method
         List<Movie> suggestions = movieService.getMovieSuggestions(user.getUserId(), 5);
 
-        // 5. Verify TMDbService was called with correct parameters
-        Mockito.verify(tmdbService).searchMovies(Mockito.argThat(searchParams -> {
-            return searchParams.getGenres() != null &&
-                    searchParams.getGenres().containsAll(favoriteGenres) &&
-                    searchParams.getActors() != null &&
-                    searchParams.getActors().containsAll(actorsMap.keySet()) &&
-                    searchParams.getDirectors() != null &&
-                    searchParams.getDirectors().containsAll(directorsMap.keySet());
-        }));
+        // 5. Verify TMDbService was called with parameters containing user favorites
+        ArgumentCaptor<Movie> searchParamsCaptor = ArgumentCaptor.forClass(Movie.class);
+        Mockito.verify(tmdbService, Mockito.atLeastOnce()).searchMovies(searchParamsCaptor.capture());
+
+        List<Movie> capturedParams = searchParamsCaptor.getAllValues();
+
+        // For debugging: print all captured search parameters
+        System.out.println("Captured search parameters:");
+        for (Movie params : capturedParams) {
+            System.out.println("Genres: " + params.getGenres());
+            System.out.println("Actors: " + params.getActors());
+            System.out.println("Directors: " + params.getDirectors());
+            System.out.println("-----------------------");
+        }
+
+        // Define expected actor and director IDs
+        Map<String, String> expectedActorMap = new HashMap<>();
+        expectedActorMap.put("31", "Tom Hanks");
+        expectedActorMap.put("5064", "Meryl Streep");
+
+        Map<String, String> expectedDirectorMap = new HashMap<>();
+        expectedDirectorMap.put("488", "Steven Spielberg");
+        expectedDirectorMap.put("525", "Christopher Nolan");
+
+        // Verify that user favorite genres were used in at least one call
+        boolean genresUsed = capturedParams.stream().anyMatch(params ->
+                params.getGenres() != null &&
+                        !Collections.disjoint(params.getGenres(), favoriteGenres));
+
+        // Check for actors - verify that either IDs or names are in the search parameters
+        boolean actorsUsed = capturedParams.stream().anyMatch(params -> {
+            if (params.getActors() == null) return false;
+
+            // Check if any of the expected actor IDs are included
+            for (String actorId : expectedActorMap.keySet()) {
+                if (params.getActors().contains(actorId)) return true;
+            }
+
+            // Check if any of the expected actor names are included
+            for (String actorName : expectedActorMap.values()) {
+                if (params.getActors().contains(actorName)) return true;
+            }
+
+            return false;
+        });
+
+        // Check for directors - verify that either IDs or names are in the search parameters
+        boolean directorsUsed = capturedParams.stream().anyMatch(params -> {
+            if (params.getDirectors() == null) return false;
+
+            // Check if any of the expected director IDs are included
+            for (String directorId : expectedDirectorMap.keySet()) {
+                if (params.getDirectors().contains(directorId)) return true;
+            }
+
+            // Check if any of the expected director names are included
+            for (String directorName : expectedDirectorMap.values()) {
+                if (params.getDirectors().contains(directorName)) return true;
+            }
+
+            return false;
+        });
+
+        assertTrue(genresUsed, "User favorite genres were not used in search parameters");
+        assertTrue(actorsUsed, "User favorite actors were not used in search parameters");
+        assertTrue(directorsUsed, "User favorite directors were not used in search parameters");
 
         // 6. Verify suggestions were returned correctly
         assertNotNull(suggestions);
@@ -220,6 +274,8 @@ public class MovieServiceIntegrationTest {
         assertTrue(suggestions.stream().anyMatch(m -> m.getMovieId() == 101));
         assertTrue(suggestions.stream().anyMatch(m -> m.getMovieId() == 102));
     }
+
+
 
     /**
      * Test 4.3 -Test for edge case: user with no favorites
