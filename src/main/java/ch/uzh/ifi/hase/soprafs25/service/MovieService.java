@@ -173,7 +173,7 @@ public class MovieService {
         // Generate all permutations of search parameters, starting with most specific
         List<Movie> searchQueries = generateSearchPermutations(favoriteGenres, favoriteActorIds, favoriteDirectorIds);
 
-        log.info("Generated {} search permutations for user {}", searchQueries.size(), userId, searchQueries);
+        log.info("Generated {} search permutations for user {}: {}", searchQueries.size(), userId, searchQueries);
 
         // Execute searches in order until we have enough suggestions or reach API call limit
         for (Movie searchParams : searchQueries) {
@@ -332,21 +332,23 @@ public class MovieService {
         RestTemplate restTemplate = new RestTemplate();
         String baseUrl = "https://sopra-fs25-group-19-server.oa.r.appspot.com";
 
-        for (String actorName : favoriteActorNames) {
+        for (String favoriteactorName : favoriteActorNames) {
+            log.info("actorName is {}", favoriteactorName);
             try {
-                // Encode the actor name for use in URL
-                String encodedName = UriUtils.encodeQueryParam(actorName, "UTF-8");
-                String url = baseUrl + "/movies/actors?actorname=" + encodedName;
+
+                String url = baseUrl + "/movies/actors?actorname=" + favoriteactorName;
+                log.info("url is {}", url);
 
                 // Make the API call
                 ResponseEntity<ActorDTO[]> response = restTemplate.getForEntity(url, ActorDTO[].class);
+                log.info("response is {}", response);
                 ActorDTO[] actors = response.getBody();
 
                 if (actors != null && actors.length > 0) {
                     // First try to find exact match
                     boolean exactMatchFound = false;
                     for (ActorDTO actor : actors) {
-                        if (actor.getActorName().equalsIgnoreCase(actorName)) {
+                        if (actor.getActorName().equalsIgnoreCase(favoriteactorName)) {
                             favoriteActorIds.add(String.valueOf(actor.getActorId()));
                             exactMatchFound = true;
                             break;
@@ -359,11 +361,11 @@ public class MovieService {
                     }
                 }
 
-                log.info("Found actor ID for {}: {}", actorName,
+                log.info("Found actor ID for {}: {}", favoriteactorName,
                         favoriteActorIds.isEmpty() ? "No match found" : favoriteActorIds.get(favoriteActorIds.size() - 1));
 
             } catch (Exception e) {
-                log.error("Error finding actor ID for {}: {}", actorName, e.getMessage());
+                log.error("Error finding actor ID for {}: {}", favoriteactorName, e.getMessage());
             }
         }
 
@@ -387,9 +389,7 @@ public class MovieService {
 
         for (String directorName : favoriteDirectorNames) {
             try {
-                // Encode the director name for use in URL
-                String encodedName = UriUtils.encodeQueryParam(directorName, "UTF-8");
-                String url = baseUrl + "/movies/directors?directorname=" + encodedName;
+                String url = baseUrl + "/movies/directors?directorname=" + directorName;
 
                 // Make the API call
                 ResponseEntity<DirectorDTO[]> response = restTemplate.getForEntity(url, DirectorDTO[].class);
