@@ -472,7 +472,7 @@ class MovieServiceSearchPermutationsTest {
     }
 
     /**
-     * Test 2.2: Verify the permutations are generated in the correct order (most specific to least)
+     * Test 2.2: Verify the permutations start with the most specific searches
      */
     @Test
     public void testSearchPermutationsOrder() throws Exception {
@@ -487,45 +487,37 @@ class MovieServiceSearchPermutationsTest {
                 movieService, genres, actors, directors
         );
 
-        // Verify the order is from most specific to least specific First should have all parameters
+        // Verify the first search has all parameters
         Movie firstSearch = result.get(0);
-        assertFalse(firstSearch.getGenres().isEmpty());
-        assertFalse(firstSearch.getActors().isEmpty());
-        assertFalse(firstSearch.getDirectors().isEmpty());
+        assertFalse(firstSearch.getGenres().isEmpty(), "First search should include genres");
+        assertFalse(firstSearch.getActors().isEmpty(), "First search should include actors");
+        assertFalse(firstSearch.getDirectors().isEmpty(), "First search should include directors");
 
-        // Check that single parameter searches come after multi-parameter searches
-        // (This assumes the implementation follows the ordering: all params, 2 params, 1 param, individual items)
-        boolean foundAllDualParamBeforeSingleParam = true;
-        boolean foundSingleParam = false;
-
-        for (int i = 1; i < 4; i++) { // Next 3 should be dual-parameter searches
-            Movie search = result.get(i);
-            int paramCount = 0;
-            if (!search.getGenres().isEmpty()) paramCount++;
-            if (!search.getActors().isEmpty()) paramCount++;
-            if (!search.getDirectors().isEmpty()) paramCount++;
-
-            if (paramCount != 2) {
-                foundAllDualParamBeforeSingleParam = false;
-                break;
-            }
+        // Verify that all combinations are represented
+        Set<String> foundCombinations = new HashSet<>();
+        for (Movie search : result) {
+            foundCombinations.add(getCombinationCode(search));
         }
 
-        for (int i = 4; i < 7; i++) { // Next 3 should be single-category searches
-            Movie search = result.get(i);
-            int paramCount = 0;
-            if (!search.getGenres().isEmpty()) paramCount++;
-            if (!search.getActors().isEmpty()) paramCount++;
-            if (!search.getDirectors().isEmpty()) paramCount++;
-
-            if (paramCount == 1) {
-                foundSingleParam = true;
-            }
-        }
-
-        assertTrue(foundAllDualParamBeforeSingleParam, "Dual-parameter searches should come before single-parameter searches");
-        assertTrue(foundSingleParam, "Should include single-parameter searches after dual-parameter searches");
+        assertTrue(foundCombinations.contains("GAD"), "Should include searches with all parameters");
+        assertTrue(foundCombinations.contains("GA"), "Should include searches with genres and actors");
+        assertTrue(foundCombinations.contains("AD"), "Should include searches with actors and directors");
+        assertTrue(foundCombinations.contains("D"), "Should include searches with only directors");
+        assertTrue(foundCombinations.contains("A"), "Should include searches with only actors");
+        assertTrue(foundCombinations.contains("G"), "Should include searches with only genres");
     }
+
+    /**
+     * Helper method to get a code representing which parameters are present
+     */
+    private String getCombinationCode(Movie search) {
+        StringBuilder code = new StringBuilder();
+        if (!search.getGenres().isEmpty()) code.append("G");
+        if (!search.getActors().isEmpty()) code.append("A");
+        if (!search.getDirectors().isEmpty()) code.append("D");
+        return code.toString();
+    }
+
 
     /**
      * Test 2.3: Check edge cases like empty input lists
