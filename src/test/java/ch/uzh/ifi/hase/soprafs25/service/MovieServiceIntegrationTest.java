@@ -94,14 +94,14 @@ public class MovieServiceIntegrationTest {
 
         // Create movies
         Movie watched = new Movie();
-        watched.setMovieId(101);
+        watched.setMovieId(999999991);
         watched.setTitle("Previously Watched Movie");
         watched.setGenres(new ArrayList<>(Arrays.asList("Action")));
         watched.setYear(2020);
         movieRepository.save(watched);
 
         Movie inWatchlist = new Movie();
-        inWatchlist.setMovieId(102);
+        inWatchlist.setMovieId(999999992);
         inWatchlist.setTitle("Movie in Watchlist");
         inWatchlist.setGenres(new ArrayList<>(Arrays.asList("Comedy")));
         inWatchlist.setYear(2021);
@@ -121,7 +121,7 @@ public class MovieServiceIntegrationTest {
         List<Movie> mockSuggestedMovies = new ArrayList<>();
         for (int i = 1; i <= 5; i++) {
             Movie movie = new Movie();
-            movie.setMovieId(200 + i);
+            movie.setMovieId(999999991 + i);
             movie.setTitle("Suggested Movie " + i);
             movie.setGenres(new ArrayList<>(Arrays.asList("Action", "Comedy")));
             movie.setYear(2022);

@@ -179,7 +179,7 @@ public class MovieControllerServiceIntegrationTest {
 
         for (int i = 1; i <= 10; i++) {
             Movie movie = new Movie();
-            movie.setMovieId(i);
+            movie.setMovieId(99999999+i);
             movie.setTitle("Test Movie " + i);
             movie.setPosterURL("https://example.com/poster" + i + ".jpg");
 
@@ -232,17 +232,17 @@ public class MovieControllerServiceIntegrationTest {
 
         // Set watchlist and watched movies
         Movie watchlistMovie1 = new Movie();
-        watchlistMovie1.setMovieId(101);
+        watchlistMovie1.setMovieId(999999991);
         watchlistMovie1.setTitle("Watchlist Movie 1");
         movieRepository.save(watchlistMovie1);
 
         Movie watchlistMovie2 = new Movie();
-        watchlistMovie2.setMovieId(102);
+        watchlistMovie2.setMovieId(999999992);
         watchlistMovie2.setTitle("Watchlist Movie 2");
         movieRepository.save(watchlistMovie2);
 
         Movie watchedMovie = new Movie();
-        watchedMovie.setMovieId(103);
+        watchedMovie.setMovieId(999999993);
         watchedMovie.setTitle("Watched Movie");
         movieRepository.save(watchedMovie);
 
