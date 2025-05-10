@@ -133,7 +133,7 @@ public class MovieApiIntegrationTest {
         // Setup TMDb service mock to return different results for different queries
         List<Movie> actionMovies = new ArrayList<>();
         Movie actionMovie = new Movie();
-        actionMovie.setMovieId(101);
+        actionMovie.setMovieId(999999991);
         actionMovie.setTitle("Action Movie");
         actionMovie.setGenres(Collections.singletonList("Action"));
         actionMovie.setPosterURL("http://example.com/poster101.jpg");
@@ -153,7 +153,7 @@ public class MovieApiIntegrationTest {
         // Verify that the response contains data from our stubbed TMDb service
         boolean foundStubMovie = false;
         for (MovieGetDTO movie : responseMovies) {
-            if (movie.getMovieId() == 101) {
+            if (movie.getMovieId() == 999999991) {
                 assertEquals("Action Movie", movie.getTitle());
                 assertEquals("http://example.com/poster101.jpg", movie.getPosterURL());
                 foundStubMovie = true;
@@ -188,7 +188,7 @@ public class MovieApiIntegrationTest {
         // Create some test movies
         for (int i = 1; i <= 10; i++) {
             Movie movie = new Movie();
-            movie.setMovieId(i);
+            movie.setMovieId(99999999+i);
             movie.setTitle("Test Movie " + i);
 
             // Set different genres
@@ -238,7 +238,7 @@ public class MovieApiIntegrationTest {
 
         // Set favorite movie
         Movie favoriteMovie = new Movie();
-        favoriteMovie.setMovieId(1);
+        favoriteMovie.setMovieId(999999991);
         favoriteMovie.setTitle("Inception");
         favoriteMovie = movieRepository.save(favoriteMovie);
         user.setFavoriteMovie(favoriteMovie);
