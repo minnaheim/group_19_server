@@ -628,56 +628,49 @@ public class TMDbService {
      * Results are ordered by popularity in descending order.
      */
     private List<String> extractTopActors(JsonNode creditsNode) {
-
-
         if (creditsNode == null || creditsNode.isMissingNode()) {
             log.warn("Credits node is missing - returning empty list");
             return Collections.emptyList();
         }
-
         List<ActorData> actors = new ArrayList<>();
-
         // Extract actors from cast node if available
         JsonNode castNode = creditsNode.path("cast");
         if (castNode != null && !castNode.isMissingNode() && castNode.isArray()) {
+            log.info("Extracting top actors from cast node");
             for (JsonNode actor : castNode) {
                 if (actor.has("known_for_department") &&
                         "Acting".equals(actor.get("known_for_department").asText())) {
-
                     String name = actor.has("name") ? actor.get("name").asText() : "";
                     double popularity = actor.has("popularity") ? actor.get("popularity").asDouble() : 0.0;
-
                     actors.add(new ActorData(name, popularity));
+                    log.info("Actor: {}, Popularity: {} added to actors", name, popularity);
                 }
             }
         }
-
         // Extract actors from crew node if available (some actors might also be in crew)
         JsonNode crewNode = creditsNode.path("crew");
         if (crewNode != null && !crewNode.isMissingNode() && crewNode.isArray()) {
+            log.info("Extracting top actors from crew node");
             for (JsonNode crewMember : crewNode) {
                 if (crewMember.has("known_for_department") &&
                         "Acting".equals(crewMember.get("known_for_department").asText())) {
-
                     String name = crewMember.has("name") ? crewMember.get("name").asText() : "";
                     double popularity = crewMember.has("popularity") ? crewMember.get("popularity").asDouble() : 0.0;
-
                     // Only add if not already added from cast
                     if (actors.stream().noneMatch(a -> a.name.equals(name))) {
                         actors.add(new ActorData(name, popularity));
+                        log.info("Actor: {}, Popularity: {} added to actors", name, popularity);
                     }
                 }
             }
         }
-
         // Sort by popularity (descending)
         actors.sort((a1, a2) -> Double.compare(a2.popularity, a1.popularity));
-
         // Extract only names
         List<String> actorNames = actors.stream()
                 .map(a -> a.name)
                 .collect(Collectors.toList());
-
+        log.info("Top actors: {}", actorNames);
         return actorNames;
     }
 
@@ -691,36 +684,45 @@ public class TMDbService {
             log.warn("Credits node is missing - returning empty list");
             return Collections.emptyList();
         }
-
-        JsonNode crewNode = creditsNode.path("crew");
-        if (crewNode == null || crewNode.isMissingNode() || !crewNode.isArray()) {
-            log.warn("Crew node is missing - returning empty list");
-            return Collections.emptyList();
-        }
-
         List<DirectorData> directors = new ArrayList<>();
-
-        for (JsonNode crewMember : crewNode) {
-            if (crewMember.has("known_for_department") &&
-                    "Directing".equals(crewMember.get("known_for_department").asText()) &&
-                    crewMember.has("job") &&
-                    "Director".equals(crewMember.get("job").asText())) {
-
-                String name = crewMember.has("name") ? crewMember.get("name").asText() : "";
-                double popularity = crewMember.has("popularity") ? crewMember.get("popularity").asDouble() : 0.0;
-
-                directors.add(new DirectorData(name, popularity));
+        // Extract actors from cast node if available
+        JsonNode castNode = creditsNode.path("cast");
+        if (castNode != null && !castNode.isMissingNode() && castNode.isArray()) {
+            log.info("Extracting top directors from cast node");
+            for (JsonNode director : castNode) {
+                if (director.has("known_for_department") &&
+                        "Directing".equals(director.get("known_for_department").asText())) {
+                    String name = director.has("name") ? director.get("name").asText() : "";
+                    double popularity = director.has("popularity") ? director.get("popularity").asDouble() : 0.0;
+                    directors.add(new DirectorData(name, popularity));
+                    log.info("Director: {}, Popularity: {} added to directors", name, popularity);
+                }
             }
         }
-
+        // Extract actors from crew node if available (some actors might also be in crew)
+        JsonNode crewNode = creditsNode.path("crew");
+        if (crewNode != null && !crewNode.isMissingNode() && crewNode.isArray()) {
+            log.info("Extracting top actors from crew node");
+            for (JsonNode crewMember : crewNode) {
+                if (crewMember.has("known_for_department") &&
+                        "Directing".equals(crewMember.get("known_for_department").asText())) {
+                    String name = crewMember.has("name") ? crewMember.get("name").asText() : "";
+                    double popularity = crewMember.has("popularity") ? crewMember.get("popularity").asDouble() : 0.0;
+                    // Only add if not already added from cast
+                    if (directors.stream().noneMatch(a -> a.name.equals(name))) {
+                        directors.add(new DirectorData(name, popularity));
+                        log.info("Actor: {}, Popularity: {} added to actors", name, popularity);
+                    }
+                }
+            }
+        }
         // Sort by popularity (descending)
         directors.sort((d1, d2) -> Double.compare(d2.popularity, d1.popularity));
-
         // Extract only names
         List<String> directorNames = directors.stream()
                 .map(d -> d.name)
                 .collect(Collectors.toList());
-
+        log.info("Top actors: {}", directorNames);
         return directorNames;
     }
 
