@@ -128,6 +128,9 @@ public class GroupInvitationService {
         if (!invitation.getSender().getUserId().equals(userId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not authorized to delete this invitation");
         }
+        else if(invitation.isAccepted()){
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Invitation is already accepted - can't cancel it");
+        }
 
         groupInvitationRepository.delete(invitation);
     }
