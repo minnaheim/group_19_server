@@ -3,6 +3,7 @@ package ch.uzh.ifi.hase.soprafs25.controller;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -26,6 +27,7 @@ import ch.uzh.ifi.hase.soprafs25.rest.dto.RankingSubmitDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.UserGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.VoteStateGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.VotingStatusDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.PoolEntryGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.mapper.DTOMapper;
 import ch.uzh.ifi.hase.soprafs25.service.GroupService;
 import ch.uzh.ifi.hase.soprafs25.service.MoviePoolService;
@@ -92,7 +94,19 @@ public class GroupController {
         token = AuthorizationUtil.extractToken(token);
         Long userId = userService.getUserByToken(token).getUserId();
         List<Group> userGroups = groupService.getGroupsByUserId(userId);
-        return DTOMapper.INSTANCE.convertEntityListToGroupGetDTOList(userGroups);
+        List<GroupGetDTO> dtos = DTOMapper.INSTANCE.convertEntityListToGroupGetDTOList(userGroups);
+        // populate full movie list for each group
+        for (GroupGetDTO dto : dtos) {
+            try {
+                MoviePool pool = moviePoolService.getMoviePool(dto.getGroupId(), userId);
+                List<MovieGetDTO> movies = DTOMapper.INSTANCE.convertEntityListToMovieGetDTOList(pool.getMovies());
+                dto.setMovies(movies);
+            } catch (Exception e) {
+                // group may have no pool yet
+                dto.setMovies(Collections.emptyList());
+            }
+        }
+        return dtos;
     }
 
     @PostMapping("/groups")
@@ -125,21 +139,35 @@ public class GroupController {
     // get movie pool 
     @GetMapping("/groups/{groupId}/pool")
     @ResponseStatus(HttpStatus.OK)
-    public List<MovieGetDTO> getGroupMoviePool( @RequestHeader("Authorization") String token, @PathVariable Long groupId) {
+    public List<PoolEntryGetDTO> getGroupMoviePool(@RequestHeader("Authorization") String token, @PathVariable Long groupId) {
         token = AuthorizationUtil.extractToken(token);
         Long userId = userService.getUserByToken(token).getUserId();
         MoviePool moviePool = moviePoolService.getMoviePool(groupId, userId);
-        return DTOMapper.INSTANCE.convertEntityListToMovieGetDTOList(moviePool.getMovies());
+        return moviePool.getMovies().stream()
+            .map(movie -> {
+                PoolEntryGetDTO dto = new PoolEntryGetDTO();
+                dto.setMovie(DTOMapper.INSTANCE.convertEntityToMovieGetDTO(movie));
+                dto.setAddedBy(moviePool.getUserAddedMovies().get(movie));
+                return dto;
+            })
+            .collect(Collectors.toList());
     }
 
     // add movie
     @PostMapping("/groups/{groupId}/pool/{movieId}")
     @ResponseStatus(HttpStatus.OK)
-    public List<MovieGetDTO> addMovieToGroupPool(@RequestHeader("Authorization") String token, @PathVariable Long groupId, @PathVariable Long movieId) {
+    public List<PoolEntryGetDTO> addMovieToGroupPool(@RequestHeader("Authorization") String token, @PathVariable Long groupId, @PathVariable Long movieId) {
         token = AuthorizationUtil.extractToken(token);
         Long userId = userService.getUserByToken(token).getUserId();
         MoviePool moviePool = moviePoolService.addMovie(groupId, movieId, userId);
-        return DTOMapper.INSTANCE.convertEntityListToMovieGetDTOList(moviePool.getMovies());
+        return moviePool.getMovies().stream()
+            .map(movie -> {
+                PoolEntryGetDTO dto = new PoolEntryGetDTO();
+                dto.setMovie(DTOMapper.INSTANCE.convertEntityToMovieGetDTO(movie));
+                dto.setAddedBy(moviePool.getUserAddedMovies().get(movie));
+                return dto;
+            })
+            .collect(Collectors.toList());
     }
 
     @DeleteMapping("/groups/{groupId}/pool/{movieId}")

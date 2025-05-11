@@ -2,6 +2,7 @@ package ch.uzh.ifi.hase.soprafs25.rest.dto;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.MovieGetDTO;
 
 public class GroupGetDTO {
     
@@ -11,6 +12,7 @@ public class GroupGetDTO {
     private UserGetDTO creator;
     private List<Long> memberIds;
     private List<Long> movieIds;
+    private List<MovieGetDTO> movies;
     private String phase;
     private Integer poolPhaseDuration;
     private Integer votingPhaseDuration;
@@ -55,6 +57,14 @@ public class GroupGetDTO {
 
     public void setMovieIds(List<Long> movieIds) {
         this.movieIds = movieIds;
+    }
+
+    public List<MovieGetDTO> getMovies() {
+        return movies;
+    }
+
+    public void setMovies(List<MovieGetDTO> movies) {
+        this.movies = movies;
     }
 
     public String getPhase() {
