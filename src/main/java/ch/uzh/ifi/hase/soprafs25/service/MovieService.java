@@ -102,14 +102,6 @@ public class MovieService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Movie ID is required");
         }
 
-        boolean isTrailerBlank = (movie.getTrailerURL() == null || movie.getTrailerURL().isBlank());
-        boolean isActorsEmpty = (movie.getActors() == null ||movie.getActors().stream().allMatch(item -> item == null || item.trim().isEmpty()));
-        boolean isDirectorsEmpty = (movie.getDirectors() == null || movie.getDirectors().stream().allMatch(item -> item == null || item.trim().isEmpty()));
-
-        if (isTrailerBlank  && isActorsEmpty && isDirectorsEmpty) {
-            throw new SearchValidationException("Movie must be saved with details available from TMDb API. Missing trailer, actors or directors.");
-        }
-
         // Check if movie already exists
         Movie existingMovie = movieRepository.findByMovieId(movie.getMovieId());
         if (existingMovie != null) {
