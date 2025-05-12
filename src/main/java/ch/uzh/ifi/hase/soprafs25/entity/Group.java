@@ -54,12 +54,11 @@ public class Group implements Serializable {
     private MoviePool moviePool;
 
     // timer handling
-    // default 5 minutes
     @Column
-    private Integer poolPhaseDuration = 300;  
+    private Integer poolPhaseDuration;  
 
     @Column
-    private Integer votingPhaseDuration = 300; 
+    private Integer votingPhaseDuration; 
 
     @Column
     private LocalDateTime phaseStartTime;

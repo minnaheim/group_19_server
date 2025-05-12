@@ -23,11 +23,11 @@ import ch.uzh.ifi.hase.soprafs25.exceptions.UserNotFoundException;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.GroupGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.GroupPostDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.MovieGetDTO;
+import ch.uzh.ifi.hase.soprafs25.rest.dto.PoolEntryGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.RankingSubmitDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.UserGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.VoteStateGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.VotingStatusDTO;
-import ch.uzh.ifi.hase.soprafs25.rest.dto.PoolEntryGetDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.mapper.DTOMapper;
 import ch.uzh.ifi.hase.soprafs25.service.GroupService;
 import ch.uzh.ifi.hase.soprafs25.service.MoviePoolService;
@@ -230,7 +230,9 @@ public class GroupController {
 
 
     // timer endpoints
-    @PutMapping("/groups/{groupId}/pool-timer")
+
+    // setting timers
+    @PostMapping("/groups/{groupId}/pool-timer")
     @ResponseStatus(HttpStatus.OK)
     public void setPoolPhaseDuration(@PathVariable Long groupId, @RequestHeader("Authorization") String token, @RequestBody Integer duration) {
         token = AuthorizationUtil.extractToken(token);
@@ -238,12 +240,28 @@ public class GroupController {
         groupService.setPoolPhaseDuration(groupId, userId, duration);
     }
 
-    @PutMapping("/groups/{groupId}/voting-timer")
+    @PostMapping("/groups/{groupId}/voting-timer")
     @ResponseStatus(HttpStatus.OK)
     public void setVotingPhaseDuration(@PathVariable Long groupId, @RequestHeader("Authorization") String token, @RequestBody Integer duration) {
         token = AuthorizationUtil.extractToken(token);
         Long userId = userService.getUserByToken(token).getUserId();
         groupService.setVotingPhaseDuration(groupId, userId, duration);
+    }
+    // start timers 
+    @PostMapping("/groups/{groupId}/start-pool-timer")
+    @ResponseStatus(HttpStatus.OK)
+    public void startPoolTimer(@PathVariable Long groupId, @RequestHeader("Authorization") String token) {
+        token = AuthorizationUtil.extractToken(token);
+        Long userId = userService.getUserByToken(token).getUserId();
+        groupService.startPoolTimer(groupId, userId);
+    }
+
+    @PostMapping("/groups/{groupId}/start-voting-timer")
+    @ResponseStatus(HttpStatus.OK)
+    public void startVotingTimer(@PathVariable Long groupId, @RequestHeader("Authorization") String token) {
+        token = AuthorizationUtil.extractToken(token);
+        Long userId = userService.getUserByToken(token).getUserId();
+        groupService.startVotingTimer(groupId, userId);
     }
 
     @GetMapping("/groups/{groupId}/timer")

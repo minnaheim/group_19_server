@@ -84,8 +84,10 @@ public class GroupControllerIntegrationTest {
         testGroup = groupRepository.save(testGroup);
     }
 
+    // successful creation of group
     @Test
     void createGroup_validInput_returnsCreated() throws Exception {
+        // send request with some mock data
         mockMvc.perform(MockMvcRequestBuilders.post("/groups")
                 .header("Authorization", "Bearer " + user1Token)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -94,47 +96,59 @@ public class GroupControllerIntegrationTest {
                 .andExpect(jsonPath("$.groupName").value("New Group"));
     }
 
+    // successfully retrive group by id
     @Test
     void getGroup_validId_returnsGroup() throws Exception {
+        // send request
         mockMvc.perform(MockMvcRequestBuilders.get("/groups/{groupId}", testGroup.getGroupId())
                 .header("Authorization", "Bearer " + user1Token))
                 .andExpect(status().isOk())
+                // make sure it;s test group
                 .andExpect(jsonPath("$.groupId").value(testGroup.getGroupId()))
                 .andExpect(jsonPath("$.groupName").value(testGroup.getGroupName()));
     }
 
+    // successfully retrive groups of user (by token)
     @Test
     void getUserGroups_returnsUserGroups() throws Exception {
+        // send request
         mockMvc.perform(MockMvcRequestBuilders.get("/groups")
                 .header("Authorization", "Bearer " + user1Token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].groupId").value(testGroup.getGroupId()));
     }
 
+    // successfully delete group
     @Test
     void deleteGroup_validRequest_returnsNoContent() throws Exception {
+        // send request
         mockMvc.perform(MockMvcRequestBuilders.delete("/groups/{groupId}", testGroup.getGroupId())
                 .header("Authorization", "Bearer " + user1Token))
                 .andExpect(status().isNoContent());
-                // Verify that the group no longer exists in the database
+        // verify that the group no longer exists in the database
         boolean groupExists = groupRepository.existsById(testGroup.getGroupId());
         assertFalse(groupExists, "The group should have been deleted from the database.");
                 
     }
 
+    // successfully retrieve members of group
     @Test
     void getGroupMembers_returnsMembers() throws Exception {
+        // send request
         mockMvc.perform(MockMvcRequestBuilders.get("/groups/{groupId}/members", testGroup.getGroupId())
                 .header("Authorization", "Bearer " + user1Token))
                 .andExpect(status().isOk())
+                // creator of the group and the only member is there
                 .andExpect(jsonPath("$[0].userId").value(user1.getUserId()));
     }
 
+    // successfully leave group
     @Test
     void leaveGroup_validRequest_returnsNoContent() throws Exception {
+        // add one more user
         testGroup.getMembers().add(user2);
         groupRepository.save(testGroup);
-
+        // user2 leaves the group
         mockMvc.perform(MockMvcRequestBuilders.delete("/groups/{groupId}/leave", testGroup.getGroupId())
                 .header("Authorization", "Bearer " + user2Token))
                 .andExpect(status().isNoContent());
@@ -144,24 +158,30 @@ public class GroupControllerIntegrationTest {
         assertFalse(updatedGroup.getMembers().contains(user2), "User2 should have left the group.");
     }
 
+    // successfully update groupname
     @Test
     void updateGroupName_validRequest_returnsUpdatedGroup() throws Exception {
+        // send request wirh some new mock grouoname
         mockMvc.perform(MockMvcRequestBuilders.put("/groups/{groupId}", testGroup.getGroupId())
                 .header("Authorization", "Bearer " + user1Token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"groupName\":\"Updated Name\"}"))
                 .andExpect(status().isOk())
+                // make sure it has been changed
                 .andExpect(jsonPath("$.groupName").value("Updated Name"));
     }
 
+    // successfully start voting phase
     @Test
     void startVotingPhase_validRequest_returnsOk() throws Exception {
+        // send request
         mockMvc.perform(MockMvcRequestBuilders.post("/groups/{groupId}/start-voting", testGroup.getGroupId())
                 .header("Authorization", "Bearer " + user1Token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Voting phase started."));
     }
 
+    // same for results phase
     @Test
     void showResultsPhase_validRequest_returnsOk() throws Exception {
         testGroup.setPhase(Group.GroupPhase.VOTING);
@@ -172,9 +192,10 @@ public class GroupControllerIntegrationTest {
     }
 
 
+    // successfully remvoe member of the group
     @Test
     void removeMember_validRequest_returnsNoContent() throws Exception {
-
+        // add one more member
         testGroup.getMembers().add(user2);
         groupRepository.save(testGroup);
         mockMvc.perform(MockMvcRequestBuilders.delete("/groups/{groupId}/members/{memberId}", 
@@ -182,32 +203,41 @@ public class GroupControllerIntegrationTest {
                 .header("Authorization", "Bearer " + user1Token))
                 .andExpect(status().isNoContent());
 
-    // get the group from the database
-    Group updatedGroup = groupRepository.findById(testGroup.getGroupId()).orElse(null);
-    // check that user2 is no longer a member of the group
-    assertNotNull(updatedGroup, "The group should still exist.");
-    assertFalse(updatedGroup.getMembers().contains(user2), "User2 should have been removed from the group.");
+        // get the group from the database
+        Group updatedGroup = groupRepository.findById(testGroup.getGroupId()).orElse(null);
+        // check that user2 is no longer a member of the group
+        assertNotNull(updatedGroup);
+        assertFalse(updatedGroup.getMembers().contains(user2), "User2 should have been removed from the group.");
     }
 
 
+    // succesfully set pool timer
     @Test
     void setPoolPhaseDuration_validRequest_returnsOk() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.put("/groups/{groupId}/pool-timer", testGroup.getGroupId())
+        // send request
+        mockMvc.perform(MockMvcRequestBuilders.post("/groups/{groupId}/pool-timer", testGroup.getGroupId())
                 .header("Authorization", "Bearer " + user1Token)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("60"))
+                .content("300"))
                 .andExpect(status().isOk());
+        // make sure that duration was updated
+        Group updatedGroup = groupRepository.findById(testGroup.getGroupId()).orElse(null);
+        assertNotNull(updatedGroup.getPoolPhaseDuration());
     }
 
+    // same for voting timer
     @Test
     void setVotingPhaseDuration_validRequest_returnsOk() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.put("/groups/{groupId}/voting-timer", testGroup.getGroupId())
+        mockMvc.perform(MockMvcRequestBuilders.post("/groups/{groupId}/voting-timer", testGroup.getGroupId())
                 .header("Authorization", "Bearer " + user1Token)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("60"))
+                .content("300"))
                 .andExpect(status().isOk());
+        Group updatedGroup = groupRepository.findById(testGroup.getGroupId()).orElse(null);
+        assertNotNull(updatedGroup.getVotingPhaseDuration());
     }
 
+    // succesfully returns remaining time of current phase
     @Test
     void getRemainingTime_returnsTimeInSeconds() throws Exception {
         testGroup.setPhase(Group.GroupPhase.POOL);
@@ -220,6 +250,8 @@ public class GroupControllerIntegrationTest {
     }
 
     // negative test cases
+
+    // try to create group without username etc
     @Test
     void createGroup_missingName_returnsBadRequest() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.post("/groups")
@@ -229,6 +261,7 @@ public class GroupControllerIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
+    // user2 who is not member of testgroup tries to get info about the group - fails
     @Test
     void getGroup_notMember_returnsForbidden() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get("/groups/{groupId}", testGroup.getGroupId())
@@ -236,32 +269,46 @@ public class GroupControllerIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
+    // deletion of the group fails because user is not owner
     @Test
     void deleteGroup_notOwner_returnsForbidden() throws Exception {
-        
+        // add user2 to members
         testGroup.getMembers().add(user2);
         groupRepository.save(testGroup);
-
+        // send request with user2 token (not owner)
         mockMvc.perform(MockMvcRequestBuilders.delete("/groups/{groupId}", testGroup.getGroupId())
                 .header("Authorization", "Bearer " + user2Token))
                 .andExpect(status().isForbidden());
     }
 
+    // remove of member fails because user is not owner
     @Test
     void removeMember_notOwner_returnsForbidden() throws Exception {
+        // add user2 to members 
         testGroup.getMembers().add(user2);
         groupRepository.save(testGroup);
-
+        // send request by not owner
         mockMvc.perform(MockMvcRequestBuilders.delete("/groups/{groupId}/members/{memberId}", 
                 testGroup.getGroupId(), user1.getUserId())
                 .header("Authorization", "Bearer " + user2Token))
                 .andExpect(status().isForbidden());
     }
+    // start of pool phase fails because user is not onwer
+    @Test
+    void setPoolPhaseDuration_notOwner_returnsForbidden() throws Exception {
+        testGroup.getMembers().add(user2);
+        groupRepository.save(testGroup);
 
+        mockMvc.perform(MockMvcRequestBuilders.post("/groups/{groupId}/pool-timer", testGroup.getGroupId())
+                .header("Authorization", "Bearer " + user2Token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("300"))
+                .andExpect(status().isForbidden());
+    }
+    // start of voting phase fails because user is not owner
     @Test
     void startVotingPhase_notOwner_returnsForbidden() throws Exception {
-
-
+        // add user2
         testGroup.getMembers().add(user2);
         groupRepository.save(testGroup);
 
@@ -270,30 +317,118 @@ public class GroupControllerIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
+    // add movie to moviepool failes because user is not member of the group
     @Test
     void addMovieToGroupPool_notMember_returnsForbidden() throws Exception {
-        testGroup.getMembers().add(user1);
-        groupRepository.saveAndFlush(testGroup);
+        // create mock movie
         Movie testMovie = new Movie();
         testMovie.setMovieId(1L);
         movieRepository.save(testMovie);
-
+        // send request from user2
         mockMvc.perform(MockMvcRequestBuilders.post("/groups/{groupId}/pool/{movieId}", 
                 testGroup.getGroupId(), testMovie.getMovieId())
                 .header("Authorization", "Bearer " + user2Token))
                 .andExpect(status().isForbidden());
     }
 
-    @Test
-    void setPoolPhaseDuration_notOwner_returnsForbidden() throws Exception {
-        testGroup.getMembers().add(user2);
-        
-        groupRepository.save(testGroup);
 
-        mockMvc.perform(MockMvcRequestBuilders.put("/groups/{groupId}/pool-timer", testGroup.getGroupId())
-                .header("Authorization", "Bearer " + user2Token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("60"))
+    // successfully start timer for pool phase
+    @Test
+    void startPoolTimer_validRequest_returnsOk() throws Exception {
+        // set duration
+        testGroup.setPoolPhaseDuration(300);
+        groupRepository.save(testGroup);
+        
+        // send request
+        mockMvc.perform(MockMvcRequestBuilders.post("/groups/{groupId}/start-pool-timer", testGroup.getGroupId())
+                .header("Authorization", "Bearer " + user1Token))
+                .andExpect(status().isOk());
+        
+        // make sure that timer was started
+        Group updatedGroup = groupRepository.findById(testGroup.getGroupId()).orElseThrow();
+        assertNotNull(updatedGroup.getPhaseStartTime());
+    }
+
+    // start of timer fails, because no duration was set previosly
+    @Test
+    void startPoolTimer_noDurationSet_returnsBadRequest() throws Exception {
+        // send request, but no duration was set 
+        mockMvc.perform(MockMvcRequestBuilders.post("/groups/{groupId}/start-pool-timer", testGroup.getGroupId())
+                .header("Authorization", "Bearer " + user1Token))
+                .andExpect(status().isBadRequest());
+    }
+
+    // start of timer fails, because user is not creator of the group
+    @Test
+    void startPoolTimer_notOwner_returnsForbidden() throws Exception {
+        testGroup.setPoolPhaseDuration(300);
+        groupRepository.save(testGroup);
+        
+        mockMvc.perform(MockMvcRequestBuilders.post("/groups/{groupId}/start-pool-timer", testGroup.getGroupId())
+                .header("Authorization", "Bearer " + user2Token))
                 .andExpect(status().isForbidden());
+    }
+
+    // start of timer fails, because phase is not POOl
+    @Test
+    void startPoolTimer_wrongPhase_returnsConflict() throws Exception {
+        testGroup.setPoolPhaseDuration(300);
+        // set phase to voting as an example
+        testGroup.setPhase(Group.GroupPhase.VOTING);
+        groupRepository.save(testGroup);
+        
+        mockMvc.perform(MockMvcRequestBuilders.post("/groups/{groupId}/start-pool-timer", testGroup.getGroupId())
+                .header("Authorization", "Bearer " + user1Token))
+                .andExpect(status().isConflict());
+    }
+    // exactly same four tets for voting timer
+    @Test
+    void startVotingTimer_validRequest_returnsOk() throws Exception {
+        // set a duration and switch to voting phase
+        testGroup.setVotingPhaseDuration(60);
+        testGroup.setPhase(Group.GroupPhase.VOTING);
+        groupRepository.save(testGroup);
+        
+        // send request
+        mockMvc.perform(MockMvcRequestBuilders.post("/groups/{groupId}/start-voting-timer", testGroup.getGroupId())
+                .header("Authorization", "Bearer " + user1Token))
+                .andExpect(status().isOk());
+        
+        // verify timer was started
+        Group updatedGroup = groupRepository.findById(testGroup.getGroupId()).orElseThrow();
+        assertNotNull(updatedGroup.getPhaseStartTime(), "Timer should have been started");
+    }
+
+    @Test
+    void startVotingTimer_noDurationSet_returnsBadRequest() throws Exception {
+        testGroup.setPhase(Group.GroupPhase.VOTING);
+        groupRepository.save(testGroup);
+        
+        mockMvc.perform(MockMvcRequestBuilders.post("/groups/{groupId}/start-voting-timer", testGroup.getGroupId())
+                .header("Authorization", "Bearer " + user1Token))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void startVotingTimer_notOwner_returnsForbidden() throws Exception {
+        testGroup.setVotingPhaseDuration(60);
+        testGroup.setPhase(Group.GroupPhase.VOTING);
+        groupRepository.save(testGroup);
+        
+        mockMvc.perform(MockMvcRequestBuilders.post("/groups/{groupId}/start-voting-timer", testGroup.getGroupId())
+                .header("Authorization", "Bearer " + user2Token))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void startVotingTimer_wrongPhase_returnsConflict() throws Exception {
+        testGroup.setVotingPhaseDuration(300);
+        // set phase to results
+        testGroup.setPhase(Group.GroupPhase.RESULTS);
+        groupRepository.save(testGroup);
+        
+        mockMvc.perform(MockMvcRequestBuilders.post("/groups/{groupId}/start-voting-timer", testGroup.getGroupId())
+                .header("Authorization", "Bearer " + user1Token))
+                .andExpect(status().isConflict());
     }
 }

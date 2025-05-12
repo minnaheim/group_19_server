@@ -219,7 +219,6 @@ public class GroupService {
         }
     }
 
-    // for timer handling
     public void startPoolPhase(Long groupId, Long userId) {
 
         Group group = groupRepository.findById(groupId)
@@ -233,7 +232,7 @@ public class GroupService {
         group.setPhaseStartTime(LocalDateTime.now());
         groupRepository.save(group);
     }
-
+    
     public void startVotingPhase(Long groupId, Long userId) {
         Group group = groupRepository.findById(groupId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
@@ -245,6 +244,44 @@ public class GroupService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Voting phase can only be started from POOL phase");
         }
         
+        group.setPhase(Group.GroupPhase.VOTING);
+        // for timer handling
+        group.setPhaseStartTime(LocalDateTime.now());
+        groupRepository.save(group);
+    }
+    // for timer handling
+    public void startPoolTimer(Long groupId, Long userId) {
+
+        Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
+
+        if (!group.getCreator().getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the group creator can start the pool phase");
+        }
+        if (group.getPhase() != Group.GroupPhase.POOL) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Pool timer can only be started from POOL phase");
+        }
+        if (group.getPoolPhaseDuration() == null){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Provide duration before starting the timer");
+        }
+        // group.setPhase(Group.GroupPhase.POOL);
+        group.setPhaseStartTime(LocalDateTime.now());
+        groupRepository.save(group);
+    }
+
+    public void startVotingTimer(Long groupId, Long userId) {
+        Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
+        // make sure only creator can do it
+        if (!group.getCreator().getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the group creator can start the voting timer");
+        }
+        if (group.getPhase() == Group.GroupPhase.RESULTS) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Voting timer can only be started from POOL or VOTING phases");
+        }
+        if (group.getVotingPhaseDuration() == null){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Provide duration before starting the timer");
+        }
         group.setPhase(Group.GroupPhase.VOTING);
         // for timer handling
         group.setPhaseStartTime(LocalDateTime.now());
@@ -274,14 +311,14 @@ public class GroupService {
             if (group.getPhaseStartTime() != null) {
                 int passedSeconds = (int) Duration.between(group.getPhaseStartTime(), LocalDateTime.now()).getSeconds();
                 
-                if (group.getPhase() == Group.GroupPhase.POOL && passedSeconds >= group.getPoolPhaseDuration()) {
+                if (group.getPhase() == Group.GroupPhase.POOL && group.getPoolPhaseDuration() != null && passedSeconds >= group.getPoolPhaseDuration()) {
                     // switch to voting phase
                     group.setPhase(Group.GroupPhase.VOTING);
                     group.setPhaseStartTime(LocalDateTime.now());
                     groupRepository.save(group);
                 } 
 
-                else if (group.getPhase() == Group.GroupPhase.VOTING && 
+                else if (group.getPhase() == Group.GroupPhase.VOTING && group.getVotingPhaseDuration() != null && 
                 passedSeconds >= group.getVotingPhaseDuration()) {
                     // switch to results phase
                     group.setPhase(Group.GroupPhase.RESULTS);
@@ -296,7 +333,9 @@ public class GroupService {
 
         Group group = groupRepository.findById(groupId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
-        if (group.getPhaseStartTime() == null || group.getPhase() == Group.GroupPhase.RESULTS) {
+        if (group.getPhaseStartTime() == null || group.getPhase() == Group.GroupPhase.RESULTS ||
+            (group.getPhase() == Group.GroupPhase.POOL && group.getPoolPhaseDuration() == null) ||
+            (group.getPhase() == Group.GroupPhase.VOTING && group.getVotingPhaseDuration() == null)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No active timer for this group");
         }
         
