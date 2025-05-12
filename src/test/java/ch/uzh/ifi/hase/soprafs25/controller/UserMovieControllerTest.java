@@ -143,7 +143,8 @@ public class UserMovieControllerTest {
         movie.setTitle("Test Movie");
         updatedWatchedMovies.add(movie);
         
-        given(userMovieService.addToWatchedMovies(userId, movieId, token)).willReturn(updatedWatchedMovies);
+        // Use default keepInWatchlist=false for test compatibility
+        given(userMovieService.addToWatchedMovies(userId, movieId, token, false)).willReturn(updatedWatchedMovies);
 
         // When/Then
         MockHttpServletRequestBuilder postRequest = post("/users/{userId}/watched/{movieId}", userId, movieId)
@@ -156,7 +157,8 @@ public class UserMovieControllerTest {
                 .andExpect(jsonPath("$[0].movieId", is(1)))
                 .andExpect(jsonPath("$[0].title", is("Test Movie")));
                 
-        verify(userMovieService).addToWatchedMovies(userId, movieId, token);
+        // For the basic test case without keepInWatchlist parameter, default is false
+        verify(userMovieService).addToWatchedMovies(Mockito.eq(userId), Mockito.eq(movieId), Mockito.eq(token), Mockito.eq(false));
     }
 
     @Test

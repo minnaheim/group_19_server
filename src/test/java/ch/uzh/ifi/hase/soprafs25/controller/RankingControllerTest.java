@@ -11,6 +11,7 @@ import static java.util.Arrays.asList;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -210,6 +211,118 @@ class RankingControllerTest {
                 .andExpect(jsonPath("$.message", containsString("Invalid ranking: Duplicate rank"))); // Check actual
                                                                                                       // error message
                                                                                                       // if known
+    }
+
+    @Test
+    void changeRankings_validInput_replacesExistingRankingsInVotingPhase() throws Exception {
+        // Set group phase to VOTING
+        testGroup.setPhase(Group.GroupPhase.VOTING);
+        groupRepository.saveAndFlush(testGroup);
+        
+        // Step 1: Submit initial rankings
+        List<RankingSubmitDTO> initialRankings = List.of(
+                createSubmitDTO(movie1.getMovieId(), 1),
+                createSubmitDTO(movie2.getMovieId(), 2),
+                createSubmitDTO(movie3.getMovieId(), 3),
+                createSubmitDTO(movie4.getMovieId(), 4),
+                createSubmitDTO(movie5.getMovieId(), 5));
+
+        mockMvc.perform(post("/groups/{groupId}/users/{userId}/rankings", testGroup.getGroupId(), testUser.getUserId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(initialRankings)))
+                .andExpect(status().isNoContent()); // 204 No Content on success
+        
+        // Verify initial rankings were saved
+        List<UserMovieRanking> savedInitialRankings = userMovieRankingRepository.findByUserAndGroup(testUser, testGroup);
+        assertEquals(5, savedInitialRankings.size(), "Expected 5 initial rankings to be saved");
+        
+        // Find the ranking for movie1 to verify its initial position
+        UserMovieRanking movie1Ranking = savedInitialRankings.stream()
+                .filter(r -> r.getMovie().getMovieId() == movie1.getMovieId())
+                .findFirst().orElse(null);
+        assertNotNull(movie1Ranking, "Movie1 ranking should exist");
+        assertEquals(1, movie1Ranking.getRank(), "Movie1 should initially be ranked #1");
+        
+        // Step 2: Submit updated rankings (swapping positions of movie1 and movie5)
+        List<RankingSubmitDTO> updatedRankings = List.of(
+                createSubmitDTO(movie1.getMovieId(), 5), // Changed from 1 to 5
+                createSubmitDTO(movie2.getMovieId(), 2), // Same
+                createSubmitDTO(movie3.getMovieId(), 3), // Same
+                createSubmitDTO(movie4.getMovieId(), 4), // Same
+                createSubmitDTO(movie5.getMovieId(), 1)); // Changed from 5 to 1
+
+        // Perform the update
+        mockMvc.perform(post("/groups/{groupId}/users/{userId}/rankings", testGroup.getGroupId(), testUser.getUserId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updatedRankings)))
+                .andExpect(status().isNoContent()); // 204 No Content on success
+        
+        // Verify rankings were updated
+        List<UserMovieRanking> updatedSavedRankings = userMovieRankingRepository.findByUserAndGroup(testUser, testGroup);
+        assertEquals(5, updatedSavedRankings.size(), "Should still have 5 rankings after update");
+        
+        // Check that movie1's rank changed from 1 to 5
+        UserMovieRanking updatedMovie1Ranking = updatedSavedRankings.stream()
+                .filter(r -> r.getMovie().getMovieId() == movie1.getMovieId())
+                .findFirst().orElse(null);
+        assertNotNull(updatedMovie1Ranking, "Movie1 ranking should still exist");
+        assertEquals(5, updatedMovie1Ranking.getRank(), "Movie1 should now be ranked #5");
+        
+        // Check that movie5's rank changed from 5 to 1
+        UserMovieRanking updatedMovie5Ranking = updatedSavedRankings.stream()
+                .filter(r -> r.getMovie().getMovieId() == movie5.getMovieId())
+                .findFirst().orElse(null);
+        assertNotNull(updatedMovie5Ranking, "Movie5 ranking should exist");
+        assertEquals(1, updatedMovie5Ranking.getRank(), "Movie5 should now be ranked #1");
+    }
+    
+    @Test
+    void changeRankings_wrongPhase_returnsConflict() throws Exception {
+        // First set to VOTING phase to submit initial rankings
+        testGroup.setPhase(Group.GroupPhase.VOTING);
+        groupRepository.saveAndFlush(testGroup);
+        
+        // Submit initial rankings
+        List<RankingSubmitDTO> initialRankings = List.of(
+                createSubmitDTO(movie1.getMovieId(), 1),
+                createSubmitDTO(movie2.getMovieId(), 2),
+                createSubmitDTO(movie3.getMovieId(), 3),
+                createSubmitDTO(movie4.getMovieId(), 4),
+                createSubmitDTO(movie5.getMovieId(), 5));
+
+        mockMvc.perform(post("/groups/{groupId}/users/{userId}/rankings", testGroup.getGroupId(), testUser.getUserId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(initialRankings)))
+                .andExpect(status().isNoContent()); // 204 No Content on success
+        
+        // Now change phase to RESULTS
+        testGroup.setPhase(Group.GroupPhase.RESULTS);
+        groupRepository.saveAndFlush(testGroup);
+        
+        // Try to update rankings in RESULTS phase
+        List<RankingSubmitDTO> updatedRankings = List.of(
+                createSubmitDTO(movie1.getMovieId(), 5), // Changed
+                createSubmitDTO(movie2.getMovieId(), 4), // Changed
+                createSubmitDTO(movie3.getMovieId(), 3), // Same
+                createSubmitDTO(movie4.getMovieId(), 2), // Changed
+                createSubmitDTO(movie5.getMovieId(), 1)); // Changed
+
+        // This should fail
+        mockMvc.perform(post("/groups/{groupId}/users/{userId}/rankings", testGroup.getGroupId(), testUser.getUserId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updatedRankings)))
+                .andExpect(status().isConflict()) // 409 Conflict
+                .andExpect(jsonPath("$.message", containsString("Group is not in voting phase")));
+        
+        // Verify rankings were NOT updated (still have original values)
+        List<UserMovieRanking> unchangedRankings = userMovieRankingRepository.findByUserAndGroup(testUser, testGroup);
+        
+        // Check movie1's rank is still 1 (unchanged)
+        UserMovieRanking movie1Ranking = unchangedRankings.stream()
+                .filter(r -> r.getMovie().getMovieId() == movie1.getMovieId())
+                .findFirst().orElse(null);
+        assertNotNull(movie1Ranking, "Movie1 ranking should exist");
+        assertEquals(1, movie1Ranking.getRank(), "Movie1 should still be ranked #1");
     }
 
     // --- Tests for GET /groups/{groupId}/rankings/results ---

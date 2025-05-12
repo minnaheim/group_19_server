@@ -134,9 +134,10 @@ public class UserMovieService {
      * @param userId the ID of the user
      * @param movieId the ID of the movie to add
      * @param requesterToken the token of the user making the request (for authorization)
+     * @param keepInWatchlist whether to keep the movie in the watchlist if it's present
      * @return the updated watched movies list
      */
-    public List<Movie> addToWatchedMovies(Long userId, Long movieId, String requesterToken) {
+    public List<Movie> addToWatchedMovies(Long userId, Long movieId, String requesterToken, Boolean keepInWatchlist) {
         User user = getUserById(userId);
         // Authorization check
         authorizeUserAction(user, requesterToken);
@@ -149,10 +150,13 @@ public class UserMovieService {
         }
         watchedMovies.add(movie);
         user.setWatchedMovies(watchedMovies);
-        // Remove from watchlist if present
-        List<Movie> watchlist = getWatchlist(userId);
-        removeMovieFromList(watchlist, movieId);
-        user.setWatchlist(watchlist);
+        // Only remove from watchlist if keepInWatchlist is false
+        if (!keepInWatchlist) {
+            // Remove from watchlist if present
+            List<Movie> watchlist = getWatchlist(userId);
+            removeMovieFromList(watchlist, movieId);
+            user.setWatchlist(watchlist);
+        }
         userRepository.save(user);
         return user.getWatchedMovies();
     }
