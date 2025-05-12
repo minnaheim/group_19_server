@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
@@ -99,9 +100,26 @@ public class MoviePool implements Serializable {
     }
 
     public void addMovie(Movie movie, Long userId) {
-        this.movies.add(movie);
-        this.userAddedMovies.put(movie, userId);
+    // This is a replacement/change operation, so we'll replace the first movie
+    // the user has added, but leave any second movie alone
+    
+    // Find movies added by this user
+    List<Movie> userMovies = this.userAddedMovies.entrySet().stream()
+        .filter(entry -> entry.getValue().equals(userId))
+        .map(Map.Entry::getKey)
+        .collect(Collectors.toList());
+    
+    // If user has already added movies, remove the first one
+    if (!userMovies.isEmpty()) {
+        Movie existingMovie = userMovies.get(0); // Get the first movie added
+        this.movies.remove(existingMovie);
+        this.userAddedMovies.remove(existingMovie);
     }
+    
+    // Add the new movie
+    this.movies.add(movie);
+    this.userAddedMovies.put(movie, userId);
+}
 
     public void removeMovie(Movie movie) {
         this.movies.remove(movie);

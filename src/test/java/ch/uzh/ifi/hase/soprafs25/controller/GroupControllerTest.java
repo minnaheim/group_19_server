@@ -18,6 +18,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -135,5 +142,57 @@ public class GroupControllerTest {
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
+    }
+    
+    @Test
+    void changeMovieInGroupPool_inPoolPhase_returnsOkAndUpdatesUserMovies() throws Exception {
+        // Set up second movie for replacement
+        Movie newMovie = new Movie();
+        newMovie.setMovieId(666L);
+        newMovie.setTitle("Replacement Movie");
+        Movie savedNewMovie = movieRepository.saveAndFlush(newMovie);
+        
+        // First add the original movie in POOL phase
+        group.setPhase(Group.GroupPhase.POOL);
+        groupRepository.saveAndFlush(group);
+        mockMvc.perform(post("/groups/{groupId}/pool/{movieId}", group.getGroupId(), movie.getMovieId())
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        
+        // Verify the first movie was added to the pool
+        pool = moviePoolRepository.findByGroup_GroupId(group.getGroupId());
+        Map<Movie, Long> userAddedMovies = pool.getUserAddedMovies();
+        assertTrue(userAddedMovies.values().stream().anyMatch(id -> id.equals(user.getUserId())), 
+                "User should have added at least one movie");
+        assertTrue(userAddedMovies.keySet().stream().anyMatch(m -> m.getMovieId() == movie.getMovieId()), 
+                "Original movie should be in the pool");
+        
+        // Now add another movie by the same user (replacing the first one)
+        mockMvc.perform(post("/groups/{groupId}/pool/{movieId}", group.getGroupId(), savedNewMovie.getMovieId())
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        
+        // Reload pool and verify the change
+        pool = moviePoolRepository.findByGroup_GroupId(group.getGroupId());
+        userAddedMovies = pool.getUserAddedMovies();
+        
+        // Verify the second movie is now in the pool and the first one is not
+        assertTrue(userAddedMovies.keySet().stream().anyMatch(m -> m.getMovieId() == savedNewMovie.getMovieId()), 
+                "New movie should be in the pool");
+        assertFalse(userAddedMovies.keySet().stream().anyMatch(m -> m.getMovieId() == movie.getMovieId()), 
+                "Original movie should no longer be in the pool");
+        
+        // Verify that the movie was added by the correct user
+        Movie addedNewMovie = userAddedMovies.keySet().stream()
+                .filter(m -> m.getMovieId() == savedNewMovie.getMovieId())
+                .findFirst().orElse(null);
+        assertEquals(user.getUserId(), userAddedMovies.get(addedNewMovie), 
+                "New movie should be associated with the test user");
+        
+        // Verify that the number of movies added by the user is as expected
+        int moviesAddedByUser = pool.getMoviesAddedByUser(user.getUserId());
+        assertEquals(1, moviesAddedByUser, "User should have only one movie in the pool");
     }
 }

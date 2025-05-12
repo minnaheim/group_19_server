@@ -86,7 +86,7 @@ public class RankingService {
     Group group = groupRepository.findById(groupId)
             .orElseThrow(() -> new GroupNotFoundException("Group with ID " + groupId + " not found."));
     if (group.getPhase() != Group.GroupPhase.VOTING) {
-        throw new ResponseStatusException(HttpStatus.CONFLICT, "Rankings can only be submitted during the VOTING phase");
+        throw new ResponseStatusException(HttpStatus.CONFLICT, "Group is not in voting phase");
     }
     User user = userRepository.findById(userId)
             .orElseThrow(() -> new UserNotFoundException("User with ID " + userId + " not found."));
