@@ -95,6 +95,7 @@ public class UserMovieController {
             @PathVariable("userId") Long userId,
             @PathVariable("movieId") Long movieId,
             @RequestParam(required = false) String token,
+            @RequestParam(required = false, defaultValue = "false") Boolean keepInWatchlist,
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         
         // Extract token from Authorization header if present
@@ -103,7 +104,7 @@ public class UserMovieController {
             effectiveToken = authHeader.substring(7);
         }
         
-        List<Movie> updatedWatchedMovies = userMovieService.addToWatchedMovies(userId, movieId, effectiveToken);
+        List<Movie> updatedWatchedMovies = userMovieService.addToWatchedMovies(userId, movieId, effectiveToken, keepInWatchlist);
         return convertMovieListToDTOList(updatedWatchedMovies);
     }
     

@@ -149,9 +149,9 @@ public class UserMovieServiceIntegrationTest {
 
     @Test
     public void addToWatchedMovies_validRequest_addsMovie() {
-        // Add movie to watched movies
+        // Add movie to watched movies (with keepInWatchlist=false to maintain original behavior)
         List<Movie> updatedWatchedMovies = userMovieService.addToWatchedMovies(
-                testUser.getUserId(), testMovie.getMovieId(), testUser.getToken());
+                testUser.getUserId(), testMovie.getMovieId(), testUser.getToken(), false);
 
         // Verify movie was added
         assertEquals(1, updatedWatchedMovies.size());
@@ -168,8 +168,8 @@ public class UserMovieServiceIntegrationTest {
         // First add movie to watchlist
         userMovieService.addToWatchlist(testUser.getUserId(), testMovie.getMovieId(), testUser.getToken());
 
-        // Then add to watched movies
-        userMovieService.addToWatchedMovies(testUser.getUserId(), testMovie.getMovieId(), testUser.getToken());
+        // Then add to watched movies (with keepInWatchlist=false to maintain original behavior)
+        userMovieService.addToWatchedMovies(testUser.getUserId(), testMovie.getMovieId(), testUser.getToken(), false);
 
         // Verify movie was removed from watchlist
         User updatedUser = userRepository.findById(testUser.getUserId()).orElseThrow();
@@ -179,8 +179,8 @@ public class UserMovieServiceIntegrationTest {
 
     @Test
     public void removeFromWatchedMovies_existingMovie_removesMovie() {
-        // First add movie to watched movies
-        userMovieService.addToWatchedMovies(testUser.getUserId(), testMovie.getMovieId(), testUser.getToken());
+        // First add movie to watched movies (with keepInWatchlist=false to maintain original behavior)
+        userMovieService.addToWatchedMovies(testUser.getUserId(), testMovie.getMovieId(), testUser.getToken(), false);
 
         // Then remove it
         List<Movie> updatedWatchedMovies = userMovieService.removeFromWatchedMovies(

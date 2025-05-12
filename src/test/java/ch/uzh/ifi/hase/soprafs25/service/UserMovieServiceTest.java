@@ -188,9 +188,9 @@ public class UserMovieServiceTest {
         testUser.setWatchedMovies(new ArrayList<>());
         testUser.setWatchlist(new ArrayList<>());
 
-        // When
+        // When (with keepInWatchlist=false to maintain original behavior)
         List<Movie> updatedWatchedMovies = userMovieService.addToWatchedMovies(
-                testUser.getUserId(), testMovie.getMovieId(), validToken);
+                testUser.getUserId(), testMovie.getMovieId(), validToken, false);
 
         // Then
         assertEquals(1, updatedWatchedMovies.size());
@@ -205,10 +205,10 @@ public class UserMovieServiceTest {
         existingWatchedMovies.add(testMovie);
         testUser.setWatchedMovies(existingWatchedMovies);
 
-        // When/Then
+        // When/Then (with keepInWatchlist=false to maintain original behavior)
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
-                () -> userMovieService.addToWatchedMovies(testUser.getUserId(), testMovie.getMovieId(), validToken)
+                () -> userMovieService.addToWatchedMovies(testUser.getUserId(), testMovie.getMovieId(), validToken, false)
         );
         
         assertTrue(exception.getMessage().contains("already in your watched movies"));
