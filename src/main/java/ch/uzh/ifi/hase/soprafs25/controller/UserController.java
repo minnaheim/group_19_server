@@ -77,7 +77,10 @@ public class UserController {
   
   @PostMapping("/logout")
   @ResponseStatus(HttpStatus.OK)
-  public void logoutUser(@RequestParam String token) {
+  public void logoutUser(@RequestHeader("Authorization") String token) {
+    // just for safety
+    token = AuthorizationUtil.extractToken(token);
+    User user = userService.getUserByToken(token);
     userService.logoutUser(token);
   }
   

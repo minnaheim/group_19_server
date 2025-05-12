@@ -1,17 +1,12 @@
 package ch.uzh.ifi.hase.soprafs25.controller;
 
-import java.util.Collections;
-import java.util.List;
-
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import org.junit.jupiter.api.Test;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.BDDMockito.given;
+import org.mockito.Mockito;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -141,7 +136,7 @@ public class UserControllerTest {
 
       // when/then
       MockHttpServletRequestBuilder postRequest = post("/logout")
-          .param("token", token);
+          .header("Authorization","Bearer "+token);
 
       mockMvc.perform(postRequest)
           .andExpect(status().isOk());
