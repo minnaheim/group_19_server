@@ -24,7 +24,6 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -178,11 +177,11 @@ public class GroupControllerTest {
         pool = moviePoolRepository.findByGroup_GroupId(group.getGroupId());
         userAddedMovies = pool.getUserAddedMovies();
         
-        // Verify the second movie is now in the pool and the first one is not
+        // Verify both movies are now in the pool (users can add up to two movies)
         assertTrue(userAddedMovies.keySet().stream().anyMatch(m -> m.getMovieId() == savedNewMovie.getMovieId()), 
                 "New movie should be in the pool");
-        assertFalse(userAddedMovies.keySet().stream().anyMatch(m -> m.getMovieId() == movie.getMovieId()), 
-                "Original movie should no longer be in the pool");
+        assertTrue(userAddedMovies.keySet().stream().anyMatch(m -> m.getMovieId() == movie.getMovieId()), 
+                "Original movie should still be in the pool");
         
         // Verify that the movie was added by the correct user
         Movie addedNewMovie = userAddedMovies.keySet().stream()
@@ -193,6 +192,6 @@ public class GroupControllerTest {
         
         // Verify that the number of movies added by the user is as expected
         int moviesAddedByUser = pool.getMoviesAddedByUser(user.getUserId());
-        assertEquals(1, moviesAddedByUser, "User should have only one movie in the pool");
+        assertEquals(2, moviesAddedByUser, "User should have two movies in the pool");
     }
 }
