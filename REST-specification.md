@@ -401,14 +401,11 @@ Each group has a `phase` attribute:
 | `/groups/{groupId}/vote` | POST | groupId\<integer\>, userId\<integer\>, vote\<List\<Movie\>\> | Body | 404 Not Found | Error: reason\<string\> | Group not found | VOTING |
 | `/groups/{groupId}/results` | GET | groupId\<integer\> | Path | 200 OK | List\<Movie\> | Retrieve voting results - list of movies with maximum number of votes | RESULTS |
 | `/groups/{groupId}/results` | GET | groupId\<integer\> | Path | 400 Bad Request | Error: reason\<string\> | Retrieve voting results failed due to invalid group ID | RESULTS |
-| `/groups/{groupId}/movies/rankable` | GET | groupId\<long\> | Path | 200 OK | List\<MovieGetDTO\> | Retrieve the list of movies available for ranking in the group's pool | VOTING |
 | `/groups/{groupId}/rankings/details` | GET | groupId\<long\> | Path | 200 OK | List\<MovieAverageRankDTO\> | Retrieve detailed average ranking results for all movies (sorted by best rank) | RESULTS |
 | `/groups/{groupId}/users/{userId}/rankings` | POST | groupId\<long\>, userId\<long\>, rankingSubmitDTOs\<List\<RankingSubmitDTO\>\> | Path, Body | 204 No Content | - | Submit a user's movie rankings for a group | VOTING |
 | `/groups/{groupId}/users/{userId}/rankings` | POST | groupId\<long\>, userId\<long\>, rankingSubmitDTOs\<List\<RankingSubmitDTO\>\> | Path, Body | 400 Bad Request | Error: reason\<string\> | Invalid ranking data (e.g., invalid rank, duplicate movies, wrong number of movies ranked) | VOTING |
 | `/groups/{groupId}/users/{userId}/rankings` | POST | groupId\<long\>, userId\<long\>, rankingSubmitDTOs\<List\<RankingSubmitDTO\>\> | Path, Body | 404 Not Found | Error: reason\<string\> | User or Group with the given ID not found | VOTING |
 | `/groups/{groupId}/rankings/result` | GET | groupId\<long\> | Path | 404 Not Found | Error: reason\<string\> | Group not found or no ranking result exists for the group yet | RESULTS |
-| `/groups/{groupId}/movies/rankable` | GET | groupId\<long\> | Path | 404 Not Found | Error: reason\<string\> | Group not found or group has no movie pool | VOTING |
-| `/groups/{groupId}/rankings/details` | GET | groupId\<long\> | Path | 404 Not Found | Error: reason\<string\> | Group not found | RESULTS |
 | `/groups/{groupId}/vote-state` | GET | Authorization\<string\>, groupId\<long\> | Header, Path | 200 OK | VoteStateGetDTO | Get current vote state (pool and user rankings) | VOTING |
 | `/groups/{groupId}/vote-state` | GET | Authorization\<string\>, groupId\<long\> | Header, Path | 401 Unauthorized | Error: reason\<string\> | Invalid or missing token | VOTING |
 | `/groups/{groupId}/vote-state` | GET | Authorization\<string\>, groupId\<long\> | Header, Path | 404 Not Found | Error: reason\<string\> | Group not found or user not a member | VOTING |
@@ -436,13 +433,10 @@ Each group has a `phase` attribute:
 |----------|--------|--------------------------------------------------------------|---------------|-------------|----------------------|-------------|---------------|
 | `/groups/{groupId}/users/{userId}/rankings` | POST | groupId\<long\>, userId\<long\>, rankingSubmitDTOs\<List\<RankingSubmitDTO\>\> | Path, Body | 204 No Content | - | Submit a user's movie rankings for a group | VOTING |
 | `/groups/{groupId}/rankings/result` | GET | groupId\<long\> | Path | 200 OK | RankingResultGetDTO | Retrieve the latest calculated ranking result for the group (the winning movie and its average rank) | RESULTS |
-| `/groups/{groupId}/movies/rankable` | GET | groupId\<long\> | Path | 200 OK | List\<MovieGetDTO\> | Retrieve the list of movies available for ranking in the group's pool | VOTING |
 | `/groups/{groupId}/rankings/details` | GET | groupId\<long\> | Path | 200 OK | List\<MovieAverageRankDTO\> | Retrieve the detailed average ranking results for all movies in the group (each movie with its average rank, sorted by best rank) | RESULTS |
 | `/groups/{groupId}/users/{userId}/rankings` | POST | rankingSubmitDTOs\<List\<RankingSubmitDTO\>\> | Body | 400 Bad Request | Error | Invalid ranking data (e.g., invalid rank, duplicate movies, wrong number of movies ranked) | VOTING |
 | `/groups/{groupId}/users/{userId}/rankings` | POST | groupId\<long\>, userId\<long\> | Path | 404 Not Found | Error | User or Group with the given ID not found | VOTING |
 | `/groups/{groupId}/rankings/result` | GET | groupId\<long\> | Path | 404 Not Found | Error | Group not found or no ranking result exists for the group yet | RESULTS |
-| `/groups/{groupId}/movies/rankable` | GET | groupId\<long\> | Path | 404 Not Found | Error | Group not found or group has no movie pool | VOTING |
-| `/groups/{groupId}/rankings/details` | GET | groupId\<long\> | Path | 404 Not Found | Error | Group not found | RESULTS |
 
 **Note:** All ranking endpoints must check the group phase and return `409 Conflict` if called in the wrong phase.
 
@@ -455,5 +449,7 @@ Add a `phase` attribute to the group object:
 }
 ```
 This field must be included in all relevant group-related responses.
+
+```
 
 ```

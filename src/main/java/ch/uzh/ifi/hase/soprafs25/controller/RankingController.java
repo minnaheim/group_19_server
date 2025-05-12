@@ -1,12 +1,9 @@
 package ch.uzh.ifi.hase.soprafs25.controller;
 
 import ch.uzh.ifi.hase.soprafs25.rest.dto.RankingSubmitDTO;
-import ch.uzh.ifi.hase.soprafs25.rest.dto.RankingResultGetDTO;
-import ch.uzh.ifi.hase.soprafs25.rest.dto.MovieGetDTO;
-import ch.uzh.ifi.hase.soprafs25.rest.dto.MovieAverageRankDTO;
 import ch.uzh.ifi.hase.soprafs25.rest.dto.RankingResultsDTO;
-import ch.uzh.ifi.hase.soprafs25.rest.mapper.DTOMapper;
 import ch.uzh.ifi.hase.soprafs25.service.RankingService;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -14,12 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import ch.uzh.ifi.hase.soprafs25.entity.Movie;
-import ch.uzh.ifi.hase.soprafs25.entity.RankingResult;
 
 @RestController
 
@@ -52,23 +43,6 @@ public class RankingController {
         
         rankingService.submitRankings(userId, groupId, rankingSubmitDTOs); // Use new service method
         return ResponseEntity.noContent().build(); 
-    }
-
-    /**
-     * GET /groups/{groupId}/movies/rankable
-     * Retrieves the list of movies available for ranking within a specific group.
-     *
-     * @param groupId The ID of the group.
-     * @return ResponseEntity containing a list of MovieGetDTOs (200 OK) or 404 if the group or pool is not found.
-     *         Handles GroupNotFoundException (404) via GlobalExceptionHandler.
-     */
-    @GetMapping("/groups/{groupId}/movies/rankable")
-    public ResponseEntity<List<MovieGetDTO>> getRankableMoviesForGroup(@PathVariable Long groupId) {
-        List<Movie> rankableMovies = rankingService.getRankableMoviesForGroup(groupId); // Use new service method
-        List<MovieGetDTO> movieDTOs = rankableMovies.stream()
-                .map(DTOMapper.INSTANCE::convertEntityToMovieGetDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(movieDTOs);
     }
 
     @GetMapping("/groups/{groupId}/rankings/results")

@@ -81,13 +81,6 @@ public class UserController {
     userService.logoutUser(token);
   }
   
-  @GetMapping("/session")
-  @ResponseStatus(HttpStatus.OK)
-  public UserGetDTO validateSession(@RequestParam String token) {
-    User user = userService.getUserByToken(token);
-    return DTOMapper.INSTANCE.convertEntityToUserGetDTO(user);
-  }
-
   @GetMapping("/check/username")
   @ResponseStatus(HttpStatus.OK)
   public boolean checkUsernameAvailability(@RequestParam String username) {

@@ -150,27 +150,6 @@ public class UserControllerTest {
   }
 
   @Test
-  public void validateSession_validToken_returnsUser() throws Exception {
-      // given
-      User user = new User();
-      user.setUsername("testUsername");
-      user.setEmail("test@example.com");
-      user.setToken("token123");
-      user.setStatus(UserStatus.ONLINE);
-
-      given(userService.getUserByToken(anyString())).willReturn(user);
-
-      // when/then
-      MockHttpServletRequestBuilder getRequest = get("/session")
-          .param("token", "token123");
-
-      mockMvc.perform(getRequest)
-          .andExpect(status().isOk())
-          .andExpect(jsonPath("$.username", is(user.getUsername())))
-          .andExpect(jsonPath("$.token", is(user.getToken())));
-  }
-
-  @Test
   public void checkUsernameAvailability_usernameAvailable_returnsTrue() throws Exception {
       // given
       given(userService.isUsernameAvailable(anyString())).willReturn(true);
