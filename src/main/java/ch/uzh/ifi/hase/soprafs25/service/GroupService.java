@@ -86,6 +86,11 @@ public class GroupService {
         if (groupRepository.findByGroupName(groupName) != null) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "This group name is already taken");
         }
+
+        String groupName_removed_all_spaces_in_front_and_back = groupName.trim();
+        if (groupRepository.findByGroupName(groupName_removed_all_spaces_in_front_and_back) != null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This group name is already taken");
+        }
     }
 
     private String generateUniqueName() {
