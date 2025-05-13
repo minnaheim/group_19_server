@@ -21,6 +21,7 @@ import ch.uzh.ifi.hase.soprafs25.entity.FriendRequest;
 import ch.uzh.ifi.hase.soprafs25.entity.User;
 import ch.uzh.ifi.hase.soprafs25.repository.FriendRequestRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
+import static org.hamcrest.Matchers.hasSize;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
@@ -165,5 +166,34 @@ public class FriendRequestControllerIntegrationTest {
         mockMvc.perform(delete("/friends/remove/{friendId}", user2.getUserId())
                 .header("Authorization", "Bearer " + user1Token))
             .andExpect(status().isNoContent());
+    }
+
+    // succesfully retrieve friends list
+    @Test
+    void getFriends_returnsFriendsList() throws Exception {
+        // add user2 as a friend
+        user1.getFriends().add(user2);
+        user2.getFriends().add(user1);
+        userRepository.saveAll(List.of(user1, user2));
+        // send request
+        mockMvc.perform(get("/friends")
+                .header("Authorization", "Bearer " + user1Token))
+            .andExpect(status().isOk())
+            // user1 has only 1 friend - user2
+            .andExpect(jsonPath("$", hasSize(1)))
+            .andExpect(jsonPath("$[0].userId").value(user2.getUserId()))
+            .andExpect(jsonPath("$[0].username").value(user2.getUsername()));
+    }
+
+    // in case there are no friends - empty list should be returned
+    @Test
+    void getFriends_noFriends_returnsEmptyList() throws Exception {
+        // user1 currently has no friends
+        // send request
+        mockMvc.perform(get("/friends")
+                .header("Authorization", "Bearer " + user1Token))
+            .andExpect(status().isOk())
+            // user1 has no friends - empty list
+            .andExpect(jsonPath("$", hasSize(0)));
     }
 }

@@ -3,6 +3,7 @@ package ch.uzh.ifi.hase.soprafs25.controller;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,8 +21,10 @@ import org.springframework.transaction.annotation.Transactional;
 import ch.uzh.ifi.hase.soprafs25.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs25.entity.Group;
 import ch.uzh.ifi.hase.soprafs25.entity.Movie;
+import ch.uzh.ifi.hase.soprafs25.entity.MoviePool;
 import ch.uzh.ifi.hase.soprafs25.entity.User;
 import ch.uzh.ifi.hase.soprafs25.repository.GroupRepository;
+import ch.uzh.ifi.hase.soprafs25.repository.MoviePoolRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.MovieRepository;
 import ch.uzh.ifi.hase.soprafs25.repository.UserRepository;
 
@@ -42,12 +45,16 @@ public class GroupControllerIntegrationTest {
     @Autowired
     private MovieRepository movieRepository;
 
+    @Autowired
+    private MoviePoolRepository moviePoolRepository;
+
 
     private User user1;
     private User user2;
     private String user1Token;
     private String user2Token;
     private Group testGroup;
+    private MoviePool moviePool;
 
 
     @BeforeEach
@@ -81,6 +88,15 @@ public class GroupControllerIntegrationTest {
         testGroup.setCreator(user1);
         testGroup.setMembers(new ArrayList<>()); 
         testGroup.getMembers().add(user1);
+        testGroup = groupRepository.save(testGroup);
+
+        // create and associate movie pool with test group
+        moviePool = new MoviePool();
+        moviePool.setGroup(testGroup);
+        moviePool.setMovies(new ArrayList<>());
+        moviePool.setLastUpdated(LocalDateTime.now());
+        moviePool = moviePoolRepository.save(moviePool);
+        testGroup.setMoviePool(moviePool);
         testGroup = groupRepository.save(testGroup);
     }
 
@@ -430,5 +446,120 @@ public class GroupControllerIntegrationTest {
         mockMvc.perform(MockMvcRequestBuilders.post("/groups/{groupId}/start-voting-timer", testGroup.getGroupId())
                 .header("Authorization", "Bearer " + user1Token))
                 .andExpect(status().isConflict());
+    }
+
+    // successfully retrive moviepool
+    @Test
+    void getGroupMoviePool_returnsMoviePool() throws Exception {
+        // create mock movie
+        Movie testMovie = new Movie();
+        testMovie.setMovieId(1L);
+        testMovie.setTitle("Test Movie");
+        testMovie.setYear(2025);
+        testMovie.setGenres(new ArrayList<>());
+        testMovie.setActors(new ArrayList<>());
+        testMovie.setDirectors(new ArrayList<>());
+        testMovie.setOriginallanguage("rus");
+        testMovie.setTrailerURL("http://test.com/trailer");
+        testMovie.setPosterURL("http://test.com/poster");
+        testMovie.setDescription("Test description");
+        testMovie = movieRepository.saveAndFlush(testMovie);
+
+        // add movie to group pool
+        mockMvc.perform(MockMvcRequestBuilders.post("/groups/{groupId}/pool/{movieId}", 
+                testGroup.getGroupId(), testMovie.getMovieId())
+                .header("Authorization", "Bearer " + user1Token))
+                .andExpect(status().isOk());
+
+        // get movie pool
+        mockMvc.perform(MockMvcRequestBuilders.get("/groups/{groupId}/pool", testGroup.getGroupId())
+                .header("Authorization", "Bearer " + user1Token))
+                .andExpect(status().isOk())
+                // moviepool should have only 1 movie - test movie added by user1
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].movie.movieId").value(testMovie.getMovieId()))
+                .andExpect(jsonPath("$[0].movie.title").value(testMovie.getTitle()))
+                .andExpect(jsonPath("$[0].addedBy").value(user1.getUserId()));
+    }
+
+    // succesfully retrieve rankings and pool (that's what the endpoints does)
+    @Test
+    void getVoteState_returnsPoolAndRankings() throws Exception {
+        // create movie
+        Movie testMovie = new Movie();
+        testMovie.setMovieId(1L);
+        testMovie.setTitle("Test Movie");
+        testMovie = movieRepository.saveAndFlush(testMovie);
+
+        // add movie to the pool
+        mockMvc.perform(MockMvcRequestBuilders.post("/groups/{groupId}/pool/{movieId}", 
+                testGroup.getGroupId(), testMovie.getMovieId())
+                .header("Authorization", "Bearer " + user1Token))
+                .andExpect(status().isOk());
+
+        // swritch phase to voting 
+        testGroup.setPhase(Group.GroupPhase.VOTING);
+        groupRepository.save(testGroup);
+
+        // get vote state
+        // send request
+        mockMvc.perform(MockMvcRequestBuilders.get("/groups/{groupId}/vote-state", testGroup.getGroupId())
+                .header("Authorization", "Bearer " + user1Token))
+                .andExpect(status().isOk())
+                // movie pool should have only 1 movie and currently no rankings
+                .andExpect(jsonPath("$.pool", hasSize(1)))
+                .andExpect(jsonPath("$.pool[0].movieId").value(testMovie.getMovieId()))
+                .andExpect(jsonPath("$.rankings", hasSize(0)));
+    }
+
+    // succesfully get voting statuses
+    @Test
+    void getVotingStatus_returnsVotingStatus() throws Exception {
+        // add second user to group
+        testGroup.getMembers().add(user2);
+        groupRepository.save(testGroup);
+
+        // swithc to the voting phase
+        testGroup.setPhase(Group.GroupPhase.VOTING);
+        groupRepository.save(testGroup);
+
+        // send request
+        mockMvc.perform(MockMvcRequestBuilders.get("/groups/{groupId}/voting-status", testGroup.getGroupId())
+                .header("Authorization", "Bearer " + user1Token))
+                .andExpect(status().isOk())
+                // there should be 2 users and both haven't voted yet
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].userId").value(user1.getUserId()))
+                .andExpect(jsonPath("$[0].hasVoted").value(false))
+                .andExpect(jsonPath("$[1].userId").value(user2.getUserId()))
+                .andExpect(jsonPath("$[1].hasVoted").value(false));
+    }
+
+    // negative cases
+    // fail to get pool, because user is not member of the group
+    @Test
+    void getGroupMoviePool_notMember_returnsForbidden() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/groups/{groupId}/pool", testGroup.getGroupId())
+        // use user2 token
+                .header("Authorization", "Bearer " + user2Token))
+                .andExpect(status().isForbidden());
+    }
+
+    // fail to get voting state, because user is not member of the group
+    @Test
+    void getVoteState_notMember_returnsForbidden() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/groups/{groupId}/vote-state", testGroup.getGroupId())
+        // use user 2 token
+                .header("Authorization", "Bearer " + user2Token))
+                .andExpect(status().isForbidden());
+    }
+
+    // fail to get voting status, because user is not member of the group
+    @Test
+    void getVotingStatus_notMember_returnsForbidden() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/groups/{groupId}/voting-status", testGroup.getGroupId())
+        // use user 2 token
+                .header("Authorization", "Bearer " + user2Token))
+                .andExpect(status().isForbidden());
     }
 }
