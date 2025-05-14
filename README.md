@@ -1,119 +1,182 @@
-# Group 19 Server
+# Movie Night Planner
 
-## Getting started with Spring Boot
--   Documentation: https://docs.spring.io/spring-boot/docs/current/reference/html/index.html
--   Guides: http://spring.io/guides
-    -   Building a RESTful Web Service: http://spring.io/guides/gs/rest-service/
-    -   Building REST services with Spring: https://spring.io/guides/tutorials/rest/
+## Introducing the Movie Night Planner
 
-## Setup this Template with your IDE of choice
-Download your IDE of choice (e.g., [IntelliJ](https://www.jetbrains.com/idea/download/), [Visual Studio Code](https://code.visualstudio.com/), or [Eclipse](http://www.eclipse.org/downloads/)). Make sure Java 17 is installed on your system (for Windows, please make sure your `JAVA_HOME` environment variable is set to the correct version of Java).
+Movie Night Planner is a collaborative web application that simplifies group decision-making for movie selection.
+Coordinating movie tastes among friends can be challenging, so our solution enables users to create personal profiles,
+create and manage their Watch List (which is the list of movies a user wants so watch) and form groups. In those groups,
+members can contribute to the group's pool of movies by adding up to two movies from their respective Watch List to it.  
+Upon entering the voting phase, the movie pooling phase is closed automatically (thus no more movies can be added to the
+group's movie pool). In the voting phase group members have the option to rank the movies in the group's movie pool.
+Finally, the Movie Night Planner will announce the winning movie, which is the movie which represent the group members
+preferences the best.<br />
+Users can add films the Watch List via Search Movies. Upon accessing this page, the Movie Night Planner will provide the
+user with personalized movie suggestions. Here the Movie Night Planner makes use of the user's genre, actor and director
+favorites, which can be changed under the users profile. Movies can also be search for via title. The advances search
+allows users to specify year, genres, actors and directors.<br />
+The necessary data on movies, actors and directors is provided by the external TMDb API: https://developer.themoviedb.org/docs/getting-started
 
-### IntelliJ
-If you consider to use IntelliJ as your IDE of choice, you can make use of your free educational license [here](https://www.jetbrains.com/community/education/#students).
-1. File -> Open... -> SoPra server template
-2. Accept to import the project as a `gradle project`
-3. To build right click the `build.gradle` file and choose `Run Build`
+## Technologies
+[comment]: <> (Minna I think this is best if you'd do this as you did the setup)
 
-### VS Code
-The following extensions can help you get started more easily:
--   `vmware.vscode-spring-boot`
--   `vscjava.vscode-spring-initializr`
--   `vscjava.vscode-spring-boot-dashboard`
--   `vscjava.vscode-java-pack`
-
-**Note:** You'll need to build the project first with Gradle, just click on the `build` command in the _Gradle Tasks_ extension. Then check the _Spring Boot Dashboard_ extension if it already shows `soprafs25` and hit the play button to start the server. If it doesn't show up, restart VS Code and check again.
-
-## Building with Gradle
-You can use the local Gradle Wrapper to build the application.
--   macOS: `./gradlew`
--   Linux: `./gradlew`
--   Windows: `./gradlew.bat`
+* [smth](http:link) - The web framework used
+* [smth](https://maven.apache.org/) - Dependency Management
+* [smth](https://rometools.github.io/rome/) - Used to generate RSS Feeds
 
 
-More Information about [Gradle Wrapper](https://docs.gradle.org/current/userguide/gradle_wrapper.html) and [Gradle](https://gradle.org/docs/).
+## High-level components
 
-### Build
+The Movie Night Planner application is divided into the following main components, spanning both backend and frontend repositories:
 
-```bash
-./gradlew build
-```
+1. ### User Management
+   Role: Handles user registration, authentication, profiles, and preference management. This component allows users to create accounts, log in, update personal information, and set movie preferences that drive personalized recommendations.<br />
+   Correlation: Acts as the foundation for the entire application, enabling personalized movie recommendations and connecting users to groups and friends.<br />
+    - Backend Key Files:<br />
+        - [UserService.java](https://github.com/minnaheim/group_19_server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs25/service/UserService.java):<br />
+          Core service handling user authentication, registration, and profile management<br />
+        - [UserFavoritesService.java](https://github.com/minnaheim/group_19_server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs25/service/UserFavoritesService.java):<br />
+          Manages user's favorite genres, actors, and directors<br />
+        - [User.java](https://github.com/minnaheim/group_19_server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs25/entity/User.java): <br />
+          Entity model defining user properties and relationships<br />
+        - [UserController.java](https://github.com/minnaheim/group_19_server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs25/controller/UserController.java): <br />
+          Endpoints for user operations<br />
+        - [UserFavoritesController.java](https://github.com/minnaheim/group_19_server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs25/controller/UserFavoritesController.java):<br />
+          Endpoints for managing user preferences<br />
+    - Frontend Key Files:<br />
+        - [favorite_genres/page.tsx](https://github.com/minnaheim/group_19_client/blob/main/src/app/(favorites)/favorite_genres/page.tsx): <br />
+          UI for selecting and managing preferred genres<br />
+        - [favorite_movies/page.tsx](https://github.com/minnaheim/group_19_client/blob/main/src/app/(favorites)/favorite_movies/page.tsx): <br />
+          UI for selecting favorite movies<br />
+        - [profile/page.tsx](https://github.com/minnaheim/group_19_client/blob/main/src/app/users/%5Bid%5D/profile/page.tsx):<br />
+          User profile display page<br />
+        - [edit_profile/page.tsx](https://github.com/minnaheim/group_19_client/blob/main/src/app/users/%5Bid%5D/edit_profile/page.tsx):<br />
+          UI for editing user profile information and preferences <br />
 
-### Run
+2. ### Group Management
+   Role: Manages the complete lifecycle of movie groups - from creation and configuration to invitations and member management. Provides core functionality for collaborative movie selection within defined social circles.<br />
+   Correlation: Serves as the collaborative hub connecting User Management with the Movie Pool and Voting components.<br />
+    - Backend Key Files:<br />
+        - [GroupController.java](https://github.com/minnaheim/group_19_server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs25/controller/GroupController.java): <br />
+          REST endpoints for group operations<br />
+        - [GroupInvitationController.java](https://github.com/minnaheim/group_19_server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs25/controller/GroupInvitationController.java):<br />
+          Manages invitation processes between users<br />
+        - [Group.java](https://github.com/minnaheim/group_19_server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs25/entity/Group.java): <br />
+          Entity defining group properties and relationships<br />
+        - [MoviePool.java](https://github.com/minnaheim/group_19_server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs25/entity/MoviePool.java): <br />
+          Collection model for group's candidate movies<br />
+        - [GroupInvitationService.java](https://github.com/minnaheim/group_19_server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs25/service/GroupInvitationService.java):<br />
+          Logic for managing invitations<br />
+        - [GroupService.java](https://github.com/minnaheim/group_19_server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs25/service/GroupService.java): <br />
+          Core service for group operations<br />
+        - [MoviePoolService.java](https://github.com/minnaheim/group_19_server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs25/service/MoviePoolService.java):<br />
+          Manages the collection of candidate movies for groups<br />
+    - Frontend Key Files:<br />
+        - [groups/page.tsx](https://github.com/minnaheim/group_19_client/blob/main/src/app/users/%5Bid%5D/groups/page.tsx): <br />
+          Dashboard displaying user's groups<br />
+        - [pool/page.tsx](https://github.com/minnaheim/group_19_client/blob/main/src/app/users/%5Bid%5D/groups/%5BgroupId%5D/pool/page.tsx): <br />
+          UI for viewing and managing group's movie pool<br />
 
-```bash
-./gradlew bootRun
-```
+3. ### Movie Management
+   Role: Provides the core movie data infrastructure, handling external API integration with TMDb, local movie database operations, and sophisticated search and recommendation algorithms. Centralizes all movie-related operations into a cohesive service layer.<br />
+   Correlation: Acts as the primary data provider for all movie-related components including Watchlists, Group Pools, and voting mechanisms.<br />
+    - Backend Key Files:<br />
+        - [MovieController.java](https://github.com/minnaheim/group_19_server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs25/controller/MovieController.java):<br />
+          Endpoints for movie operations<br />
+        - [Movie.java](https://github.com/minnaheim/group_19_server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs25/entity/Movie.java): <br />
+          Entity model with movie attributes and relationships<br />
+        - [MovieService.java](https://github.com/minnaheim/group_19_server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs25/service/MovieService.java): <br />
+          Core service implementing movie logic<br />
+        - [TMDbService.java](https://github.com/minnaheim/group_19_server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs25/service/TMDbService.java):<br />
+          Integration service with the external TMDb API<br />
+    - Frontend Key Files:<br />
+        - [movie_search/page.tsx](https://github.com/minnaheim/group_19_client/blob/main/src/app/users/%5Bid%5D/movie_search/page.tsx):<br />
+          UI for searching for movies with filters and movie recommendation display<br />
 
-You can verify that the server is running by visiting `localhost:8080` in your browser.
+4. ### Watchlist & Already Seen Movies
+   Role: Provides personal movie collection management capabilities, allowing users to maintain lists of movies they wish to watch and those they've already seen. Incorporates rating functionality to improve recommendation accuracy.<br />
+   Correlation: Connects user preferences with movie data and supplies candidate movies for group pools.<br />
+    - Backend Key Files:<br />
+        - [UserMovieController.java](https://github.com/minnaheim/group_19_server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs25/controller/UserMovieController.java): <br />
+          Endpoints for user-movie relationships<br />
+        - [UserMovieService.java](https://github.com/minnaheim/group_19_server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs25/service/UserMovieService.java): <br />
+          Service managing user's movie lists and interactions<br />
+    - Frontend Key Files:<br />
+        - [seen_list/page.tsx](https://github.com/minnaheim/group_19_client/blob/main/src/app/users/%5Bid%5D/seen_list/page.tsx): <br />
+          UI for managing watched movies<br />
+        - [watchlist/page.tsx](https://github.com/minnaheim/group_19_client/blob/main/src/app/users/%5Bid%5D/watchlist/page.tsx): <br />
+          UI for managing movies to watch<br />
 
-### Test
+5. ### Voting System
+   Role: Implements a sophisticated preferential voting algorithm that processes group members' movie rankings to determine the optimal movie choice. Manages the complete voting workflow from ballot creation to result calculation and announcement.<br />
+   Correlation: Represents the decision-making core of the application, integrating with Group Management and Movie Pool components.<br />
+    - Backend Key Files:<br />
+        - [RankingController.java](https://github.com/minnaheim/group_19_server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs25/controller/RankingController.java): <br />
+          Endpoint for submitting and retrieving rankings<br />
+        - [RankingResult.java](https://github.com/minnaheim/group_19_server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs25/entity/RankingResult.java):<br />
+          Entity storing voting outcome data<br />
+        - [RankingSubmissionLog.java](https://github.com/minnaheim/group_19_server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs25/entity/RankingSubmissionLog.java):<br />
+          Vote submissions<br />
+        - [UserMovieRanking.java](https://github.com/minnaheim/group_19_server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs25/entity/UserMovieRanking.java):<br />
+          Entity representing a user's movie preferences<br />
+        - [RankingScheduler.java](https://github.com/minnaheim/group_19_server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs25/scheduler/RankingScheduler.java): <br />
+          Service managing voting deadlines<br />
+        - [RankingService.java](https://github.com/minnaheim/group_19_server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs25/service/RankingService.java):<br />
+          Service implementing voting algorithms<br />
+    - Frontend Key Files:<br />
+        - [results/page.tsx](https://github.com/minnaheim/group_19_client/blob/main/src/app/users/%5Bid%5D/groups/%5BgroupId%5D/results/page.tsx):<br />
+          Displays voting results and winning movie<br />
+        - [vote/page.tsx](https://github.com/minnaheim/group_19_client/blob/main/src/app/users/%5Bid%5D/groups/%5BgroupId%5D/vote/page.tsx): <br />
+          Interactive drag-and-drop interface for ranking movies<br />
 
-```bash
-./gradlew test
-```
+6. ### Friendship Management
+   Role: Enables social connections between users through a friend request and acceptance system. Facilitates discovery of other users and provides visibility into friends' movie preferences and watchlists to encourage shared experiences.<br />
+   Correlation: Enhances the social fabric of the application, supporting easier group formation and encouraging collaborative movie selection.<br />
+    - Backend Key Files:<br />
+        - [FriendRequestController.java](https://github.com/minnaheim/group_19_server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs25/controller/FriendRequestController.java):<br />
+          Endpoints for friend operations<br />
+        - [FriendRequest.java](https://github.com/minnaheim/group_19_server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs25/entity/FriendRequest.java): <br />
+          Entity model for pending friendship requests<br />
+        - [FriendRequestService.java](https://github.com/minnaheim/group_19_server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs25/service/FriendRequestService.java): <br />
+          Service handling friendship business logic<br />
+    - Frontend Key Files:<br />
+        - [friends/page.tsx](https://github.com/minnaheim/group_19_client/blob/main/src/app/users/%5Bid%5D/friends/page.tsx): <br />
+          Interface for managing friends and requests<br />
 
-### Development Mode
-You can start the backend in development mode, this will automatically trigger a new build and reload the application
-once the content of a file has been changed.
+## Launch & Deployment
 
-Start two terminal windows and run:
+Please refer to the following files for a description on how to get started with this application, including
+which commands are required to build and run this project locally and how to run tests.
+* [Launch_and_Deployment_Client.md](https://github.com/minnaheim/group_19_client/blob/main/Launch_and_Deployment_Client.md)
+* [Launch_and_Deployment_Server](https://github.com/minnaheim/group_19_server/blob/main/Launch_and_Deployment_Server.md)
 
-`./gradlew build --continuous`
+### Database:
+[comment]: <> (Minna i think this is best if you'd do this as you did the setup)
 
-and in the other one:
+### TMDb API: We requested an API key under the following link:<br />
+https://www.themoviedb.org/settings/api<br />
+We've stored it in the server's Github Secrets, refer to 
+[TMDbConfig.java](https://github.com/minnaheim/group_19_server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs25/config/TMDbConfig.java)
 
-`./gradlew bootRun`
 
-If you want to avoid running all tests with every change, use the following command instead:
+## Roadmap
 
-`./gradlew build --continuous -xtest`
+We suggest adding these features to this project:
+* Adding an additional list (besides the existing lists: Watch List and Already Seen) so that users can dismiss movies suggested. The endpoint GET /movies/suggestions/{userId} needs to be updated, so that these movies in this "dismissed/ do not like list" are filtered out and so that other movies are suggested.
+* Add YouTube functionality to the project: Applying for a youtube API Key, and displaying trailer directly in the Movie Night Planner instead of redirecting to youtube. https://developers.google.com/youtube/v3?hl=en
+* Providing the same functionalities for TV Series's as well
 
-## API Endpoint Testing with Postman
-We recommend using [Postman](https://www.getpostman.com) to test your API Endpoints.
 
-## Debugging
-If something is not working and/or you don't know what is going on. We recommend using a debugger and step-through the process step-by-step.
+## Authors and acknowledgment.
 
-To configure a debugger for SpringBoot's Tomcat servlet (i.e. the process you start with `./gradlew bootRun` command), do the following:
+* **Benedikt Jung** - [BeneJung](https://github.com/BeneJung)
+* **Elisabeth Philippi** - [ellaruby0](https://github.com/ellaruby0)
+* **Anabel Nigsch** - [AnabelNigsch](https://github.com/AnabelNigsch)
+* **Minna Heim** - [minnaheim](https://github.com/minnaheim)
+* **Ivan Isaenko** - [ivis-ii](https://github.com/ivis-ii)
 
-1. Open Tab: **Run**/Edit Configurations
-2. Add a new Remote Configuration and name it properly
-3. Start the Server in Debug mode: `./gradlew bootRun --debug-jvm`
-4. Press `Shift + F9` or the use **Run**/Debug "Name of your task"
-5. Set breakpoints in the application where you need it
-6. Step through the process one step at a time
+Refer also to [contributions.md](https://github.com/minnaheim/group_19_client/blob/main/contributions.md)
 
-## Testing
-Have a look here: https://www.baeldung.com/spring-boot-testing
-
-<br>
-<br>
-<br>
-
-## Docker
-
-### Introduction
-This year, for the first time, Docker will be used to ease the process of deployment.\
-Docker is a tool that uses containers as isolated environments, ensuring that the application runs consistently and uniformly across different devices.\
-Everything in this repository is already set up to minimize your effort for deployment.\
-All changes to the main branch will automatically be pushed to dockerhub and optimized for production.
-
-### Setup
-1. **One** member of the team should create an account on [dockerhub](https://hub.docker.com/), _incorporating the group number into the account name_, for example, `SoPra_group_XX`.\
-2. This account then creates a repository on dockerhub with the _same name as the group's Github repository name_.\
-3. Finally, the person's account details need to be added as [secrets](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions#creating-secrets-for-a-repository) to the group's repository:
-    - dockerhub_username (the username of the dockerhub account from step 1, for example, `SoPra_group_XX`)
-    - dockerhub_password (a generated PAT([personal access token](https://docs.docker.com/docker-hub/access-tokens/)) of the account with read and write access)
-    - dockerhub_repo_name (the name of the dockerhub repository from step 2)
-
-### Pull and run
-Once the image is created and has been successfully pushed to dockerhub, the image can be run on any machine.\
-Ensure that [Docker](https://www.docker.com/) is installed on the machine you wish to run the container.\
-First, pull (download) the image with the following command, replacing your username and repository name accordingly.
-
-```docker pull <dockerhub_username>/<dockerhub_repo_name>```
-
-Then, run the image in a container with the following command, again replacing _<dockerhub_username>_ and _<dockerhub_repo_name>_ accordingly.
-
-```docker run -p 3000:3000 <dockerhub_username>/<dockerhub_repo_name>```
+## License
+[comment]: <> (Minna i think this is best if you'd do this as you did the setup)
+[comment]: <> (Per assignment we have to: 
+Add additional notes about how to deploy this on a live system Say how your project is licensed (see License guide3: https://choosealicense.com/) 
