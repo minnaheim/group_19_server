@@ -56,7 +56,7 @@ class MoviePoolServiceTest {
 
     @Test
     void addMovie_success_inPoolPhase() {
-        group.setPhase(Group.GroupPhase.POOL);
+        group.setPhase(Group.GroupPhase.POOLING);
         when(groupRepository.findById(1L)).thenReturn(Optional.of(group));
         when(movieRepository.findById(100L)).thenReturn(Optional.of(movie));
         when(moviePoolRepository.findByGroup_GroupId(1L)).thenReturn(moviePool);
@@ -78,7 +78,7 @@ class MoviePoolServiceTest {
 
     @Test
     void removeMovie_success_inPoolPhase() {
-        group.setPhase(Group.GroupPhase.POOL);
+        group.setPhase(Group.GroupPhase.POOLING);
         when(groupRepository.findById(1L)).thenReturn(Optional.of(group));
         when(movieRepository.findById(100L)).thenReturn(Optional.of(movie));
         when(moviePoolRepository.findByGroup_GroupId(1L)).thenReturn(moviePool);
@@ -103,7 +103,7 @@ class MoviePoolServiceTest {
 
     @Test
     void addMovie_forbidden_notMember() {
-        group.setPhase(Group.GroupPhase.POOL);
+        group.setPhase(Group.GroupPhase.POOLING);
         group.getMembers().clear(); // user not in group
         when(groupRepository.findById(1L)).thenReturn(Optional.of(group));
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
@@ -113,7 +113,7 @@ class MoviePoolServiceTest {
 
     @Test
     void addMovie_conflict_movieAlreadyInPool() {
-        group.setPhase(Group.GroupPhase.POOL);
+        group.setPhase(Group.GroupPhase.POOLING);
         when(groupRepository.findById(1L)).thenReturn(Optional.of(group));
         when(movieRepository.findById(100L)).thenReturn(Optional.of(movie));
         when(moviePoolRepository.findByGroup_GroupId(1L)).thenReturn(moviePool);
@@ -125,7 +125,7 @@ class MoviePoolServiceTest {
 
     @Test
     void addMovie_forbidden_userExceedsLimit() {
-        group.setPhase(Group.GroupPhase.POOL);
+        group.setPhase(Group.GroupPhase.POOLING);
         when(groupRepository.findById(1L)).thenReturn(Optional.of(group));
         when(movieRepository.findById(100L)).thenReturn(Optional.of(movie));
         when(moviePoolRepository.findByGroup_GroupId(1L)).thenReturn(moviePool);
@@ -143,7 +143,7 @@ class MoviePoolServiceTest {
 
     @Test
     void removeMovie_forbidden_notAddedByUser() {
-        group.setPhase(Group.GroupPhase.POOL);
+        group.setPhase(Group.GroupPhase.POOLING);
         when(groupRepository.findById(1L)).thenReturn(Optional.of(group));
         when(movieRepository.findById(100L)).thenReturn(Optional.of(movie));
         when(moviePoolRepository.findByGroup_GroupId(1L)).thenReturn(moviePool);

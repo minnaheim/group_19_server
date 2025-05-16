@@ -256,7 +256,7 @@ public class GroupControllerIntegrationTest {
     // succesfully returns remaining time of current phase
     @Test
     void getRemainingTime_returnsTimeInSeconds() throws Exception {
-        testGroup.setPhase(Group.GroupPhase.POOL);
+        testGroup.setPhase(Group.GroupPhase.POOLING);
         testGroup.setPoolPhaseDuration(300);
         testGroup.setPhaseStartTime(LocalDateTime.now());
         mockMvc.perform(MockMvcRequestBuilders.get("/groups/{groupId}/timer", testGroup.getGroupId())

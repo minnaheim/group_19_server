@@ -48,7 +48,7 @@ class MoviePoolServiceIntegrationTest {
         // Create and persist a group
         group = new Group();
         group.setGroupName("integrationGroup");
-        group.setPhase(Group.GroupPhase.POOL);
+        group.setPhase(Group.GroupPhase.POOLING);
         group.setMembers(new java.util.ArrayList<>());
         group.getMembers().add(user);
         group.setCreator(user);
@@ -92,7 +92,7 @@ class MoviePoolServiceIntegrationTest {
 
     @Test
     void removeMovie_wrongPhase_conflict() {
-        // Add movie in POOL phase
+        // Add movie in POOLING phase
         moviePoolService.addMovie(group.getGroupId(), movie.getMovieId(), user.getUserId());
         // Change phase
         group.setPhase(Group.GroupPhase.RESULTS);

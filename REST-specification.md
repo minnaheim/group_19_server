@@ -383,14 +383,14 @@ A `Review object` is a JSON object with the following structure:
 
 #### Group Phase Attribute
 Each group has a `phase` attribute:
-- `POOL`: Movie pool is open for additions.
+- `POOLING`: Movie pool is open for additions.
 - `VOTING`: Pool is locked; voting is open.
 - `RESULTS`: Voting is closed; results can be viewed.
 
 #### Phase Transition Endpoints
 | Endpoint | Method | Parameters | Parameter Type | Status Code | Response | Description |
 |----------|--------|------------|---------------|-------------|----------|-------------|
-| `/groups/{groupId}/start-voting` | POST | groupId\<integer\>, userId\<integer\> | Path, Body | 200 OK | Success message\<string\> | Trigger transition from POOL to VOTING phase (only by group creator or auto when all have submitted) |
+| `/groups/{groupId}/start-voting` | POST | groupId\<integer\>, userId\<integer\> | Path, Body | 200 OK | Success message\<string\> | Trigger transition from POOLING to VOTING phase (only by group creator or auto when all have submitted) |
 | `/groups/{groupId}/show-results` | POST | groupId\<integer\>, userId\<integer\> | Path, Body | 200 OK | Success message\<string\> | Trigger transition from VOTING to RESULTS phase (only by group creator or auto when all have voted) |
 
 #### Voting Endpoints (Phase Restricted)
@@ -411,7 +411,7 @@ Each group has a `phase` attribute:
 | `/groups/{groupId}/vote-state` | GET | Authorization\<string\>, groupId\<long\> | Header, Path | 404 Not Found | Error: reason\<string\> | Group not found or user not a member | VOTING |
 
 **Note:**
-- Adding movies to pool is only allowed in the POOL phase.
+- Adding movies to pool is only allowed in the POOLING phase.
 - Voting is only allowed in the VOTING phase.
 - Results are only viewable in the RESULTS phase.
 - Endpoints must return `409 Conflict` if the operation is not allowed in the current phase.
@@ -445,7 +445,7 @@ Add a `phase` attribute to the group object:
 ```json
 {
   ...
-  "phase": "POOL" | "VOTING" | "RESULTS"
+  "phase": "POOLING" | "VOTING" | "RESULTS"
 }
 ```
 This field must be included in all relevant group-related responses.

@@ -21,13 +21,13 @@ import javax.persistence.Table;
 public class Group implements Serializable {
 
     public enum GroupPhase {
-        POOL,
+        POOLING,
         VOTING,
         RESULTS
     }
 
     @Column(nullable = false)
-    private GroupPhase phase = GroupPhase.POOL; // default phase
+    private GroupPhase phase = GroupPhase.POOLING; // default phase
 
     
     @Id

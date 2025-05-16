@@ -65,7 +65,7 @@ public class GroupControllerTest {
 
         group = new Group();
         group.setGroupName("controllerGroup");
-        group.setPhase(Group.GroupPhase.POOL);
+        group.setPhase(Group.GroupPhase.POOLING);
         group.setMembers(new java.util.ArrayList<>());
         group.getMembers().add(user);
         group.setCreator(user);
@@ -99,7 +99,7 @@ public class GroupControllerTest {
 
     @Test
     void addMovieToGroupPool_inPoolPhase_returnsOk() throws Exception {
-        group.setPhase(Group.GroupPhase.POOL);
+        group.setPhase(Group.GroupPhase.POOLING);
         groupRepository.saveAndFlush(group);
         mockMvc.perform(post("/groups/{groupId}/pool/{movieId}", group.getGroupId(), movie.getMovieId())
                 .header("Authorization", "Bearer " + token)
@@ -109,8 +109,8 @@ public class GroupControllerTest {
 
     @Test
     void removeMovieFromGroupPool_wrongPhase_returnsConflict() throws Exception {
-        // First add the movie in POOL phase
-        group.setPhase(Group.GroupPhase.POOL);
+        // First add the movie in POOLING phase
+        group.setPhase(Group.GroupPhase.POOLING);
         groupRepository.saveAndFlush(group);
         mockMvc.perform(post("/groups/{groupId}/pool/{movieId}", group.getGroupId(), movie.getMovieId())
                 .header("Authorization", "Bearer " + token)
@@ -127,8 +127,8 @@ public class GroupControllerTest {
 
     @Test
     void removeMovieFromGroupPool_inPoolPhase_returnsNoContent() throws Exception {
-        // First add the movie in POOL phase
-        group.setPhase(Group.GroupPhase.POOL);
+        // First add the movie in POOLING phase
+        group.setPhase(Group.GroupPhase.POOLING);
         groupRepository.saveAndFlush(group);
         mockMvc.perform(post("/groups/{groupId}/pool/{movieId}", group.getGroupId(), movie.getMovieId())
                 .header("Authorization", "Bearer " + token)
@@ -136,7 +136,7 @@ public class GroupControllerTest {
                 .andExpect(status().isOk());
         // Reload pool from DB to ensure userAddedMovies is up-to-date
         pool = moviePoolRepository.findByGroup_GroupId(group.getGroupId());
-        // Remove in POOL phase
+        // Remove in POOLING phase
         mockMvc.perform(delete("/groups/{groupId}/pool/{movieId}", group.getGroupId(), movie.getMovieId())
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON))
@@ -151,8 +151,8 @@ public class GroupControllerTest {
         newMovie.setTitle("Replacement Movie");
         Movie savedNewMovie = movieRepository.saveAndFlush(newMovie);
         
-        // First add the original movie in POOL phase
-        group.setPhase(Group.GroupPhase.POOL);
+        // First add the original movie in POOLING phase
+        group.setPhase(Group.GroupPhase.POOLING);
         groupRepository.saveAndFlush(group);
         mockMvc.perform(post("/groups/{groupId}/pool/{movieId}", group.getGroupId(), movie.getMovieId())
                 .header("Authorization", "Bearer " + token)
