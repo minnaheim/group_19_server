@@ -8,6 +8,6 @@ public class AuthorizationUtil {
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             return authorizationHeader.substring(7); // Remove "Bearer " prefix
         }
-        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token");
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Authorization header");
     }
 }

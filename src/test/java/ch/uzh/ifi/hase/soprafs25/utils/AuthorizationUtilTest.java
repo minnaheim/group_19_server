@@ -1,7 +1,9 @@
 package ch.uzh.ifi.hase.soprafs25.utils;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
+import org.springframework.web.server.ResponseStatusException;
 
 class AuthorizationUtilTest {
 
@@ -23,13 +25,12 @@ class AuthorizationUtilTest {
         String authHeader = null;
 
         // Act & Assert
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
                 () -> AuthorizationUtil.extractToken(authHeader)
         );
 
-        assertEquals("Invalid Authorization header", exception.getMessage());
-    }
+        assertEquals("Invalid Authorization header", exception.getReason());    }
 
     @Test
     void extractToken_headerWithoutBearer_throwsException() {
@@ -37,13 +38,12 @@ class AuthorizationUtilTest {
         String authHeader = "Token myToken123";
 
         // Act & Assert
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
                 () -> AuthorizationUtil.extractToken(authHeader)
         );
 
-        assertEquals("Invalid Authorization header", exception.getMessage());
-    }
+        assertEquals("Invalid Authorization header", exception.getReason());    }
 
     @Test
     void extractToken_emptyHeader_throwsException() {
@@ -51,13 +51,12 @@ class AuthorizationUtilTest {
         String authHeader = "";
 
         // Act & Assert
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
                 () -> AuthorizationUtil.extractToken(authHeader)
         );
 
-        assertEquals("Invalid Authorization header", exception.getMessage());
-    }
+        assertEquals("Invalid Authorization header", exception.getReason());    }
 
     @Test
     void extractToken_headerWithOnlyBearer_returnsEmptyString() {
